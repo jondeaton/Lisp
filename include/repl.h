@@ -18,25 +18,27 @@ typedef char* expression;
  * --------------
  * Takes an expression from standard input, turns it into
  * an object and returns the object
- * @return
+ * @return : The object representation of the expression read from stdin
  */
 obj* read();
-
 
 /**
  * Function: eval
  * --------------
  * Takes an object (either a list or an atom) and returns
- *
- * @param o
- * @return
+ * the result of the evaluation of this
+ * @param o : An object to be evaluated
+ * @return : An reduced object
  */
 obj* eval(obj* o);
 
 /**
- *
- * @param o
- * @return
+ * Function: print
+ * ---------------
+ * Converts an object to an expression and then prints it
+ * to standard output
+ * @param o : An object to print
+ * @return : Nothing
  */
 void print(obj* o);
 

@@ -10,20 +10,21 @@
 #include "stdbool.h"
 #include "stdlib.h"
 
-enum type {atom, list, primative};
+typedef char* atom;
+atom t = "t";
+atom empty = "()";
+
+enum type {atomtype, listtype, primative};
 
 typedef struct {
   type objtype;
 	void* p;
 } obj;
 
-typedef char* atom;
-atom t = "t";
-atom empty = "()";
 
 typedef struct {
-	obj* car;
-  obj* cdr;
+	obj car;
+  obj cdr;
 } list;
 
 /**

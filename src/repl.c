@@ -5,23 +5,27 @@
  * for Lisp
  */
 
+#include <tclDecls.h>
 #include "repl.h"
 #include "string.h"
 #include "stdio.h"
 
 #define BUFSIZE 1024
+#define PROMPT "> "
+#define REPROMPT ">> "
 
+static expression getExpression();
+static bool unbalancedExpression(expression e);
 static obj* parse(expression input);
+static expression unparse(obj* o);
 static bool isWhiteSpace(char character);
 
 // Get expression from stdin, turn it into a list, return the list
 obj* read() {
-  char input[BUFSIZE];
-
-  printf("> ");
-  scanf("%s", input);
-
-  return parse((expression) input);
+  expression input = getExpression();
+  obj* o = parse((expression) input);
+  free(input);
+  return o;
 };
 
 // Walk the list, if car is a primitive, apply it to cdr
@@ -30,17 +34,68 @@ obj* eval(obj* o) {
 };
 
 void print(obj* o) {
-
-
-
-
+  expression e = unparse(o);
+  printf("%s", (char*) e);
 };
 
 void repl() {
   while (true) print(eval(read()));
 };
 
+/**
+ * Function: getExpression
+ * -----------------------
+ * Gets an expression from the user
+ * @return : The expression in a dynamically allocated location
+ */
+static expression getExpression() {
+  printf(PROMPT);
 
+  char buff[BUFSIZE];
+  int inputSize = scanf("%s", buff);
+  int totalSize = inputSize;
+  expression e = malloc(sizeof(char) * (inputSize + 1));
+  if (e == NULL) return NULL;
+
+  strcpy(buff, e);
+
+  while (unbalancedExpression(e)) {
+    printf(REPROMPT);
+    inputSize = scanf("%s", buff);
+    e = realloc(e, (size_t) totalSize + inputSize);
+    if (e == NULL) return NULL;
+
+    strcpy(e + totalSize + 1, buff);
+    totalSize += inputSize;
+  }
+
+  return e;
+}
+
+/**
+ * Function: unbalancedExpression
+ * ------------------------------
+ * Checks if the expression has a balanced set of parentheses
+ * @param e :
+ * @return
+ */
+static bool unbalancedExpression(expression e) {
+  size_t numOpen = 0;
+  size_t numClose = 0;
+  for (size_t i = 0; i < strlen(e), i++) {
+    if (e[i] == '(') numOpen++;
+    if (e[i] == ')') numClose++;
+  }
+  return numOpen > numClose;
+}
+
+/**
+ * Function: parse
+ * ---------------
+ * Converts a lisp expression into a lisp data structure
+ * @param input : The lisp expression to objectify
+ * @return : Pointer to the lisp data structure
+ */
 static obj* parse(expression input) {
   size_t i = 0;
   int len = strlen(input);
@@ -66,13 +121,24 @@ static obj* parse(expression input) {
   }
 }
 
+/**
+ * Function: unparse
+ * -----------------
+ * Takes a lisp object and turns it into its string
+ * representation.
+ * @param o : A lisp object
+ * @return : An expression that represents the lisp data structure
+ */
+static expression unparse(obj* o) {
+
+}
 
 /**
  * Function: isWhiteSpace
  * ----------------------
- *
- * @param character
- * @return
+ * Checks if a single character is a whitespace character
+ * @param character : The character to check
+ * @return : True if that character is whitespace, false otherwise
  */
 static const char kWhitespace[] = {' ', '\n', '\t', NULL};
 static bool isWhiteSpace(char character) {
