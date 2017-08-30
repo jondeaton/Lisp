@@ -7,28 +7,41 @@
 
 #include "repl.h"
 #include "string.h"
+#include "stdio.h"
 
+#define BUFSIZE 1024
 
-obj* read(expression e) {
+static obj* parse(expression input);
+static bool isWhiteSpace(char character);
 
+// Get expression from stdin, turn it into a list, return the list
+obj* read() {
+  char input[BUFSIZE];
+
+  printf("> ");
+  scanf("%s", input);
+
+  return parse((expression) input);
 };
 
-
+// Walk the list, if car is a primitive, apply it to cdr
 obj* eval(obj* o) {
 
 };
 
-expression print(obj* o) {
+void print(obj* o) {
+
+
+
 
 };
 
-void repl(){
-
+void repl() {
+  while (true) print(eval(read()));
 };
 
 
-
-static list* parse(char* input) {
+static obj* parse(expression input) {
   size_t i = 0;
   int len = strlen(input);
   for (int i = 0; i < len; ++i) {
@@ -53,6 +66,14 @@ static list* parse(char* input) {
   }
 }
 
+
+/**
+ * Function: isWhiteSpace
+ * ----------------------
+ *
+ * @param character
+ * @return
+ */
 static const char kWhitespace[] = {' ', '\n', '\t', NULL};
 static bool isWhiteSpace(char character) {
   size_t i = 0;

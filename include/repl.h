@@ -18,15 +18,35 @@ typedef char* expression;
  * --------------
  * Takes an expression from standard input, turns it into
  * an object and returns the object
- * @param e
  * @return
  */
-obj* read(expression e);
+obj* read();
+
+
+/**
+ * Function: eval
+ * --------------
+ * Takes an object (either a list or an atom) and returns
+ *
+ * @param o
+ * @return
+ */
 obj* eval(obj* o);
-expression print(obj* o);
+
+/**
+ *
+ * @param o
+ * @return
+ */
+void print(obj* o);
+
+/**
+ * Function: repl
+ * --------------
+ * The read-eval-print loop which
+ * simply calls read, eval, and print
+ * in that order over and over again.
+ */
 void repl();
-
-
-static bool isWhiteSpace(char character);
 
 #endif
