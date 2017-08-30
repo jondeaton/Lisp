@@ -10,19 +10,20 @@
 #include "stdbool.h"
 #include "stdlib.h"
 
+enum type {atom, list, primative};
+
 typedef struct {
-	bool isatom;
+  type objtype;
 	void* p;
-} expression;
+} obj;
 
 typedef char* atom;
-
 atom t = "t";
-atom empty = NULL;
+atom empty = "()";
 
 typedef struct {
-	expression* car;
-	expression* cdr;
+	obj* car;
+  obj* cdr;
 } list;
 
 /**
@@ -32,7 +33,7 @@ typedef struct {
  * @param atom
  * @return
  */
-atom quote(expression* atom);
+obj* quote(atom* atom);
 
 /**
  * Primitive: atom
@@ -41,7 +42,7 @@ atom quote(expression* atom);
  * @param e
  * @return
  */
-atom atom(expression* e);
+atom atm(expression* e);
 
 /**
  * Primitive: eq
@@ -71,5 +72,6 @@ list* cons(expression* x, list* y);
  * @return
  */
 expression* cond(list* exps);
+
 
 #endif

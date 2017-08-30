@@ -7,8 +7,11 @@ SET( CMAKE_CXX_FLAGS  "-g -Wall -pedantic -O0")
 include_directories(include src)
 
 set(SOURCES
-        src/main.c
+        include/lisp.h
+        include/repl.h
         src/lisp.c
-        include/lisp.h)
+        src/repl.c
+        src/main.c
+        )
 
 add_executable(lisp ${SOURCES})
