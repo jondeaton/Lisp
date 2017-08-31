@@ -6,6 +6,7 @@
  */
 
 #include <tclDecls.h>
+#include <lisp.h>
 #include "repl.h"
 #include "string.h"
 #include "stdio.h"
@@ -15,7 +16,8 @@
 #define REPROMPT ">> "
 
 static expression getExpression();
-static bool unbalancedExpression(expression e);
+static bool isBalanced(expression e);
+static bool isValid(expression e);
 static obj* parse(expression input);
 static expression unparse(obj* o);
 static bool isWhiteSpace(char character);
@@ -23,6 +25,7 @@ static bool isWhiteSpace(char character);
 // Get expression from stdin, turn it into a list, return the list
 obj* read() {
   expression input = getExpression();
+  if (input == NULL) return NULL;
   obj* o = parse((expression) input);
   free(input);
   return o;
@@ -30,10 +33,12 @@ obj* read() {
 
 // Walk the list, if car is a primitive, apply it to cdr
 obj* eval(obj* o) {
-
+  if (o == NULL) return NULL;
+  // todo...
 };
 
 void print(obj* o) {
+  if (o == NULL) printf("Error");
   expression e = unparse(o);
   printf("%s", (char*) e);
 };
@@ -59,7 +64,8 @@ static expression getExpression() {
 
   strcpy(buff, e);
 
-  while (unbalancedExpression(e)) {
+  bool valid;
+  while ((valid = isValid(e)) && !isBalanced(e)) {
     printf(REPROMPT);
     inputSize = scanf("%s", buff);
     e = realloc(e, (size_t) totalSize + inputSize);
@@ -68,25 +74,43 @@ static expression getExpression() {
     strcpy(e + totalSize + 1, buff);
     totalSize += inputSize;
   }
+  if (!valid) return NULL;
 
   return e;
 }
 
 /**
- * Function: unbalancedExpression
+ * Function: unbalanced
  * ------------------------------
- * Checks if the expression has a balanced set of parentheses
- * @param e :
- * @return
+ * Checks if all of the open parenthesis in the expression
+ * are balanced by a closing parentheses.
+ * @param e : A lisp expression
+ * @return : True if there are at least as many
  */
-static bool unbalancedExpression(expression e) {
-  size_t numOpen = 0;
-  size_t numClose = 0;
-  for (size_t i = 0; i < strlen(e), i++) {
-    if (e[i] == '(') numOpen++;
-    if (e[i] == ')') numClose++;
+static bool isBalanced(expression e) {
+  int net = 0;
+  for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '(') net++;
+    if (e[i] == ')') net--;
   }
-  return numOpen > numClose;
+  return net == 0;
+}
+
+/**
+ * Function: isValid
+ * -----------------
+ * Checks if the expression is valid
+ * @param e : The expression to check
+ * @return : True if the expression is valid, false otherwise
+ */
+static bool isValid(expression e) {
+  int net = 0;
+  for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '(') net++;
+    if (e[i] == ')') net--;
+    if (net < 0) return false;
+  }
+  return net == 0;
 }
 
 /**
@@ -96,29 +120,48 @@ static bool unbalancedExpression(expression e) {
  * @param input : The lisp expression to objectify
  * @return : Pointer to the lisp data structure
  */
-static obj* parse(expression input) {
-  size_t i = 0;
-  int len = strlen(input);
-  for (int i = 0; i < len; ++i) {
+static obj* parse(expression e, size_t* numParsed) {
 
-    if (isWhitespace(input[i])) continue;
+  // Check if its an atom
+  if (e[0] != '(') {
 
-    if (inpit[i] == ')') return list;
+  }
 
-    if (input[i] == '(') {
-      size_t listSize = findListSize(input + i); // num chars until closign paren
-      list.car = parse(input + i + 1);
-      parse(input + i + listSize + 1, list.cdr);
+  size_t netOpen = 1;
+  list* l = malloc(sizeof(list));
+
+  size_t i = 1;
+  while (i < strlen(e)) {
+    if (isWhiteSpace(e[i])) continue;
+
+    // Closing parenthesis
+    if (netOpen == 0) {
+      *numParsed == i;
+      return l;
+    }
+
+    if (e[i] == '(') {
+      netOpen++;
+
+
+      size_t listSize = findListSize(e + i);
+      list.car = parse(e + i + 1);
+      parse(e + i + listSize + 1, list.cdr);
     } else {
-      size_t tokenSize = findTokenSize(input); // this is the size of the next token
+      size_t tokenSize = findTokenSize(e); // this is the size of the next token
 
       char *copy = malloc(tokenSize);
-      strcpy(input, copy, tokenSize);
+      strcpy(e, copy, tokenSize);
 
       list.car = copy;
-      list.cdr = parse(input + i + next_token_location + 1);
+      list.cdr = parse(e + i + next_token_location + 1);
     }
+
+    i++;
   }
+  // Got to the end of the string;
+  *numParsed = i - 1;
+  return o;
 }
 
 /**
@@ -130,7 +173,7 @@ static obj* parse(expression input) {
  * @return : An expression that represents the lisp data structure
  */
 static expression unparse(obj* o) {
-
+  // todo
 }
 
 /**
