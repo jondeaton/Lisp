@@ -5,6 +5,7 @@
  */
 
 #include "lisp.h"
+#include <string.h>
 #include <assert.h>
 
 obj t_atom = {
