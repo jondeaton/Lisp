@@ -8,8 +8,10 @@
 #include "repl.h"
 #include <string.h>
 #include <stdio.h>
+#include <lisp.h>
 
 #define BUFSIZE 1024
+#define UNPARSE_BUFF 16
 #define PROMPT "> "
 #define REPROMPT ">> "
 
@@ -163,14 +165,55 @@ static obj* parse(expression_t e, size_t* numParsedP) {
  * Stringifies a lisp data structure. Will return a pointer to dynamically
  * allocated memory that must be freed.
  * @param o : A lisp object
- * @return : An expression_t that represents the lisp data structure
+ * @return : The string representation of the lisp data structure
  */
 static expression_t unparse(obj* o) {
-  if (o->objtype == atom_obj) return o->p;
-  else if (o->objtype == list_obj) {
-    expression_t e = malloc(BUFSIZE);
+  if (o == NULL) return NULL;
+
+  if (o->objtype == atom_obj) {
+    expression_t e = malloc(strlen(o->p) + 1);
+    return strcpy(e, o->p);
+  }
+
+  if (o->objtype == list_obj) {
+    expression_t e = malloc(UNPARSE_BUFF);
+    if (e == NULL) return NULL;
     e[0] = '(';
 
+    list_t* l = o->p;
+    expression_t carExp = unparse(l->car);
+    if (carExp == NULL) {
+      e[1] = ')';
+      return e;
+    }
+
+    size_t carExpSize = strlen(carExp);
+
+    // 4: open paren, space, close paren, null terminator
+    if (1 + carExpSize + 3 > UNPARSE_BUFF) {
+      e = realloc(e, 4 + carExpSize);
+      if (e == NULL) return NULL;
+    }
+    strcpy(e + 1, carExp);
+    free(carExp);
+    e[1 + carExpSize] = ' ';
+
+    expression_t cdrExp = unparse(l->cdr);
+    if (cdrExp == NULL) {
+      e[1 + carExpSize] = ')';
+      return e;
+    }
+    size_t cdrExpSize = strlen(cdrExp);
+
+    if (1 + carExpSize + 1 + cdrExpSize + 2 > 4 + carExpSize) {
+      e = realloc(e, 4 + carExpSize + cdrExpSize);
+      if (e == NULL) return NULL;
+    }
+    strcpy(e + 2 + carExpSize, cdrExp);
+    free(cdrExp);
+
+    strcpy(e + 1 + carExpSize + 1 + cdrExpSize, ")");
+    return e;
   }
 }
 
