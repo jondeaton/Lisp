@@ -1,2 +1,5 @@
+(cons '(label (cons label env)  env)
 
-(defun eval (
+
+
+

@@ -5,8 +5,6 @@
  * for Lisp
  */
 
-#include <tclDecls.h>
-#include <lisp.h>
 #include "repl.h"
 #include "string.h"
 #include "stdio.h"
@@ -18,7 +16,7 @@
 static expression getExpression();
 static bool isBalanced(expression e);
 static bool isValid(expression e);
-static obj* parse(expression input);
+static obj* parse(expression e, size_t* numParsed);
 static expression unparse(obj* o);
 static bool isWhiteSpace(char character);
 
@@ -26,7 +24,7 @@ static bool isWhiteSpace(char character);
 obj* read() {
   expression input = getExpression();
   if (input == NULL) return NULL;
-  obj* o = parse((expression) input);
+  obj* o = parse((expression) input, NULL);
   free(input);
   return o;
 };
@@ -123,45 +121,17 @@ static bool isValid(expression e) {
 static obj* parse(expression e, size_t* numParsed) {
 
   // Check if its an atom
-  if (e[0] != '(') {
-
-  }
+  if (e[0] != '(') {}
 
   size_t netOpen = 1;
   list* l = malloc(sizeof(list));
 
-  size_t i = 1;
-  while (i < strlen(e)) {
-    if (isWhiteSpace(e[i])) continue;
-
-    // Closing parenthesis
-    if (netOpen == 0) {
-      *numParsed == i;
-      return l;
-    }
-
-    if (e[i] == '(') {
-      netOpen++;
-
-
-      size_t listSize = findListSize(e + i);
-      list.car = parse(e + i + 1);
-      parse(e + i + listSize + 1, list.cdr);
-    } else {
-      size_t tokenSize = findTokenSize(e); // this is the size of the next token
-
-      char *copy = malloc(tokenSize);
-      strcpy(e, copy, tokenSize);
-
-      list.car = copy;
-      list.cdr = parse(e + i + next_token_location + 1);
-    }
-
-    i++;
+  size_t i;
+  for (size_t i = 0; i < strlen(e); i++) {
+    if (isWhiteSpace(e[i]))continue;
+    *numParsed = i - 1;
+    return NULL;
   }
-  // Got to the end of the string;
-  *numParsed = i - 1;
-  return o;
 }
 
 /**
@@ -183,12 +153,7 @@ static expression unparse(obj* o) {
  * @param character : The character to check
  * @return : True if that character is whitespace, false otherwise
  */
-static const char kWhitespace[] = {' ', '\n', '\t', NULL};
+static const char* kWhitespace = " \t\n";
 static bool isWhiteSpace(char character) {
-  size_t i = 0;
-  while (kWhitespace[i] != NULL) {
-    if (character == kWhitespace[i]) return true;
-    i++;
-  }
-  return false;
+  return strchr(kWhitespace, character) == NULL;
 }

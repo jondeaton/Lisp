@@ -11,8 +11,6 @@
 #include "stdbool.h"
 #include "stdlib.h"
 
-typedef char* expression;
-
 /**
  * Function: read
  * --------------
