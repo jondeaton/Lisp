@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(lisp)
+project(Lisp)
 
 add_compile_options()
 SET(CMAKE_CXX_FLAGS  "-g -O0 -Wall -pedantic")
@@ -9,8 +9,10 @@ include_directories(include src)
 set(SOURCES
         include/lisp.h
         include/repl.h
+        include/environment.h
         src/lisp.c
         src/repl.c
+        src/environment.c
         src/main.c)
 
 add_executable(lisp ${SOURCES})

@@ -10,7 +10,7 @@
  * ./lisp
  */
 
-#include "repl.h"
+#include <repl.h>
 #include <stdio.h>
 
 int main(int argc, char* argv[]) {

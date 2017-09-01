@@ -5,10 +5,9 @@
  * for Lisp
  */
 
-#include "repl.h"
+#include <repl.h>
 #include <string.h>
 #include <stdio.h>
-#include <lisp.h>
 
 #define BUFSIZE 1024
 #define UNPARSE_BUFF 16

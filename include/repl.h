@@ -7,9 +7,9 @@
 #ifndef _REPL_H
 #define _REPL_H
 
+#include <lisp.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "lisp.h"
 
 /**
  * Function: repl

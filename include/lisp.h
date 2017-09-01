@@ -7,17 +7,17 @@
 #ifndef _LISP_H
 #define _LISP_H
 
-#include "stdbool.h"
-#include "stdlib.h"
+#include <stdbool.h>
+#include <stdlib.h>
 
 typedef char* expression_t;
 typedef char* atom_t;
 
-enum type {atom_obj, list_obj, primitive_obj};
+enum type {atom_obj, list_obj, func_obj, primitive_obj};
 
 typedef struct {
   enum type objtype;
-	void* p; // Pointer to contents
+	void* p; // Pointer to object contents
 } obj;
 
 typedef struct {
@@ -36,6 +36,15 @@ typedef obj*(*primitive_t)(obj*);
  * @return : A reduced object
  */
 obj* eval(obj* o);
+
+/**
+ * Function: dispose
+ * -----------------
+ * Frees the dynamically allocated memory used to store
+ * the lisp object.
+ * @param o : Pointer to the lisp objct to dispose of
+ */
+void dispose(obj* o);
 
 /**
  * Primitive: quote
@@ -118,9 +127,10 @@ obj* label(obj* o);
  * Primitive: lambda
  * -----------------
  * The most important primitive...
+ * @param params_def
  * @param args
  * @return
  */
-obj* lambda(obj* o);
+obj* lambda(obj* params_def, obj* args);
 
 #endif
