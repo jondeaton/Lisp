@@ -3,9 +3,23 @@
  * ------------
  * Presents the implementation of the lisp primitives
  */
+
 #include "lisp.h"
-#include <string.h>
 #include <assert.h>
+
+obj t_atom = {
+  .objtype = atom_obj,
+  .p = "t"
+};
+
+obj empty_atom = {
+  .objtype = atom_obj,
+  .p = "()"
+};
+
+obj* t = &t_atom;
+obj* empty = &empty_atom;
+
 
 // Reduce the list
 obj* eval(obj* o) {

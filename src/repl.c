@@ -32,7 +32,11 @@ obj* read() {
 
 // Stringifies the lisp data structure, prints it to stdout
 void print(obj* o) {
-  if (o == NULL) printf("Error");
+  if (o == NULL) {
+    perror("Error\n");
+    return;
+  }
+
   expression_t e = unparse(o);
   printf("%s", (char*) e);
 };
@@ -118,9 +122,11 @@ static bool isValid(expression_t e) {
  * @return : Pointer to the lisp data structure
  */
 static obj* parse(expression_t e, size_t* numParsed) {
-  // todo
+
   // Check if its an atom
-  if (e[0] != '(') {}
+  if (e[0] != '(') {
+
+  }
 
   size_t netOpen = 1;
   list_t* l = malloc(sizeof(list_t));

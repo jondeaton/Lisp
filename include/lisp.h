@@ -20,19 +20,6 @@ typedef struct {
 	void* p; // Pointer to contents
 } obj;
 
-obj t_atom = {
-  .objtype = atom_obj,
-  .p = "t"
-};
-
-obj empty_atom = {
-  .objtype = atom_obj,
-  .p = "()"
-};
-
-obj* t = &t_atom;
-obj* empty = &empty_atom;
-
 typedef struct {
 	obj* car;
   obj* cdr;
