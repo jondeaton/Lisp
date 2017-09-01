@@ -12,6 +12,15 @@
 #include "lisp.h"
 
 /**
+ * Function: repl
+ * --------------
+ * The read-eval-print loop which
+ * simply calls read, eval, and print
+ * in that order over and over again.
+ */
+void repl();
+
+/**
  * Function: read
  * --------------
  * Takes an expression from standard input, turns it into
@@ -29,14 +38,5 @@ obj* read();
  * @return : Nothing
  */
 void print(obj* o);
-
-/**
- * Function: repl
- * --------------
- * The read-eval-print loop which
- * simply calls read, eval, and print
- * in that order over and over again.
- */
-void repl();
 
 #endif

@@ -8,6 +8,7 @@
 #include "repl.h"
 #include <string.h>
 #include <stdio.h>
+#include <lisp.h>
 
 #define BUFSIZE 1024
 #define PROMPT "> "
@@ -19,6 +20,7 @@ static bool isBalanced(expression_t e);
 static bool isValid(expression_t e);
 static obj* parse(expression_t e, size_t* numParsed);
 static expression_t unparse(obj* o);
+size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
 
 // Get expression_t from stdin, turn it into a list, return the list
@@ -121,22 +123,38 @@ static bool isValid(expression_t e) {
  * @param input : The lisp expression to objectify
  * @return : Pointer to the lisp data structure
  */
-static obj* parse(expression_t e, size_t* numParsed) {
+static obj* parse(expression_t e, size_t* numParsedP) {
+  size_t i;
+  for (i = 0; i < strlen(e); i++)
+    if (!isWhiteSpace(e[i])) break;
+  if (i == strlen(e)) return NULL; // only whitespace
+  if (e[0] == ')') return NULL; // End of list or error
+
+  obj* o = calloc(1, sizeof(obj));
 
   // Check if its an atom
   if (e[0] != '(') {
+    o->objtype = atom_obj;
+    size_t size = atomSize(e);
+    o->p = malloc(size + 1);
+    if (o->p == NULL) return NULL;
+    strcpy(e, o->p);
+    if (numParsedP != NULL) *numParsedP = size;
+  } else {
+    // otherwise its a list
+    o->objtype = list_obj;
+    o->p = calloc(1, sizeof(list_t));
+    list_t* l = o->p;
 
+    size_t carExpressionSize;
+    l->car = parse(e + 1, &carExpressionSize);
+
+    size_t cdrExpressionSize;
+    l->cdr = parse(e + 1 + carExpressionSize, &cdrExpressionSize);
+
+    if (numParsedP != NULL) *numParsedP = 1 + carExpressionSize + cdrExpressionSize;
   }
-
-  size_t netOpen = 1;
-  list_t* l = malloc(sizeof(list_t));
-
-  for (size_t i = 0; i < strlen(e); i++) {
-    if (isWhiteSpace(e[i]))continue;
-    *numParsed = i - 1;
-    return NULL;
-  }
-  return NULL;
+  return o;
 }
 
 /**
@@ -148,8 +166,25 @@ static obj* parse(expression_t e, size_t* numParsed) {
  * @return : An expression_t that represents the lisp data structure
  */
 static expression_t unparse(obj* o) {
-  // todo
-  return NULL;
+  if (o->objtype == atom_obj) return o->p;
+  else if (o->objtype == list_obj) {
+    return NULL;
+  }
+}
+
+/**
+ * Function: atomSize
+ * ------------------------
+ * Finds the size of the atom pointed to in the expression
+ * @param e : An expression that represents an atom
+ * @return : The number of characters in that atom
+ */
+size_t atomSize(expression_t e) {
+  size_t i;
+  for(i = 0; i < strlen(e); i++) {
+    if (isWhiteSpace(e[i]) || e[i] == '(' || e[i] == ')') return i;
+  }
+  return i;
 }
 
 /**
