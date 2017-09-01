@@ -6,44 +6,43 @@
  */
 
 #include "repl.h"
-#include "string.h"
-#include "stdio.h"
+#include <string.h>
+#include <stdio.h>
 
 #define BUFSIZE 1024
 #define PROMPT "> "
 #define REPROMPT ">> "
 
-static expression getExpression();
-static bool isBalanced(expression e);
-static bool isValid(expression e);
-static obj* parse(expression e, size_t* numParsed);
-static expression unparse(obj* o);
+// Static function declarations
+static expression_t getExpression();
+static bool isBalanced(expression_t e);
+static bool isValid(expression_t e);
+static obj* parse(expression_t e, size_t* numParsed);
+static expression_t unparse(obj* o);
 static bool isWhiteSpace(char character);
 
-// Get expression from stdin, turn it into a list, return the list
+// Get expression_t from stdin, turn it into a list, return the list
 obj* read() {
-  expression input = getExpression();
+  expression_t input = getExpression();
   if (input == NULL) return NULL;
-  obj* o = parse((expression) input, NULL);
+  obj* o = parse((expression_t) input, NULL);
   free(input);
   return o;
 };
 
-// Walk the list, if car is a primitive, apply it to cdr
-obj* eval(obj* o) {
-  if (o == NULL) return NULL;
-  // todo...
-};
-
+// Stringifies the lisp data structure, prints it to stdout
 void print(obj* o) {
   if (o == NULL) printf("Error");
-  expression e = unparse(o);
+  expression_t e = unparse(o);
   printf("%s", (char*) e);
 };
 
+// Self explanatory
 void repl() {
   while (true) print(eval(read()));
 };
+
+// Static functions
 
 /**
  * Function: getExpression
@@ -51,13 +50,13 @@ void repl() {
  * Gets an expression from the user
  * @return : The expression in a dynamically allocated location
  */
-static expression getExpression() {
+static expression_t getExpression() {
   printf(PROMPT);
 
   char buff[BUFSIZE];
   int inputSize = scanf("%s", buff);
   int totalSize = inputSize;
-  expression e = malloc(sizeof(char) * (inputSize + 1));
+  expression_t e = malloc(sizeof(char) * (inputSize + 1));
   if (e == NULL) return NULL;
 
   strcpy(buff, e);
@@ -85,7 +84,7 @@ static expression getExpression() {
  * @param e : A lisp expression
  * @return : True if there are at least as many
  */
-static bool isBalanced(expression e) {
+static bool isBalanced(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;
@@ -101,7 +100,7 @@ static bool isBalanced(expression e) {
  * @param e : The expression to check
  * @return : True if the expression is valid, false otherwise
  */
-static bool isValid(expression e) {
+static bool isValid(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;
@@ -118,20 +117,20 @@ static bool isValid(expression e) {
  * @param input : The lisp expression to objectify
  * @return : Pointer to the lisp data structure
  */
-static obj* parse(expression e, size_t* numParsed) {
-
+static obj* parse(expression_t e, size_t* numParsed) {
+  // todo
   // Check if its an atom
   if (e[0] != '(') {}
 
   size_t netOpen = 1;
-  list* l = malloc(sizeof(list));
+  list_t* l = malloc(sizeof(list_t));
 
-  size_t i;
   for (size_t i = 0; i < strlen(e); i++) {
     if (isWhiteSpace(e[i]))continue;
     *numParsed = i - 1;
     return NULL;
   }
+  return NULL;
 }
 
 /**
@@ -140,10 +139,11 @@ static obj* parse(expression e, size_t* numParsed) {
  * Takes a lisp object and turns it into its string
  * representation.
  * @param o : A lisp object
- * @return : An expression that represents the lisp data structure
+ * @return : An expression_t that represents the lisp data structure
  */
-static expression unparse(obj* o) {
+static expression_t unparse(obj* o) {
   // todo
+  return NULL;
 }
 
 /**

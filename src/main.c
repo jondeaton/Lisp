@@ -10,9 +10,11 @@
  * ./lisp
  *
  */
+
 #include "repl.h"
+#include <stdio.h>
 
 int main(int argc, char* argv[]) {
   if (argc == 1) repl();
-  else repl();
+  else printf("Not yet implemented");
 }

@@ -3,25 +3,30 @@
  * ------------
  * Presents the implementation of the lisp primitives
  */
-#include <lisp.h>
-#include "string.h"
-#include "assert.h"
+#include "lisp.h"
+#include <string.h>
+#include <assert.h>
+
+// Reduce the list
+obj* eval(obj* o) {
+  if (o == NULL) return NULL;
+  // TODO
+  return NULL;
+};
 
 obj* quote(obj* o) {
   return o;
 }
 
-const obj* atom(obj* o) {
+obj* atom(obj* o) {
   return o->objtype == atom_obj ? t : empty;
 }
 
-const obj* eq(obj* o) {
+obj* eq(obj* o) {
   assert(o->objtype == list_obj);
 
-  // todo
-
-  obj* x = NULL;
-  obj* y = NULL;
+  obj* x = car(o);
+  obj* y = cdr(o);
 
   if (atom(x) == t && atom(y) == t)
     return strcmp(x->p, y->p) ? t : empty;
@@ -31,25 +36,28 @@ const obj* eq(obj* o) {
 obj* car(obj* o) {
   assert(o->objtype == list_obj);
   list_t* l = o->p;
-  return l->car;
+  return eval(l->car);
 }
 
 obj* cdr(obj* o) {
   assert(o->objtype == list_obj);
   list_t* l = o->p;
-  return l->cdr;
+  return eval(l->cdr);
 }
 
-obj* cons(obj* x, obj* y) {
-  assert(y->objtype == list_obj);
+obj* cons(obj* o) {
+  assert(o->objtype == list_obj);
 
-  obj* o = calloc(1, sizeof(obj));
-  o->objtype = list_obj;
+  obj* x = car(o);
+  obj* y = cdr(o);
+
+  obj* new_obj = calloc(1, sizeof(obj));
+  new_obj->objtype = list_obj;
   list_t* l = calloc(1, sizeof(list_t));
   l->car = x;
   l->cdr = y;
-  o->p = l;
-  return o;
+  new_obj->p = l;
+  return new_obj;
 }
 
 obj* cond(obj* o) {
@@ -71,10 +79,10 @@ obj* cond(obj* o) {
 obj* label(obj* o) {
   assert(o->objtype == list_obj);
   list_t* list = o->p;
-
-  assert(cat)
-
-  cons(a, env);
+  return NULL;
 }
 
-obj* lambda(obj* o) { return NULL; }
+obj* lambda(obj* o) {
+  // TODO
+  return NULL;
+}

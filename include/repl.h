@@ -4,12 +4,12 @@
  * Presents the interface to the Read-Eval-Print Loop
  */
 
-#ifndef _repl_
-#define _repl_
+#ifndef _REPL_H
+#define _REPL_H
 
+#include <stdbool.h>
+#include <stdlib.h>
 #include "lisp.h"
-#include "stdbool.h"
-#include "stdlib.h"
 
 /**
  * Function: read
@@ -19,16 +19,6 @@
  * @return : The object representation of the expression read from stdin
  */
 obj* read();
-
-/**
- * Function: eval
- * --------------
- * Takes an object (either a list or an atom) and returns
- * the result of the evaluation of this
- * @param o : An object to be evaluated
- * @return : An reduced object
- */
-obj* eval(obj* o);
 
 /**
  * Function: print

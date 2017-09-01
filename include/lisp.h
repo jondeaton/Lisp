@@ -1,11 +1,11 @@
-/**
+/*
  * File: lisp.h
  * ------------
  * Presents the interface to the lisp primitives
  */
 
-#ifndef _lisp_
-#define _lisp_
+#ifndef _LISP_H
+#define _LISP_H
 
 #include "stdbool.h"
 #include "stdlib.h"
@@ -20,18 +20,18 @@ typedef struct {
 	void* p; // Pointer to contents
 } obj;
 
-const obj t_atom = {
+obj t_atom = {
   .objtype = atom_obj,
   .p = "t"
 };
 
-const obj empty_atom = {
+obj empty_atom = {
   .objtype = atom_obj,
   .p = "()"
 };
 
-const obj* t = &t_atom;
-const obj* empty = &empty_atom;
+obj* t = &t_atom;
+obj* empty = &empty_atom;
 
 typedef struct {
 	obj* car;
@@ -39,6 +39,16 @@ typedef struct {
 } list_t;
 
 typedef obj*(*primitive_t)(obj*);
+
+/**
+ * Function: eval
+ * --------------
+ * Takes an object (either a list or an atom) and returns
+ * the result of the evaluation of this
+ * @param o : An object to be evaluated
+ * @return : A reduced object
+ */
+obj* eval(obj* o);
 
 /**
  * Primitive: quote
@@ -56,17 +66,16 @@ obj* quote(obj* o);
  * @param o : An object to check if it is an atom
  * @return : t if it is an atom, else the empty list
  */
-const obj* atom(obj* o);
+obj* atom(obj* o);
 
 /**
  * Primitive: eq
  * -------------
  * Test for equality of two objects
- * @param x : The first object
- * @param y : The second object
+ * @param o: pointer to a list containing the first object and then the second object
  * @return t if both are equal, empty list (false) otherwise
  */
-const obj* eq(obj* o);
+obj* eq(obj* o);
 
 /**
  * Primitive: car
@@ -95,7 +104,7 @@ obj* cdr(obj* o);
  * @param y : 
  * @return
  */
-obj* cons(obj* x, obj* y);
+obj* cons(obj* o);
 
 /**
  * Primitive: cons
@@ -104,10 +113,10 @@ obj* cons(obj* x, obj* y);
  * The p expressions are evaluated in order until one returns t
  * When one is found  the value of the corresp onding e expression
  * is returned as the expression
- * @param l :
+ * @param o :
  * @return
  */
-obj* cond(obj* l);
+obj* cond(obj* o);
 
 /**
  * Primitive: label
