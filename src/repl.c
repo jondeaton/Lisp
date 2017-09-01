@@ -19,7 +19,7 @@
 static expression_t getExpression();
 static bool isBalanced(expression_t e);
 static bool isValid(expression_t e);
-static obj* parse(expression_t e, size_t* numParsed);
+static obj* parse(expression_t e, size_t* numParsedP);
 static expression_t unparse(obj* o);
 static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
@@ -215,6 +215,7 @@ static expression_t unparse(obj* o) {
     strcpy(e + 1 + carExpSize + 1 + cdrExpSize, ")");
     return e;
   }
+  return NULL;
 }
 
 /**

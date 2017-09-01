@@ -8,6 +8,9 @@
 #include <string.h>
 #include <assert.h>
 
+// Static function declarations
+static void dispose(obj* o);
+
 obj t_atom = {
   .objtype = atom_obj,
   .p = "t"
@@ -98,6 +101,25 @@ obj* label(obj* o) {
 }
 
 obj* lambda(obj* o) {
-  // TODO
+
   return NULL;
+}
+
+/**
+ * Function: dispose
+ * -----------------
+ * Frees the dynamically allocated memory used to store
+ * the lisp object.
+ * @param o : Pointer to the lisp objct to dispose of
+ */
+static void dispose(obj* o) {
+  if (o->objtype == list_obj) {
+    list_t* l = o->p;
+    dispose(l->car);
+    dispose(l->cdr);
+    free(l);
+  } else if (o->objtype == atom_obj) {
+    free(o->p);
+  }
+  free(o);
 }
