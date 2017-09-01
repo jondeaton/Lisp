@@ -1,19 +1,22 @@
 /*
  * File: main.c
  * ------------
- * Presents the entry point to Lisp
+ * Exports the entry point to Lisp
  *
- * Usage:
+ * Running a lisp program file:
+ *  ./lisp myprog.lisp
  *
- * ./lisp myprog.lisp
- *
- * ./lisp
+ * Running a the lisp interpreter
+ *  ./lisp
  */
 
 #include <repl.h>
-#include <stdio.h>
+#include <run_lisp.h>
+
+static const char const* lispBootstrapPath = "../bootstrap.lisp";
 
 int main(int argc, char* argv[]) {
+  run(lispBootstrapPath);
   if (argc == 1) repl();
-  else printf("Not yet implemented\n");
+  else run(argv[1]);
 }
