@@ -8,7 +8,6 @@
 #include "repl.h"
 #include <string.h>
 #include <stdio.h>
-#include <lisp.h>
 
 #define BUFSIZE 1024
 #define PROMPT "> "
@@ -20,7 +19,7 @@ static bool isBalanced(expression_t e);
 static bool isValid(expression_t e);
 static obj* parse(expression_t e, size_t* numParsed);
 static expression_t unparse(obj* o);
-size_t atomSize(expression_t e);
+static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
 
 // Get expression_t from stdin, turn it into a list, return the list
@@ -39,8 +38,11 @@ void print(obj* o) {
     return;
   }
 
-  expression_t e = unparse(o);
-  printf("%s", (char*) e);
+  expression_t result = unparse(o);
+
+  if (result) printf("%s", (char*) result);
+  else perror("Error\n");
+  free(result);
 };
 
 // Self explanatory
@@ -132,17 +134,15 @@ static obj* parse(expression_t e, size_t* numParsedP) {
 
   obj* o = calloc(1, sizeof(obj));
 
-  // Check if its an atom
   if (e[0] != '(') {
-    o->objtype = atom_obj;
+    o->objtype = atom_obj; // its an atom
     size_t size = atomSize(e);
     o->p = malloc(size + 1);
     if (o->p == NULL) return NULL;
     strcpy(e, o->p);
     if (numParsedP != NULL) *numParsedP = size;
   } else {
-    // otherwise its a list
-    o->objtype = list_obj;
+    o->objtype = list_obj; // its a list
     o->p = calloc(1, sizeof(list_t));
     list_t* l = o->p;
 
@@ -160,15 +160,17 @@ static obj* parse(expression_t e, size_t* numParsedP) {
 /**
  * Function: unparse
  * -----------------
- * Takes a lisp object and turns it into its string
- * representation.
+ * Stringifies a lisp data structure. Will return a pointer to dynamically
+ * allocated memory that must be freed.
  * @param o : A lisp object
  * @return : An expression_t that represents the lisp data structure
  */
 static expression_t unparse(obj* o) {
   if (o->objtype == atom_obj) return o->p;
   else if (o->objtype == list_obj) {
-    return NULL;
+    expression_t e = malloc(BUFSIZE);
+    e[0] = '(';
+
   }
 }
 
@@ -179,7 +181,7 @@ static expression_t unparse(obj* o) {
  * @param e : An expression that represents an atom
  * @return : The number of characters in that atom
  */
-size_t atomSize(expression_t e) {
+static size_t atomSize(expression_t e) {
   size_t i;
   for(i = 0; i < strlen(e); i++) {
     if (isWhiteSpace(e[i]) || e[i] == '(' || e[i] == ')') return i;
