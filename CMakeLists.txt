@@ -10,9 +10,11 @@ set(SOURCES
         include/lisp.h
         include/repl.h
         include/environment.h
+        include/parser.h
         src/lisp.c
         src/repl.c
         src/environment.c
+        src/parser.c
         src/main.c)
 
 add_executable(lisp ${SOURCES})

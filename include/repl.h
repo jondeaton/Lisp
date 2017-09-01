@@ -8,8 +8,6 @@
 #define _REPL_H
 
 #include <lisp.h>
-#include <stdbool.h>
-#include <stdlib.h>
 
 /**
  * Function: repl

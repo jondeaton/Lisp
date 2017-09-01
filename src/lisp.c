@@ -124,8 +124,8 @@ obj* label(obj* o) {
 obj* lambda(obj* params_def, obj* args) {
   if (params_def == NULL) return NULL;
 
-
-
+  // todo
+  return NULL;
 }
 
 /**
