@@ -114,15 +114,6 @@ obj* cons(obj* o);
 obj* cond(obj* o);
 
 /**
- * Primitive: label
- * ----------------
- * yeah...
- * @param o
- * @return
- */
-obj* label(obj* o);
-
-/**
  * Primitive: lambda
  * -----------------
  * The most important primitive...
@@ -130,6 +121,6 @@ obj* label(obj* o);
  * @param args
  * @return
  */
-obj* lambda(obj* params_def, obj* args);
+obj* lambda(obj* o);
 
 #endif

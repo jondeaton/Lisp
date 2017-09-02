@@ -5,6 +5,8 @@
  */
 
 #include <environment.h>
+#include <parser.h>
+#include <string.h>
 
 #define NUMBUILTINS 8
 #define QUOTE_RESV "quote"
@@ -29,15 +31,15 @@ static const atom_t primitive_names[NUMBUILTINS] = {
   LAMBDA_RESV
 };
 
-static const void* func_ps[NUMBUILTINS] = {quote, atom, eq, car, cdr, cons, cond, lambda};
-static const expression_t env_exp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond x) (lambda x))";
-
-
+// Static function declarations
 static obj* makeFuncPair(atom_t a, void* fp);
-static size_t indexof(char* str, char* strings[]);
+static ssize_t indexof(char* str, char* strings[], size_t numStrings);
 
+static const void* kFuncPts[NUMBUILTINS] = {quote, atom, eq, car, cdr, cons, cond, lambda};
+static const expression_t kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond x) (lambda x))";
 obj* initEnv() {
-  envp = parse(env_exp, NULL);
+  envp = parse(kEnvExp, NULL); // cheeky
+  if (envp == NULL) return NULL; // ERROR
 
   list_t* l = envp->p;
 
@@ -48,7 +50,7 @@ obj* initEnv() {
 
     obj* func_obj = calloc(1, sizeof(obj));
     func_obj->objtype = primitive_obj;
-    func_obj->p = func_ps[indexof(pairList->car->p, primitive_names)];
+    func_obj->p = kFuncPts[indexof(pairList->car->p, primitive_names, NUMBUILTINS)];
     pairList->cdr = func_obj;
 
     l = l->cdr->p;
@@ -60,17 +62,18 @@ void disposeEnv() {
   dispose(envp);
 }
 
-
 /**
  * Function: indexof
  * -----------------
- *
- * @param strings
- * @param str
- * @return
+ * Determines which (if any) string in a list of strings match
+ * some query string.
+ * @param str : Query string
+ * @param strings : List of strings to search through
+ * @param numStrings : Number of strings in the search list
+ * @return : Index of the matching string, or -1 if no match
  */
-static size_t indexof(char* str, char* strings[]) {
+static ssize_t indexof(char* str, char* strings[], size_t numStrings) {
   for(size_t i = 0; i < numStrings; i++) {
-    if (strcmp(str, strings[i])) return i;
+    if (strcmp(str, strings[i]) == 0) return i;
   }
 }

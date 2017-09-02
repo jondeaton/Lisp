@@ -112,20 +112,8 @@ obj* cond(obj* o) {
   }
 }
 
-obj* label(obj* o) {
-  if (o == NULL) return NULL;
-  assert(o->objtype == list_obj);
-
-  list_t* list = o->p;
-  // todo
-  return NULL;
-}
-
-obj* lambda(obj* params_def, obj* args) {
-  if (params_def == NULL) return NULL;
-
-  // todo
-  return NULL;
+obj* lambda(obj* o) {
+  return eval()
 }
 
 /**
