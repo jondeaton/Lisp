@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef char* expression_t;
 typedef char* atom_t;
 
 enum type {atom_obj, list_obj, func_obj, primitive_obj};

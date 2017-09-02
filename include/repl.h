@@ -8,6 +8,7 @@
 #define _REPL_H
 
 #include <lisp.h>
+#include <stdio.h>
 
 /**
  * Function: repl
@@ -15,8 +16,9 @@
  * The read-eval-print loop which
  * simply calls read, eval, and print
  * in that order over and over again.
+ * @return : Exit status
  */
-void repl();
+int repl();
 
 /**
  * Function: read
@@ -25,7 +27,7 @@ void repl();
  * an object and returns the object
  * @return : The object representation of the expression read from stdin
  */
-obj* read();
+obj* read(FILE* fd, const char const* prompt, const char const* reprompt);
 
 /**
  * Function: print
@@ -35,6 +37,6 @@ obj* read();
  * @param o : An object to print
  * @return : Nothing
  */
-void print(obj* o);
+void print(FILE* fd, obj* o);
 
 #endif

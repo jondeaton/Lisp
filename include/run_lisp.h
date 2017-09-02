@@ -4,15 +4,16 @@
  * Exports the interface for running lisp program files
  */
 
-#ifndef _LISP_RUN_PROG_H
-#define _LISP_RUN_PROG_H
+#ifndef _RUN_LISP_H
+#define _RUN_LISP_H
 
 /**
  * Function: run
  * -------------
  * Runs a lisp program stored in a file
  * @param lispProgramPath : The path to the lisp program
+ * @return : Exit status
  */
-void run(const char const* lispProgramPath);
+int run(const char const* lispProgramPath);
 
 #endif

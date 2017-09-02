@@ -5,9 +5,9 @@
  */
 
 #include <parser.h>
+#include <string.h>
+#define UNPARSE_BUFF 16
 
-static bool isBalanced(expression_t e);
-static bool isValid(expression_t e);
 static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
 
@@ -94,15 +94,7 @@ expression_t unparse(obj* o) {
   return NULL;
 }
 
-/**
- * Function: unbalanced
- * ------------------------------
- * Checks if all of the open parenthesis in the expression
- * are balanced by a closing parentheses.
- * @param e : A lisp expression
- * @return : True if there are at least as many
- */
-static bool isBalanced(expression_t e) {
+bool isBalanced(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;
@@ -111,14 +103,7 @@ static bool isBalanced(expression_t e) {
   return net == 0;
 }
 
-/**
- * Function: isValid
- * -----------------
- * Checks if the expression is valid
- * @param e : The expression to check
- * @return : True if the expression is valid, false otherwise
- */
-static bool isValid(expression_t e) {
+bool isValid(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;

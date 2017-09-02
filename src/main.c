@@ -3,11 +3,14 @@
  * ------------
  * Exports the entry point to Lisp
  *
- * Running a lisp program file:
+ * Command line usage
+ *
+ * Run lisp interpreter:
+ *  ./lisp
+ *
+ * Run lisp program file:
  *  ./lisp myprog.lisp
  *
- * Running a the lisp interpreter
- *  ./lisp
  */
 
 #include <repl.h>
@@ -15,8 +18,17 @@
 
 static const char const* lispBootstrapPath = "../bootstrap.lisp";
 
+/**
+ * Entry Point: main
+ * -----------------
+ * Bootstraps the Lisp interpreter using the metacircular
+ * evaluator located in the bootstrap lisp program
+ * @param argc : Number of command line arguments
+ * @param argv : NULL terminated list of command line arguments
+ * @return : Exit status
+ */
 int main(int argc, char* argv[]) {
   run(lispBootstrapPath);
-  if (argc == 1) repl();
-  else run(argv[1]);
+  if (argc == 1) return repl();
+  else return run(argv[1]);
 }
