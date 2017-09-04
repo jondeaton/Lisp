@@ -112,10 +112,6 @@ obj* cond(obj* o) {
   }
 }
 
-obj* lambda(obj* o) {
-  return eval()
-}
-
 /**
  * Function: cmp
  * -------------
@@ -147,7 +143,7 @@ static obj* apply(obj* fo, obj* args) {
   }
 
   else if (fo->objtype == func_obj)
-    return lambda(cdr(fo), args);
+    return NULL;
 
   else return NULL;
 }

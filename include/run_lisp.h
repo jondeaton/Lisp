@@ -14,6 +14,6 @@
  * @param lispProgramPath : The path to the lisp program
  * @return : Exit status
  */
-int run(const char const* lispProgramPath);
+int run(const char* lispProgramPath);
 
 #endif

@@ -113,14 +113,4 @@ obj* cons(obj* o);
  */
 obj* cond(obj* o);
 
-/**
- * Primitive: lambda
- * -----------------
- * The most important primitive...
- * @param params_def
- * @param args
- * @return
- */
-obj* lambda(obj* o);
-
 #endif

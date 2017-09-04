@@ -19,7 +19,7 @@
 static expression_t getExpression(FILE* fd);
 
 // Get expression_t from stdin, turn it into a list, return the list
-obj* read(FILE* fd, const char const* prompt, const char const* reprompt) {
+obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
   expression_t input = getExpression(fd);
   if (input == NULL) return NULL;
   obj* o = parse((expression_t) input, NULL);
@@ -44,7 +44,7 @@ void print(FILE* fd, obj* o) {
 // Self explanatory
 int repl() {
   while (true) {
-    obj* o = read(stdin, PROMPT, REPROMPT);
+    obj* o = readExpression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;
     obj* evaluation = eval(o);
     print(stdout, evaluation);
@@ -63,21 +63,26 @@ static expression_t getExpression(FILE* fd) {
   printf(PROMPT);
 
   char buff[BUFSIZE];
-  int inputSize = fscanf(fd, "%s", buff);
+  fscanf(fd, "%s", buff);
+  size_t inputSize = strlen(buff);
+
   int totalSize = inputSize;
   expression_t e = malloc(sizeof(char) * (inputSize + 1));
   if (e == NULL) return NULL;
 
-  strcpy(buff, e);
+  strcpy(e, buff);
 
   bool valid;
   while ((valid = isValid(e)) && !isBalanced(e)) {
     printf(REPROMPT);
-    inputSize = scanf("%s", buff);
+
+    scanf("%s", buff);
+    inputSize = strlen(buff);
+
     e = realloc(e, (size_t) totalSize + inputSize);
     if (e == NULL) return NULL;
 
-    strcpy(e + totalSize + 1, buff);
+    strcpy(buff, e + totalSize + 1);
     totalSize += inputSize;
   }
   if (!valid) return NULL;

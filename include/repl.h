@@ -21,13 +21,13 @@
 int repl();
 
 /**
- * Function: read
+ * Function: readExpression
  * --------------
  * Takes an expression from standard input, turns it into
  * an object and returns the object
  * @return : The object representation of the expression read from stdin
  */
-obj* read(FILE* fd, const char const* prompt, const char const* reprompt);
+obj* readExpression(FILE* fd, const char* prompt, const char* reprompt);
 
 /**
  * Function: print

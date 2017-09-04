@@ -110,7 +110,7 @@ bool isValid(expression_t e) {
     if (e[i] == ')') net--;
     if (net < 0) return false;
   }
-  return net == 0;
+  return net >= 0;
 }
 
 /**

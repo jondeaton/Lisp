@@ -5,13 +5,12 @@
  */
 
 #include <run_lisp.h>
-#include <lisp.h>
+#include <repl.h>
 #include <sys/file.h>
 #include <unistd.h>
 #include <errno.h>
-#include <stdio.h>
 
-int run(const char const* lispProgramPath) {
+int run(const char* lispProgramPath) {
 
   // Error checking
   if (access(lispProgramPath, R_OK) != 0) {
@@ -21,5 +20,6 @@ int run(const char const* lispProgramPath) {
   }
 
   FILE* fd = fopen(lispProgramPath, O_RDONLY);
-  while (!feof(fd)) eval(read(fd, NULL, NULL));
+  while (!feof(fd)) eval(readExpression(fd, NULL, NULL));
+  return 0;
 }
