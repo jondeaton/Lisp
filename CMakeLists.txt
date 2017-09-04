@@ -19,4 +19,21 @@ set(SOURCES
         src/run_lisp.c
         src/main.c)
 
-add_executable(lisp ${SOURCES})
+
+add_executable(lisp.o ${SOURCES})
+
+include_directories(test)
+set(TEST_SOURCES
+        include/lisp.h
+        include/repl.h
+        include/environment.h
+        include/parser.h
+        include/run_lisp.h
+        src/lisp.c
+        src/repl.c
+        src/environment.c
+        src/parser.c
+        src/run_lisp.c
+        test/test.c)
+
+add_executable(test.o ${TEST_SOURCES})

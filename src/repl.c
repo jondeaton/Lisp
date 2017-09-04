@@ -22,7 +22,11 @@ static expression_t getExpression(FILE* fd);
 obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
   expression_t input = getExpression(fd);
   if (input == NULL) return NULL;
+
   obj* o = parse((expression_t) input, NULL);
+  unparse(o);
+
+
   free(input);
   return o;
 };
@@ -63,7 +67,7 @@ static expression_t getExpression(FILE* fd) {
   printf(PROMPT);
 
   char buff[BUFSIZE];
-  fscanf(fd, "%s", buff);
+  fgets(buff, sizeof buff, stdin);
   size_t inputSize = strlen(buff);
 
   size_t totalSize = inputSize;
@@ -85,7 +89,5 @@ static expression_t getExpression(FILE* fd) {
     totalSize += inputSize;
   }
   if (!valid) return NULL;
-
-  printf("expression: %s\n", e);
   return e;
 }

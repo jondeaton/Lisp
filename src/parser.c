@@ -6,6 +6,8 @@
 
 #include <parser.h>
 #include <string.h>
+#include <lisp.h>
+
 #define UNPARSE_BUFF 16
 
 static size_t atomSize(expression_t e);
@@ -16,29 +18,39 @@ obj* parse(expression_t e, size_t* numParsedP) {
   for (i = 0; i < strlen(e); i++)
     if (!isWhiteSpace(e[i])) break;
   if (i == strlen(e)) return NULL; // only whitespace
-  if (e[0] == ')') return NULL; // End of list or error
+
+  // End of list
+  if (e[0] == ')') {
+    if (numParsedP != NULL) *numParsedP = 1;
+    return NULL;
+  } // End of list or error
 
   obj* o = calloc(1, sizeof(obj));
 
   if (e[0] != '(') {
-    o->objtype = atom_obj; // its an atom
-    size_t size = atomSize(e);
-    o->p = malloc(size + 1);
-    if (o->p == NULL) return NULL;
-    strcpy(e, o->p);
+    // If its an Atom
+    o->objtype = atom_obj;
+    size_t size = atomSize(e + i);
+    atom_t atm = malloc(size + 1);
+    if (atm == NULL) return NULL;
+    strncpy(atm, e + i, size);
+    o->p = atm;
     if (numParsedP != NULL) *numParsedP = size;
+
   } else {
-    o->objtype = list_obj; // its a list
+    // If its a list
+    o->objtype = list_obj;
     o->p = calloc(1, sizeof(list_t));
     list_t* l = o->p;
 
     size_t carExpressionSize;
-    l->car = parse(e + 1, &carExpressionSize);
+    l->car = parse(e + i + 1, &carExpressionSize);
+    if (l->car == NULL) return o;
 
     size_t cdrExpressionSize;
-    l->cdr = parse(e + 1 + carExpressionSize, &cdrExpressionSize);
+    l->cdr = parse(e + i + 1 + carExpressionSize, &cdrExpressionSize);
 
-    if (numParsedP != NULL) *numParsedP = 1 + carExpressionSize + cdrExpressionSize;
+    if (numParsedP != NULL) *numParsedP = i + 1 + carExpressionSize + cdrExpressionSize;
   }
   return o;
 }
@@ -137,5 +149,5 @@ static size_t atomSize(expression_t e) {
  */
 static const char* kWhitespace = " \t\n";
 static bool isWhiteSpace(char character) {
-  return strchr(kWhitespace, character) == NULL;
+  return strchr(kWhitespace, character) != NULL;
 }
