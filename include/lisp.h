@@ -7,24 +7,9 @@
 #ifndef _LISP_H
 #define _LISP_H
 
+#include <list.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
-typedef char* atom_t;
-
-enum type {atom_obj, list_obj, func_obj, primitive_obj};
-
-typedef struct {
-  enum type objtype;
-	void* p; // Pointer to object contents
-} obj;
-
-typedef struct {
-	obj* car;
-  obj* cdr;
-} list_t;
-
-typedef obj*(*primitive_t)(obj*);
 
 /**
  * Function: eval
@@ -36,14 +21,6 @@ typedef obj*(*primitive_t)(obj*);
  */
 obj* eval(obj* o);
 
-/**
- * Function: dispose
- * -----------------
- * Frees the dynamically allocated memory used to store
- * the lisp object.
- * @param o : Pointer to the lisp objct to dispose of
- */
-void dispose(obj* o);
 
 /**
  * Primitive: quote

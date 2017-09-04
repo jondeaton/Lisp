@@ -7,6 +7,7 @@
 #include <environment.h>
 #include <parser.h>
 #include <string.h>
+#include <list.h>
 
 #define NUMBUILTINS 7
 #define QUOTE_RESV "quote"
@@ -36,25 +37,28 @@ static ssize_t indexof(char* str, char* strings[], size_t numStrings);
 static void* kFuncPts[NUMBUILTINS] = {quote, atom, eq, car, cdr, cons, cond};
 static expression_t kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond x))";
 obj* initEnv() {
-  envp = parse(kEnvExp, NULL); // cheeky
+  size_t unused;
+  envp = parseExpression(kEnvExp, &unused); // cheeky
   if (envp == NULL) return NULL; // ERROR
 
-  list_t* l = envp->p;
+  list_t* l = getList(envp);
 
   while (l->cdr != NULL) {
     obj* pair = l->car;
-    list_t* pairList = pair->p;
+    list_t* pairList = getList(envp);
     dispose(pairList->cdr);
 
     obj* func_obj = calloc(1, sizeof(obj));
     func_obj->objtype = primitive_obj;
 
-    ssize_t i = indexof(pairList->car->p, primitive_names, NUMBUILTINS);
+    ssize_t i = indexof(getAtom(pairList->car), primitive_names, NUMBUILTINS);
 
-    func_obj->p = kFuncPts[i];
+    primitive_t f = getPrimitive(func_obj);
+
+//    *f = kFuncPts[i];
     pairList->cdr = func_obj;
 
-    l = l->cdr->p;
+    l = getList(l->cdr);
   }
   return envp;
 }

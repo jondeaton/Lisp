@@ -12,16 +12,16 @@ bool parserTest() {
   obj* o;
   expression_t e;
 
-  o = parse("()", NULL);
+  o = parseExpression("()", NULL);
   e = unparse(o);
 
-  o = parse("(a)", NULL);
+  o = parseExpression("(a)", NULL);
   e = unparse(o);
 
-  o = parse("(a b c)", NULL);
+  o = parseExpression("(a b c)", NULL);
   e = unparse(o);
 
-  o = parse("(car (quote (a b c))", NULL);
+  o = parseExpression("(car (quote (a b c))", NULL);
   e = unparse(o);
 
   return true;

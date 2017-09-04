@@ -7,19 +7,18 @@
 #include <lisp.h>
 #include <string.h>
 #include <assert.h>
+#include <list.h>
 
 // Static function declarations
 static bool cmp(obj* x, obj* y);
 static obj* apply(obj* fo, obj* args);
 
 obj t_atom = {
-  .objtype = atom_obj,
-  .p = "t"
+  .objtype = atom_obj
 };
 
 obj empty_atom = {
-  .objtype = atom_obj,
-  .p = "()"
+  .objtype = atom_obj
 };
 
 obj* t = &t_atom;
@@ -31,23 +30,11 @@ obj* eval(obj* o) {
 
   if (o->objtype == atom_obj) return o;
   if (o->objtype == list_obj) {
-    list_t* l = o->p;
+    list_t* l = getList(o);
     return apply(l->car, l->cdr);
   }
   return NULL;
 };
-
-void dispose(obj* o) {
-  if (o->objtype == list_obj) {
-    list_t* l = o->p;
-    dispose(l->car);
-    dispose(l->cdr);
-    free(l);
-  } else if (o->objtype == atom_obj) {
-    free(o->p);
-  }
-  free(o);
-}
 
 obj* quote(obj* o) {
   if (o == NULL) return NULL;
@@ -68,14 +55,14 @@ obj* eq(obj* o) {
 obj* car(obj* o) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  list_t* l = o->p;
+  list_t* l = getList(o);
   return eval(l->car);
 }
 
 obj* cdr(obj* o) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  list_t* l = o->p;
+  list_t* l = getList(o);
   return eval(l->cdr);
 }
 
@@ -86,29 +73,28 @@ obj* cons(obj* o) {
   obj* x = car(o);
   obj* y = cdr(o);
 
-  obj* new_obj = calloc(1, sizeof(obj));
+  obj* new_obj = calloc(1, sizeof(obj) + sizeof(list_t));
   new_obj->objtype = list_obj;
-  list_t* l = calloc(1, sizeof(list_t));
+  list_t* l = getList(new_obj);
   l->car = x;
   l->cdr = y;
-  new_obj->p = l;
   return new_obj;
 }
 
 obj* cond(obj* o) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  list_t* l = o->p;
+  list_t* l = getList(o);
 
   while (true) {
     obj* pair_obj = l->car;
     assert(pair_obj->objtype == list_obj);
-    list_t* pair = pair_obj->p;
+    list_t* pair = getList(pair_obj);
     if (eval(pair->car) == t) return pair->cdr;
 
     if (l->cdr == NULL) return empty;
     assert(l->cdr->objtype == list_obj);
-    l = l->cdr->p;
+    l = getList(l->cdr);
   }
 }
 
@@ -121,9 +107,10 @@ obj* cond(obj* o) {
  * @return : True if the two are equal, false otherwise
  */
 static bool cmp(obj* x, obj* y) {
-  if (atom(x) == t && atom(y))
-    return strcmp(x->p, y->p) == 0;
-  else return x->p == y->p;
+  if (x->objtype != y->objtype) return false;
+  if (x->objtype == atom_obj) return strcmp(getAtom(x), getAtom(y)) == 0;
+  if (x->objtype == list_obj) return cmp(car(x), car(y)) && cmp(cdr(x), cdr(y));
+  else return x == y;
 }
 
 /**
@@ -135,15 +122,15 @@ static bool cmp(obj* x, obj* y) {
  * @return : The result of the application of the function to the arguments
  */
 static obj* apply(obj* fo, obj* args) {
-  if (fo == NULL) return NULL;
+//  if (fo == NULL) return NULL;
+//
+//  if (fo->objtype == primitive_obj) {
+//    primitive_t f = fo->p;
+//    return f(eval(args));
+//  }
+//
+//  else if (fo->objtype == func_obj)
+//    return NULL;
 
-  if (fo->objtype == primitive_obj) {
-    primitive_t f = fo->p;
-    return f(eval(args));
-  }
-
-  else if (fo->objtype == func_obj)
-    return NULL;
-
-  else return NULL;
+  return NULL;
 }

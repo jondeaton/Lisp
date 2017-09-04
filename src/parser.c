@@ -6,61 +6,50 @@
 
 #include <parser.h>
 #include <string.h>
-#include <lisp.h>
+#include <list.h>
 
 #define UNPARSE_BUFF 16
 
+static obj* parseAtom(expression_t e, size_t* numParsedP);
+static obj* parseList(expression_t e, size_t* numParsedP);
+
 static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
+static ssize_t findStart(expression_t e);
 
-obj* parse(expression_t e, size_t* numParsedP) {
-  size_t i;
-  for (i = 0; i < strlen(e); i++)
-    if (!isWhiteSpace(e[i])) break;
-  if (i == strlen(e)) return NULL; // only whitespace
+/**
+ * Function: parseExpression
+ * -------------------------
+ * Parses a lisp expression that represents either a lisp atom or list
+ * @param e : A balanced, valid lisp expression
+ * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
+ * @return : Pointer to a lisp data structure object representing that the lisp expression represents
+ */
+obj* parseExpression(expression_t e, size_t* numParsedP) {
 
-  // End of list
+  ssize_t i = findStart(e);
+  if (i == -1) {
+    if (numParsedP != NULL) *numParsedP = strlen(e);
+    return NULL;
+  }
+  expression_t exprStart = (char*) e + i;
+
   if (e[0] == ')') {
     if (numParsedP != NULL) *numParsedP = 1;
     return NULL;
-  } // End of list or error
+  } // End of list
 
-  obj* o = calloc(1, sizeof(obj));
-
-  if (e[0] != '(') {
-    // If its an Atom
-    o->objtype = atom_obj;
-    size_t size = atomSize(e + i);
-    atom_t atm = malloc(size + 1);
-    if (atm == NULL) return NULL;
-    strncpy(atm, e + i, size);
-    o->p = atm;
-    if (numParsedP != NULL) *numParsedP = size;
-
-  } else {
-    // If its a list
-    o->objtype = list_obj;
-    o->p = calloc(1, sizeof(list_t));
-    list_t* l = o->p;
-
-    size_t carExpressionSize;
-    l->car = parse(e + i + 1, &carExpressionSize);
-    if (l->car == NULL) return o;
-
-    size_t cdrExpressionSize;
-    l->cdr = parse(e + i + 1 + carExpressionSize, &cdrExpressionSize);
-
-    if (numParsedP != NULL) *numParsedP = i + 1 + carExpressionSize + cdrExpressionSize;
-  }
-  return o;
+  if (exprStart[0] == '(') return parseList((char*) exprStart + 1, numParsedP);
+  else return parseAtom(exprStart, numParsedP);
 }
 
 expression_t unparse(obj* o) {
   if (o == NULL) return NULL;
 
   if (o->objtype == atom_obj) {
-    expression_t e = malloc(strlen(o->p) + 1);
-    return strcpy(e, o->p);
+    atom_t atm = getAtom(o);
+    expression_t e = malloc(strlen(atm) + 1);
+    return strcpy(e, atm);
   }
 
   if (o->objtype == list_obj) {
@@ -68,7 +57,7 @@ expression_t unparse(obj* o) {
     if (e == NULL) return NULL;
     e[0] = '(';
 
-    list_t* l = o->p;
+    list_t* l = getList(o);
     expression_t carExp = unparse(l->car);
     if (carExp == NULL) {
       e[1] = ')';
@@ -106,6 +95,14 @@ expression_t unparse(obj* o) {
   return NULL;
 }
 
+/**
+ * Function: isBalanced
+ * --------------------
+ * Determines if an expression has balanced parenthesis
+ * @param e : The lisp expression to check
+ * @return : True if each opening parentheses in the expression is balanced by a closing parentheses
+ * and there are no extra closing parentheses, false otherwise.
+ */
 bool isBalanced(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
@@ -115,6 +112,13 @@ bool isBalanced(expression_t e) {
   return net == 0;
 }
 
+/**
+ * Function: isValid
+ * -----------------
+ * Determines if an expression has extra closing parentheses
+ * @param e : A lisp expression
+ * @return : True is there are no extra closing parentheses, false otherwise
+ */
 bool isValid(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
@@ -123,6 +127,71 @@ bool isValid(expression_t e) {
     if (net < 0) return false;
   }
   return net >= 0;
+}
+
+/**
+ * Function: parseAtom
+ * -------------------
+ * Parses an expression that represents an atom
+ * @param e :
+ * @param numParsedP
+ * @return
+ */
+static obj* parseAtom(expression_t e, size_t* numParsedP) {
+  size_t size = atomSize(e);
+  obj* o = calloc(1, sizeof(obj) + size + 1);
+  if (o == NULL) return NULL; // fuck me right?
+
+  atom_t atm = (char*) o + sizeof(obj);
+  strncpy(atm, e, size);
+  *numParsedP = size;
+  return o;
+}
+
+/**
+ * Function: parseList
+ * -------------------
+ * Parses an expression that represents a list. This expression should not start
+ * with an opening parentheses. This function will parse until there is a closing parentheses
+ * that closes the implicit opening parentheses. Note: this is NOT necessarily the first closing
+ * parentheses as there may be lists nested inside of this list.
+ * @param e : An expression representing a list
+ * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
+ * @return : Pointer to a lisp data structure object representing the lisp expression
+ */
+static obj* parseList(expression_t e, size_t* numParsedP) {
+  obj* o = calloc(1, sizeof(obj) + sizeof(list_t));
+  if (o == NULL) return NULL; // fuck me right?
+
+  o->objtype = list_obj;
+  list_t* l = getList(o);
+
+  size_t carExprSize;
+  l->car = parseExpression(e, &carExprSize);
+
+  if (l->car == NULL) { // THE LIST ENDED
+    *numParsedP = carExprSize;
+    return o;
+  }
+
+  size_t cdrExprSize;
+  l->cdr = parseList((char*)e + carExprSize, &cdrExprSize);
+  return o;
+}
+
+/**
+ * Function: findStart
+ * -------------------
+ * Counts the number of characters of whitespace until a non-whitespace character is found
+ * @param e : A lisp expression
+ * @return : The number of characters of whitespace in the beginning
+ */
+static ssize_t findStart(expression_t e) {
+  size_t i;
+  for (i = 0; i < strlen(e); i++)
+    if (!isWhiteSpace(e[i])) break;
+  if (i == strlen(e)) return -1;
+  return i;
 }
 
 /**

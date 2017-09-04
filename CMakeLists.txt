@@ -12,11 +12,13 @@ set(SOURCES
         include/environment.h
         include/parser.h
         include/run_lisp.h
+        include/list.h
         src/lisp.c
         src/repl.c
         src/environment.c
         src/parser.c
         src/run_lisp.c
+        src/list.c
         src/main.c)
 
 
@@ -29,11 +31,13 @@ set(TEST_SOURCES
         include/environment.h
         include/parser.h
         include/run_lisp.h
+        include/list.h
         src/lisp.c
         src/repl.c
         src/environment.c
         src/parser.c
         src/run_lisp.c
+        src/list.c
         test/test.c)
 
 add_executable(test.o ${TEST_SOURCES})
