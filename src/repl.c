@@ -66,7 +66,7 @@ static expression_t getExpression(FILE* fd) {
   fscanf(fd, "%s", buff);
   size_t inputSize = strlen(buff);
 
-  int totalSize = inputSize;
+  size_t totalSize = inputSize;
   expression_t e = malloc(sizeof(char) * (inputSize + 1));
   if (e == NULL) return NULL;
 
@@ -75,17 +75,17 @@ static expression_t getExpression(FILE* fd) {
   bool valid;
   while ((valid = isValid(e)) && !isBalanced(e)) {
     printf(REPROMPT);
-
     scanf("%s", buff);
     inputSize = strlen(buff);
 
-    e = realloc(e, (size_t) totalSize + inputSize);
+    e = realloc(e, sizeof(char) * (totalSize + inputSize + 1));
     if (e == NULL) return NULL;
 
-    strcpy(buff, e + totalSize + 1);
+    strcpy(e + totalSize, buff);
     totalSize += inputSize;
   }
   if (!valid) return NULL;
 
+  printf("expression: %s\n", e);
   return e;
 }
