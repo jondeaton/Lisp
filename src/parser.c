@@ -65,12 +65,9 @@ expression_t unparse(obj* o) {
 
   if (o->objtype == list_obj) {
     expression_t listExp = unparseList(o);
-    expression_t e;
-    if (listExp == NULL) {
-      e = malloc(3);
-      return strcpy(e, "()");
-    }
-    e = malloc(1 + strlen(listExp) + 2);
+    if (listExp == NULL) return strdup("()");
+
+    expression_t e = malloc(1 + strlen(listExp) + 2); // open, close, null
     e[0] = '(';
     strcpy((char*) e + 1, listExp);
     strcpy((char*) e + 1 + strlen(listExp), ")");
@@ -91,7 +88,7 @@ expression_t unparse(obj* o) {
 static expression_t unparseList(obj* o) {
   if (o == NULL) return NULL;
 
-  expression_t e = calloc(1, UNPARSE_BUFF);
+  expression_t e = calloc(sizeof(char), UNPARSE_BUFF);
   if (e == NULL) return NULL;
 
   expression_t carExp = unparse(getList(o)->car);
@@ -215,7 +212,7 @@ static obj* parseList(expression_t e, size_t* numParsedP) {
   expression_t restOfList = (char*) exprStart + exprSize;
   getList(o)->cdr = parseList(restOfList, &restSize);
 
-  *numParsedP = exprSize + restSize;
+  *numParsedP = start + exprSize + restSize;
   return o;
 }
 
