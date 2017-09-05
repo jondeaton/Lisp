@@ -12,13 +12,18 @@
 bool parserTest() {
   size_t n;
 
-  char* exprs[] = {"atom!", "()", "(a)", "(a b c)", "(car (quote (a b c))"};
+  char* exprs[] = {"atom!",
+                   "()",
+                   "(a)",
+                   "(a b c)",
+                   "(car (quote (a b c))",
+                   NULL};
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; exprs[i] != NULL; i++) {
     expression_t e = exprs[i];
     obj* o = parseExpression(e, &n);
     expression_t expr = unparse(o);
-    printf("%s => %s", (char*) e, (char*) expr);
+    printf("%s => %s\n", (char*) e, (char*) expr);
   }
 
   return true;
