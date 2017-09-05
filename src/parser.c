@@ -73,7 +73,7 @@ expression_t unparse(obj* o) {
     e = malloc(1 + strlen(listExp) + 2);
     e[0] = '(';
     strcpy((char*) e + 1, listExp);
-    e[1 + strlen(listExp)] = ')';
+    strcpy((char*) e + 1 + strlen(listExp), ")");
     return e;
   }
   return NULL;

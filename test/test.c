@@ -9,7 +9,14 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-bool parserTest() {
+static bool parserTest();
+
+int main(int argc, char* argv[]) {
+  parserTest();
+  return 0;
+}
+
+static bool parserTest() {
   size_t n;
 
   char* exprs[] = {"atom!",
@@ -29,9 +36,4 @@ bool parserTest() {
   }
 
   return true;
-}
-
-int main(int argc, char* argv[]) {
-  parserTest();
-  return 0;
 }
