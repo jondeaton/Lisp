@@ -7,22 +7,19 @@
 #include <lisp.h>
 #include <parser.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 bool parserTest() {
-  obj* o;
-  expression_t e;
+  size_t n;
 
-  o = parseExpression("()", NULL);
-  e = unparse(o);
+  char* exprs[] = {"atom!", "()", "(a)", "(a b c)", "(car (quote (a b c))"};
 
-  o = parseExpression("(a)", NULL);
-  e = unparse(o);
-
-  o = parseExpression("(a b c)", NULL);
-  e = unparse(o);
-
-  o = parseExpression("(car (quote (a b c))", NULL);
-  e = unparse(o);
+  for (int i = 0; i < 4; i++) {
+    expression_t e = exprs[i];
+    obj* o = parseExpression(e, &n);
+    expression_t expr = unparse(o);
+    printf("%s => %s", (char*) e, (char*) expr);
+  }
 
   return true;
 }
