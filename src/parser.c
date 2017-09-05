@@ -102,7 +102,7 @@ static expression_t unparseList(obj* o) {
       if (e == NULL) return NULL;
     }
     strcpy(e, carExp);
-    
+
   } else {
     size_t cdrExpSize = strlen(cdrExp);
     if (carExpSize + 1 + cdrExpSize + 1 > UNPARSE_BUFF) {

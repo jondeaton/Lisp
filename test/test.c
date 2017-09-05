@@ -16,7 +16,8 @@ bool parserTest() {
                    "()",
                    "(a)",
                    "(a b c)",
-                   "(car (quote (a b c))",
+                   "(car (quote (a b c)))",
+                   "(car \'(a b c))",
                    NULL};
 
   for (int i = 0; exprs[i] != NULL; i++) {
