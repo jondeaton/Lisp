@@ -18,7 +18,10 @@ static bool isEpmtyList(obj* o);
 static obj* toEmptyAtom(obj* o);
 static obj* getEmptyAtom();
 
-static size_t atomSize(expression_t e);
+static expression_t unparseList(obj* o);
+static expression_t unparseAtom(obj* o);
+
+  static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
 static int findNext(expression_t e);
 
@@ -57,53 +60,75 @@ obj* parseExpression(expression_t e, size_t* numParsedP) {
 expression_t unparse(obj* o) {
   if (o == NULL) return NULL;
 
-  if (o->objtype == atom_obj) {
-    atom_t atm = getAtom(o);
-    expression_t e = malloc(strlen(atm) + 1);
-    return strcpy(e, atm);
-  }
+  if (o->objtype == atom_obj) return unparseAtom(o);
 
   if (o->objtype == list_obj) {
-    expression_t e = malloc(UNPARSE_BUFF);
-    if (e == NULL) return NULL;
+    expression_t listExp = unparseList(o);
+    expression_t e;
+    if (listExp == NULL) {
+      e = malloc(3);
+      return strcpy(e, "()");
+    }
+    e = malloc(1 + strlen(listExp) + 2);
     e[0] = '(';
-
-    list_t* l = getList(o);
-    expression_t carExp = unparse(l->car);
-    if (carExp == NULL) {
-      e[1] = ')';
-      return e;
-    }
-
-    size_t carExpSize = strlen(carExp);
-
-    // 4: open paren, space, close paren, null terminator
-    if (1 + carExpSize + 3 > UNPARSE_BUFF) {
-      e = realloc(e, 4 + carExpSize);
-      if (e == NULL) return NULL;
-    }
-    strcpy(e + 1, carExp);
-    free(carExp);
-    e[1 + carExpSize] = ' ';
-
-    expression_t cdrExp = unparse(l->cdr);
-    if (cdrExp == NULL) {
-      e[1 + carExpSize] = ')';
-      return e;
-    }
-    size_t cdrExpSize = strlen(cdrExp);
-
-    if (1 + carExpSize + 1 + cdrExpSize + 2 > 4 + carExpSize) {
-      e = realloc(e, 4 + carExpSize + cdrExpSize);
-      if (e == NULL) return NULL;
-    }
-    strcpy(e + 2 + carExpSize, cdrExp);
-    free(cdrExp);
-
-    strcpy(e + 1 + carExpSize + 1 + cdrExpSize, ")");
+    strcpy((char*) e + 1, listExp);
+    e[1 + strlen(listExp)] = ')';
     return e;
   }
   return NULL;
+}
+
+/**
+ * Function: unparseList
+ * ---------------------
+ * Turn a list into
+ * @param o
+ * @return
+ */
+static expression_t unparseList(obj* o) {
+  if (o == NULL) return NULL;
+
+  expression_t e = calloc(1, UNPARSE_BUFF);
+  if (e == NULL) return NULL;
+
+  expression_t carExp = unparse(getList(o)->car);
+  if (carExp == NULL) return e;
+  expression_t cdrExp = unparseList(getList(o)->cdr);
+
+  size_t carExpSize = strlen(carExp);
+  if (cdrExp == NULL) {
+    if (carExpSize + 2 > UNPARSE_BUFF) {
+      e = realloc(e, 2 + carExpSize);
+      if (e == NULL) return NULL;
+    }
+    strcpy(e, carExp);
+    
+  } else {
+    size_t cdrExpSize = strlen(cdrExp);
+    if (carExpSize + 1 + cdrExpSize + 1 > UNPARSE_BUFF) {
+      e = realloc(e, carExpSize + 1 + cdrExpSize + 1);
+      if (e == NULL) return NULL;
+    }
+    strcpy(e, carExp);
+    strcpy((char*) e + carExpSize, " ");
+    strcpy((char*) e + carExpSize + 1, cdrExp);
+    free(cdrExp);
+  }
+  free(carExp);
+  return e;
+}
+
+/**
+ * Function: unparseAtom
+ * ---------------------
+ * Unparses an atom into dynamically allocated
+ * @param o : Pointer to an atom object
+ * @return : Pointer to dynamically allocated memory with the an expression representing the atom
+ */
+static expression_t unparseAtom(obj* o) {
+  atom_t atm = getAtom(o);
+  expression_t e = malloc(strlen(atm) + 1);
+  return strcpy(e, atm);
 }
 
 /**
