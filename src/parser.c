@@ -16,6 +16,7 @@ static obj* getQuoteList();
 static obj* putIntoList(obj* o);
 static bool isEpmtyList(obj* o);
 static obj* toEmptyAtom(obj* o);
+static obj* getEmptyAtom();
 
 static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
@@ -170,19 +171,25 @@ static obj* parseAtom(expression_t e, size_t* numParsedP) {
  * @return : Pointer to a lisp data structure object representing the lisp expression
  */
 static obj* parseList(expression_t e, size_t* numParsedP) {
-  int start = 1 + findNext((char*) e + 1);
+  int start;
+  bool fullList = e[0] == '(';
+  if (fullList) start = 1 + findNext((char*) e + 1);
+  else start = findNext(e);
   expression_t exprStart = (char*) e + start;
 
   size_t exprSize;
   obj* nextObj = parseExpression(exprStart, &exprSize); // will find closing paren
-  obj* o = putIntoList(nextObj);
+  if (nextObj == NULL) {
+    if (fullList) return getEmptyAtom();
+    else return NULL;
+  }
 
   // If there is more in the list
-  size_t restSize = 0;
-  if (nextObj != NULL) {
-    expression_t restOfList = (char*) exprStart + exprSize;
-    getList(o)->cdr = parseList(restOfList, &restSize);
-  }
+  size_t restSize;
+  obj* o = putIntoList(nextObj);
+  expression_t restOfList = (char*) exprStart + exprSize;
+  getList(o)->cdr = parseList(restOfList, &restSize);
+
   *numParsedP = 1 + exprSize + restSize;
   return o;
 }
@@ -239,8 +246,20 @@ static bool isEpmtyList(obj* o) {
  */
 static obj* toEmptyAtom(obj* o) {
   free(o);
-  size_t i;
-  return parseAtom("()", &i);
+  return getEmptyAtom();
+}
+
+/**
+ * Function: getEmptyAtom
+ * ----------------------
+ * Makes a new empty list atom
+ * @return : Pointer to a new empty list atom in dynamically allocated memory
+ */
+static obj* getEmptyAtom() {
+  obj* atomObj = calloc(1, sizeof(obj) + 3);
+  atomObj->objtype = atom_obj;
+  strcpy(getAtom(atomObj), "()");
+  return atomObj;
 }
 
 /**
