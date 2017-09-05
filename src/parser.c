@@ -47,8 +47,9 @@ obj* parseExpression(expression_t e, size_t* numParsedP) {
     getList(o)->cdr = putIntoList(quoted);
 
   } else if (exprStart[0] == '(')  {
-    o = parseList(exprStart, &exprSize);
-    if (isEpmtyList(o)) o = toEmptyAtom(o);
+    o = parseList((char*) exprStart + 1, &exprSize);
+    exprSize += 1;
+    if (o == NULL) o = toEmptyAtom(o);
   } else  {
     o = parseAtom(exprStart, &exprSize);
   }
@@ -81,9 +82,11 @@ expression_t unparse(obj* o) {
 /**
  * Function: unparseList
  * ---------------------
- * Turn a list into
- * @param o
- * @return
+ * Turn a list into an expression that represents that list. Note: the produced lisp
+ * expression will be in dynamically allocated space and will NOT contain opening and closing
+ * parentheses.
+ * @param o : A lisp object that is a list to be unparsed
+ * @return : A lisp expression that represents the passed lisp object
  */
 static expression_t unparseList(obj* o) {
   if (o == NULL) return NULL;
@@ -196,26 +199,23 @@ static obj* parseAtom(expression_t e, size_t* numParsedP) {
  * @return : Pointer to a lisp data structure object representing the lisp expression
  */
 static obj* parseList(expression_t e, size_t* numParsedP) {
-  int start;
-  bool fullList = e[0] == '(';
-  if (fullList) start = 1 + findNext((char*) e + 1);
-  else start = findNext(e);
+  int start = findNext(e);
   expression_t exprStart = (char*) e + start;
 
-  size_t exprSize;
-  obj* nextObj = parseExpression(exprStart, &exprSize); // will find closing paren
-  if (nextObj == NULL) {
-    if (fullList) return getEmptyAtom();
-    else return NULL;
-  }
+  if (exprStart[0] == ')') {
+    *numParsedP = (size_t) start + 1;
+    return NULL;
+  } // Empty list or the end of a list
 
-  // If there is more in the list
+  size_t exprSize;
+  obj* nextElement = parseExpression(exprStart, &exprSize); // will find closing paren
+  obj* o = putIntoList(nextElement);
+
   size_t restSize;
-  obj* o = putIntoList(nextObj);
   expression_t restOfList = (char*) exprStart + exprSize;
   getList(o)->cdr = parseList(restOfList, &restSize);
 
-  *numParsedP = 1 + exprSize + restSize;
+  *numParsedP = exprSize + restSize;
   return o;
 }
 

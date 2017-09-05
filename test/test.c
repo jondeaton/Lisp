@@ -16,6 +16,7 @@ bool parserTest() {
                    "()",
                    "(a)",
                    "(a b c)",
+                   "\'(a b c)",
                    "(car (quote (a b c)))",
                    "(car \'(a b c))",
                    NULL};
