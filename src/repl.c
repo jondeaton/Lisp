@@ -23,9 +23,8 @@ obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
   expression_t input = getExpression(fd);
   if (input == NULL) return NULL;
 
-  obj* o = parseExpression((expression_t) input, NULL);
+  obj* o = parseExpression(input, NULL);
   unparse(o);
-
 
   free(input);
   return o;

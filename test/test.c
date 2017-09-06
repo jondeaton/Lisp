@@ -22,9 +22,11 @@ static bool parserTest() {
 
   char* exprs[] = {"atom!",
                    "()",
+                   "(hello) there (jon)",
                    "(a)",
                    "(a b c)",
                    "(test (a b c))",
+                   "      (test(a b c )          )          ",
                    "(quote (a b c d e f hello 123456789098))",
                    "\'(a b c)",
                    "(car (quote (a b c)))",

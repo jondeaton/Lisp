@@ -9,7 +9,7 @@
 
 typedef char* atom_t;
 
-enum type {atom_obj, list_obj, func_obj, primitive_obj};
+enum type {atom_obj, list_obj, closure_obj, primitive_obj};
 
 typedef struct {
   enum type objtype;
