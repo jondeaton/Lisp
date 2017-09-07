@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <environment.h>
 
 #define BUFSIZE 1024
 #define PROMPT "> "
@@ -23,7 +24,8 @@ obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
   expression_t input = getExpression(fd);
   if (input == NULL) return NULL;
 
-  obj* o = parseExpression(input, NULL);
+  size_t n;
+  obj* o = parseExpression(input, &n);
   unparse(o);
 
   free(input);
@@ -32,7 +34,7 @@ obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
 
 // Stringifies the lisp data structure, prints it to stdout
 void print(FILE* fd, obj* o) {
-  if (o == NULL) {
+  if (o == NULL || fd == NULL) {
     perror("Error\n");
     return;
   }
@@ -44,23 +46,21 @@ void print(FILE* fd, obj* o) {
   free(result);
 };
 
-// Self explanatory
 int repl() {
+  obj* env = initEnv();
   while (true) {
     obj* o = readExpression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;
-    obj* evaluation = eval(o);
+    obj* evaluation = eval(o, env);
     print(stdout, evaluation);
   }
 };
 
-// Static functions
-
 /**
  * Function: getExpression
  * -----------------------
- * Gets an expression from the user
- * @return : The expression in a dynamically allocated location
+ * Gets an expression from the user or file
+ * @return : The expression in a dynamically allocated memory location
  */
 static expression_t getExpression(FILE* fd) {
   printf(PROMPT);

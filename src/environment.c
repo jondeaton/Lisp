@@ -7,7 +7,6 @@
 #include <environment.h>
 #include <parser.h>
 #include <string.h>
-#include <list.h>
 
 #define NUMBUILTINS 7
 #define QUOTE_RESV "quote"
@@ -17,8 +16,6 @@
 #define CDR_RESV "cdr"
 #define CONS_RESV "cons"
 #define COND_RESV "cond"
-
-obj* envp;
 
 static atom_t primitive_names[NUMBUILTINS] = {
   QUOTE_RESV,
@@ -38,7 +35,7 @@ static void* kFuncPts[NUMBUILTINS] = {quote, atom, eq, car, cdr, cons, cond};
 static expression_t kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond x))";
 obj* initEnv() {
   size_t unused;
-  envp = parseExpression(kEnvExp, &unused); // cheeky
+  obj* envp = parseExpression(kEnvExp, &unused); // cheeky
   if (envp == NULL) return NULL; // ERROR
 
   list_t* l = getList(envp);
@@ -61,10 +58,6 @@ obj* initEnv() {
     l = getList(l->cdr);
   }
   return envp;
-}
-
-void disposeEnv() {
-  dispose(envp);
 }
 
 /**

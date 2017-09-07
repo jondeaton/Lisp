@@ -9,9 +9,10 @@
 #include <assert.h>
 #include <list.h>
 
+
 // Static function declarations
 static bool cmp(obj* x, obj* y);
-static obj* apply(obj* fo, obj* args);
+static obj* putIntoList(obj* o);
 
 obj t_atom = {
   .objtype = atom_obj
@@ -24,17 +25,32 @@ obj empty_atom = {
 obj* t = &t_atom;
 obj* empty = &empty_atom;
 
-// Reduce a list
-obj* eval(obj* o) {
+obj* eval(obj* o, obj* env) {
   if (o == NULL) return NULL;
-
   if (o->objtype == atom_obj) return o;
   if (o->objtype == list_obj) {
-    list_t* l = getList(o);
-    return apply(l->car, l->cdr);
+    obj* result = putIntoList(car(o));
+    getList(result)->cdr = cdr(o);
+    return o;
   }
+  if (o->objtype == primitive_obj || o->objtype == closure_obj)
+    return apply(getList(o)->car, getList(o)->cdr, env);
   return NULL;
 };
+
+obj* apply(obj* closure, obj* args, obj* env) {
+  if (closure == NULL) return NULL;
+
+  if (closure->objtype == primitive_obj) {
+    primitive_t f = getPrimitive(closure);
+    return f(eval(args, env));
+  }
+  else if (closure->objtype == closure_obj) {
+
+  }
+  else return NULL;
+}
+
 
 obj* quote(obj* o) {
   if (o == NULL) return NULL;
@@ -114,23 +130,16 @@ static bool cmp(obj* x, obj* y) {
 }
 
 /**
- * Function: apply
- * ---------------
- * Applies a lisp function to an argument list
- * @param o : A lisp function object (will be asserted)
- * @param args : List of arguments
- * @return : The result of the application of the function to the arguments
+ * Function: putIntoList
+ * ---------------------
+ * Makes a list object with car pointing to the object passed
+ * @param o : The object that the list's car should point to
+ * @return : A pointer to the list object containing only the argument object
  */
-static obj* apply(obj* fo, obj* args) {
-//  if (fo == NULL) return NULL;
-//
-//  if (fo->objtype == primitive_obj) {
-//    primitive_t f = fo->p;
-//    return f(eval(args));
-//  }
-//
-//  else if (fo->objtype == func_obj)
-//    return NULL;
-
-  return NULL;
+static obj* putIntoList(obj* o) {
+  obj* listObj = calloc(1, sizeof(obj) + sizeof(list_t));
+  if (listObj == NULL) return NULL;
+  listObj->objtype = list_obj;
+  getList(listObj)->car = o;
+  return listObj;
 }

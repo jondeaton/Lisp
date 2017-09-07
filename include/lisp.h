@@ -19,8 +19,17 @@
  * @param o : An object to be evaluated
  * @return : A reduced object
  */
-obj* eval(obj* o);
+obj* eval(obj* o, obj* env);
 
+/**
+ * Function: apply
+ * ---------------
+ * Applies a lisp function to an argument list
+ * @param o : A lisp function object (will be asserted)
+ * @param args : List of arguments
+ * @return : The result of the application of the function to the arguments
+ */
+obj* apply(obj* closure,  obj* args, obj* env);
 
 /**
  * Primitive: quote

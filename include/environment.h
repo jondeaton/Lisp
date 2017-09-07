@@ -17,11 +17,4 @@
  */
 obj* initEnv();
 
-/**
- * Function: disposeEnv
- * --------------------
- * Disposes of the lisp environment object
- */
-void disposeEnv();
-
 #endif

@@ -21,7 +21,6 @@ set(SOURCES
         src/list.c
         src/main.c)
 
-
 add_executable(lisp.o ${SOURCES})
 
 include_directories(test)

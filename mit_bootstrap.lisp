@@ -27,7 +27,7 @@
              (cons (eval (car l) env)
                    (evlist (cdr l) env)))))))
 
-(define evcond
+(defun evcond
   (lambda (clauses env)
     (cond ((eq clauses '()) '())
           ((eq (caar clauses) 'else)
@@ -41,7 +41,7 @@
     (cond (pair-up cars vals)
           env)))
 
-(define pair-up
+(defun pair-up
   (lambda (vars vals)
     (cond
       ((eq vars '())
@@ -54,7 +54,7 @@
                (pair-up (cdr vars)
                         (cdr vals))))))))
 
-(define lookup
+(defun lookup
   (lambda (sym env)
     (cond ((eq env '()) (error UBV))
           (else
@@ -65,7 +65,7 @@
                      (else (cdr vcell))))
              (assq sym (car env)))))))
 
-(define assq
+(defun assq
   (lambda (sym alist)
     (cond ((eq alist '()) '())
           ((eq sym (caar alist))
