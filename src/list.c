@@ -5,7 +5,6 @@
  */
 
 #include <list.h>
-#include <stdlib.h>
 
 static void* getContents(obj* o);
 
@@ -19,6 +18,11 @@ atom_t getAtom(obj* o) {
 
 primitive_t getPrimitive(obj* o) {
   return (primitive_t) getContents(o);
+}
+
+obj* copy(obj* o) {
+  if (o == NULL) return NULL;
+
 }
 
 void dispose(obj* o) {

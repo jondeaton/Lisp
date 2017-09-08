@@ -13,12 +13,15 @@ set(SOURCES
         include/parser.h
         include/run_lisp.h
         include/list.h
+        include/evaluator.h
         src/lisp.c
         src/repl.c
         src/environment.c
         src/parser.c
         src/run_lisp.c
+        src/evaluator.c
         src/list.c
+
         src/main.c)
 
 add_executable(lisp.o ${SOURCES})

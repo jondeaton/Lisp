@@ -7,12 +7,9 @@
 #include <lisp.h>
 #include <string.h>
 #include <assert.h>
-#include <list.h>
-
 
 // Static function declarations
 static bool cmp(obj* x, obj* y);
-static obj* putIntoList(obj* o);
 
 obj t_atom = {
   .objtype = atom_obj
@@ -24,33 +21,6 @@ obj empty_atom = {
 
 obj* t = &t_atom;
 obj* empty = &empty_atom;
-
-obj* eval(obj* o, obj* env) {
-  if (o == NULL) return NULL;
-  if (o->objtype == atom_obj) return o;
-  if (o->objtype == list_obj) {
-    obj* result = putIntoList(car(o));
-    getList(result)->cdr = cdr(o);
-    return o;
-  }
-  if (o->objtype == primitive_obj || o->objtype == closure_obj)
-    return apply(getList(o)->car, getList(o)->cdr, env);
-  return NULL;
-};
-
-obj* apply(obj* closure, obj* args, obj* env) {
-  if (closure == NULL) return NULL;
-
-  if (closure->objtype == primitive_obj) {
-    primitive_t f = getPrimitive(closure);
-    return f(eval(args, env));
-  }
-  else if (closure->objtype == closure_obj) {
-
-  }
-  else return NULL;
-}
-
 
 obj* quote(obj* o) {
   if (o == NULL) return NULL;
@@ -112,34 +82,4 @@ obj* cond(obj* o) {
     assert(l->cdr->objtype == list_obj);
     l = getList(l->cdr);
   }
-}
-
-/**
- * Function: cmp
- * -------------
- * Comparison of two lisp objects
- * @param x : Pointer to the first lisp object
- * @param y : Pointer to the second lisp object
- * @return : True if the two are equal, false otherwise
- */
-static bool cmp(obj* x, obj* y) {
-  if (x->objtype != y->objtype) return false;
-  if (x->objtype == atom_obj) return strcmp(getAtom(x), getAtom(y)) == 0;
-  if (x->objtype == list_obj) return cmp(car(x), car(y)) && cmp(cdr(x), cdr(y));
-  else return x == y;
-}
-
-/**
- * Function: putIntoList
- * ---------------------
- * Makes a list object with car pointing to the object passed
- * @param o : The object that the list's car should point to
- * @return : A pointer to the list object containing only the argument object
- */
-static obj* putIntoList(obj* o) {
-  obj* listObj = calloc(1, sizeof(obj) + sizeof(list_t));
-  if (listObj == NULL) return NULL;
-  listObj->objtype = list_obj;
-  getList(listObj)->car = o;
-  return listObj;
 }

@@ -7,6 +7,8 @@
 #ifndef _LIST_H
 #define _LIST_H
 
+#include <stdbool.h>
+
 typedef char* atom_t;
 
 enum type {atom_obj, list_obj, closure_obj, primitive_obj};
@@ -43,11 +45,20 @@ atom_t getAtom(obj* o);
 /**
  * Function: getPrimitive
  * ----------------------
- * Gets a funciton pointer to the primitive function for a primitive object list
+ * Gets a function pointer to the primitive function for a primitive object list
  * @param o : Pointer to a lisp data structure
  * @return : Function pointer to primitive function
  */
 primitive_t getPrimitive(obj* o);
+
+/**
+ * Function: copy
+ * --------------
+ * Copies an object, returning a new one, leaving the old one untouched
+ * @param o : An object to copy
+ * @return : A copy of the object
+ */
+obj* copy(obj* o);
 
 /**
  * Function: dispose
@@ -57,5 +68,15 @@ primitive_t getPrimitive(obj* o);
  * @param o : Pointer to the lisp objct to dispose of
  */
 void dispose(obj* o);
+
+/**
+ * Function: cmp
+ * -------------
+ * Comparison of two lisp objects
+ * @param x : Pointer to the first lisp object
+ * @param y : Pointer to the second lisp object
+ * @return : True if the two are equal, false otherwise
+ */
+bool cmp(obj* x, obj* y);
 
 #endif
