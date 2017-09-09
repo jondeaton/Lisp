@@ -16,7 +16,6 @@ static obj* associate(obj* names, obj* values);
 static obj* pushFrame(obj* frame, obj* env);
 static obj* evalList(obj* list, obj* env);
 
-
 obj* eval(obj* o, obj* env) {
   if (o == NULL) return NULL;
 

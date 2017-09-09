@@ -69,14 +69,4 @@ obj* copy(obj* o);
  */
 void dispose(obj* o);
 
-/**
- * Function: cmp
- * -------------
- * Comparison of two lisp objects
- * @param x : Pointer to the first lisp object
- * @param y : Pointer to the second lisp object
- * @return : True if the two are equal, false otherwise
- */
-bool cmp(obj* x, obj* y);
-
 #endif

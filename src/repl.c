@@ -7,10 +7,10 @@
 
 #include <repl.h>
 #include <parser.h>
-#include <stdio.h>
+#include <environment.h>
+#include <evaluator.h>
 #include <string.h>
 #include <errno.h>
-#include <environment.h>
 
 #define BUFSIZE 1024
 #define PROMPT "> "

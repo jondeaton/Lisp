@@ -7,6 +7,7 @@
 #include <lisp.h>
 #include <string.h>
 #include <assert.h>
+#include <evaluator.h>
 
 // Static function declarations
 static bool cmp(obj* x, obj* y);
@@ -22,42 +23,42 @@ obj empty_atom = {
 obj* t = &t_atom;
 obj* empty = &empty_atom;
 
-obj* quote(obj* o) {
+obj* quote(obj* o, obj* env) {
   if (o == NULL) return NULL;
   return o;
 }
 
-obj* atom(obj* o) {
+obj* atom(obj* o, obj* env) {
   if (o == NULL) return NULL;
   return o->objtype == atom_obj ? t : empty;
 }
 
-obj* eq(obj* o) {
+obj* eq(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  return cmp(car(o), cdr(o)) ? t : empty;
+  return cmp(car(o, env), cdr(o, env)) ? t : empty;
 }
 
-obj* car(obj* o) {
+obj* car(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
   list_t* l = getList(o);
-  return eval(l->car);
+  return eval(l->car, env);
 }
 
-obj* cdr(obj* o) {
+obj* cdr(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
   list_t* l = getList(o);
-  return eval(l->cdr);
+  return eval(l->cdr, env);
 }
 
-obj* cons(obj* o) {
+obj* cons(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
 
-  obj* x = car(o);
-  obj* y = cdr(o);
+  obj* x = car(o, env);
+  obj* y = cdr(o, env);
 
   obj* new_obj = calloc(1, sizeof(obj) + sizeof(list_t));
   new_obj->objtype = list_obj;
@@ -67,7 +68,7 @@ obj* cons(obj* o) {
   return new_obj;
 }
 
-obj* cond(obj* o) {
+obj* cond(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
   list_t* l = getList(o);
@@ -76,10 +77,27 @@ obj* cond(obj* o) {
     obj* pair_obj = l->car;
     assert(pair_obj->objtype == list_obj);
     list_t* pair = getList(pair_obj);
-    if (eval(pair->car) == t) return pair->cdr;
+    if (eval(pair->car, env) == t) return pair->cdr;
 
     if (l->cdr == NULL) return empty;
     assert(l->cdr->objtype == list_obj);
     l = getList(l->cdr);
   }
+}
+
+/**
+ * Function: cmp
+ * -------------
+ * Deep comparison of two lisp objects
+ * @param x : The first object to compare
+ * @param y : The second object to compare
+ * @return : True if the two objects are identical, false otherwise
+ */
+static bool cmp(obj* x, obj* y) {
+  if (x->objtype != y->objtype) return false;
+  if (x->objtype == atom_obj) return strcmp(getAtom(x), getAtom(y)) == 0;
+  if (x->objtype == primitive_obj) return getPrimitive(x) == getPrimitive(y);
+  if (x->objtype == list_obj)
+    return cmp(getList(x)->car, getList(y)->car) && cmp(getList(x)->cdr, getList(y)->cdr);
+  else return x == y;
 }
