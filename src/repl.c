@@ -48,6 +48,8 @@ void print(FILE* fd, obj* o) {
 
 int repl() {
   obj* env = initEnv(); // The REPL global environment
+  printf("%s\n", unparse(env));
+
   while (true) {
     obj* o = readExpression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;

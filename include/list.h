@@ -22,7 +22,7 @@ typedef struct {
   obj* cdr;
 } list_t;
 
-typedef obj*(*primitive_t)(obj*);
+typedef obj*(*primitive_t)(obj*, obj*);
 
 /**
  * Function: getList
@@ -45,11 +45,11 @@ atom_t getAtom(obj* o);
 /**
  * Function: getPrimitive
  * ----------------------
- * Gets a function pointer to the primitive function for a primitive object list
+ * Gets a pointer to a function pointer to the primitive function for a primitive object list
  * @param o : Pointer to a lisp data structure
  * @return : Function pointer to primitive function
  */
-primitive_t getPrimitive(obj* o);
+primitive_t* getPrimitive(obj* o);
 
 /**
  * Function: copy

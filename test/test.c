@@ -6,15 +6,20 @@
 
 #include <lisp.h>
 #include <parser.h>
-#include <stdbool.h>
+#include <environment.h>
 #include <stdio.h>
-#include <string.h>
 
 static bool parserTest();
+static bool envTest();
 
 int main(int argc, char* argv[]) {
+  envTest();
   parserTest();
   return 0;
+}
+
+static bool envTest() {
+  return true;
 }
 
 static bool parserTest() {

@@ -39,8 +39,8 @@ obj* apply(obj* closure, obj* args, obj* env) {
   if (closure == NULL) return NULL;
 
   if (closure->objtype == primitive_obj) {
-    primitive_t f = getPrimitive(closure);
-    return f(eval(args, env));
+    primitive_t f = *getPrimitive(closure);
+    return f(eval(args, env), env);
   }
 
   if (closure->objtype == closure_obj) {
@@ -98,6 +98,7 @@ static obj* evalList(obj* list, obj* env) {
   if (list->objtype != list_obj) return NULL;
   obj* o = putIntoList(eval(getList(list)->car, env));
   getList(o)->cdr = evalList(getList(list)->cdr, env);
+  return o;
 }
 
 /**

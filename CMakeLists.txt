@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.6)
 project(Lisp)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 add_compile_options()
-SET(CMAKE_CXX_FLAGS  "-g -O0 -Wall -pedantic")
+SET(CMAKE_CXX_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
 
 include_directories(include src)
 
@@ -23,7 +25,7 @@ set(SOURCES
         src/list.c
         src/main.c)
 
-add_executable(lisp ${SOURCES})
+add_executable(lisp.o ${SOURCES})
 
 include_directories(test)
 set(TEST_SOURCES
@@ -43,4 +45,4 @@ set(TEST_SOURCES
         src/list.c
         test/test.c)
 
-add_executable(test ${TEST_SOURCES})
+add_executable(test.o ${TEST_SOURCES})

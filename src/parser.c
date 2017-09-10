@@ -6,7 +6,7 @@
 
 #include <parser.h>
 #include <string.h>
-#include <list.h>
+#include <stdio.h>
 
 #define UNPARSE_BUFF 16
 
@@ -14,12 +14,13 @@ static obj* parseAtom(expression_t e, size_t* numParsedP);
 static obj* parseList(expression_t e, size_t* numParsedP);
 static obj* getQuoteList();
 static obj* putIntoList(obj* o);
-static bool isEpmtyList(obj* o);
+static bool isEmptyList(obj *o);
 static obj* toEmptyAtom(obj* o);
 static obj* getEmptyAtom();
 
 static expression_t unparseList(obj* o);
 static expression_t unparseAtom(obj* o);
+static expression_t unparsePrimitive(obj* o);
 
   static size_t atomSize(expression_t e);
 static bool isWhiteSpace(char character);
@@ -62,6 +63,8 @@ expression_t unparse(obj* o) {
   if (o == NULL) return NULL;
 
   if (o->objtype == atom_obj) return unparseAtom(o);
+
+  if (o->objtype == primitive_obj) return unparsePrimitive(o);
 
   if (o->objtype == list_obj) {
     expression_t listExp = unparseList(o);
@@ -126,9 +129,24 @@ static expression_t unparseList(obj* o) {
  * @return : Pointer to dynamically allocated memory with the an expression representing the atom
  */
 static expression_t unparseAtom(obj* o) {
+  if (o == NULL) return NULL;
   atom_t atm = getAtom(o);
   expression_t e = malloc(strlen(atm) + 1);
   return strcpy(e, atm);
+}
+
+/**
+ * Function: unparsePrimitive
+ * --------------------------
+ * Turns a primitive atom into a string in dynamically allocated memory
+ * @param o : A pointer to a lisp object of primitive type
+ * @return : An expression in dynamically allocated memory that
+ */
+static expression_t unparsePrimitive(obj* o) {
+  if (o == NULL) return NULL;
+  expression_t e = malloc(2 + sizeof(void*) * 16 + 1);
+  sprintf(e, "%p", *getPrimitive(o));
+  return e;
 }
 
 /**
@@ -169,9 +187,9 @@ bool isValid(expression_t e) {
  * Function: parseAtom
  * -------------------
  * Parses an expression that represents an atom
- * @param e :
- * @param numParsedP
- * @return
+ * @param e : A pointer to an atom expression
+ * @param numParsedP : Pointer to a location to be populated with the number of characters parsed
+ * @return : A lisp object representing the parsed atom in dynamically allocated memory
  */
 static obj* parseAtom(expression_t e, size_t* numParsedP) {
   size_t size = atomSize(e);
@@ -245,7 +263,7 @@ static obj* putIntoList(obj* o) {
 }
 
 /**
- * Function: isEpmtyList
+ * Function: isEmptyList
  * ---------------------
  * Determines if a list object is an empty list. Note: this is for checking
  * if the object is a list object that is empty, which is NOT the same thing as
@@ -253,7 +271,7 @@ static obj* putIntoList(obj* o) {
  * @param o : A list object to check
  * @return : True if the object is a list object that is empty, false otherwise
  */
-static bool isEpmtyList(obj* o) {
+static bool isEmptyList(obj *o) {
   if (o->objtype != list_obj) return false;
   list_t* l = getList(o);
   return l->car == NULL && l->cdr == NULL;

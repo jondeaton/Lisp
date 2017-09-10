@@ -7,6 +7,7 @@
 #include <environment.h>
 #include <parser.h>
 #include <string.h>
+#include <list.h>
 
 #define NUMBUILTINS 7
 #define QUOTE_RESV "quote"
@@ -28,36 +29,82 @@ static atom_t primitive_names[NUMBUILTINS] = {
 };
 
 // Static function declarations
+static void insertPrimitives(obj* pairList);
+static void replacePrimitivePlaceholder(obj* pair);
+static obj* wrapPrimitive(primitive_t primitive);
+
 static obj* makeFuncPair(atom_t a, void* fp);
 static ssize_t indexof(char* str, char* strings[], size_t numStrings);
+static primitive_t lookupPrimitive(atom_t atm);
 
-static void* kFuncPts[NUMBUILTINS] = {quote, atom, eq, car, cdr, cons, cond};
+static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond};
 static expression_t kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond x))";
+
 obj* initEnv() {
   size_t unused;
-  obj* envp = parseExpression(kEnvExp, &unused); // cheeky
-  if (envp == NULL) return NULL; // ERROR
+  obj* env = parseExpression(kEnvExp, &unused); // cheeky
+  if (env == NULL) return NULL; // ERROR
+  insertPrimitives(env);
+  return env;
+}
 
-  list_t* l = getList(envp);
+/**
+ * Function: insertPrimitives
+ * --------------------------
+ * Replaces the second element of the pairs
+ * @param env
+ */
+static void insertPrimitives(obj* pairList) {
+  if (pairList == NULL) return;
+  obj* pair = getList(pairList)->car;
+  replacePrimitivePlaceholder(pair);
+  insertPrimitives(getList(pairList)->cdr);
+}
 
-  while (l->cdr != NULL) {
-    obj* pair = l->car;
-    list_t* pairList = getList(envp);
-    dispose(pairList->cdr);
+/**
+ * Function: replacePrimitivePlaceholder
+ * -------------------------------------
+ * Replaces the second element of a name-primitive pair with a primitive object
+ * corresponding to the name stored in the first element of the pair.
+ * @param pair : A pointer to a two element list of an atom with the name of the primitive and a
+ * placeholder second item that will be DISPOSED of and replaced with a primitive object
+ * corresponding to the name in the first element.
+ */
+static void replacePrimitivePlaceholder(obj* pair) {
+  if (pair == NULL) return;
+  atom_t primitiveName = getAtom(getList(pair)->car);
+  primitive_t primitive = lookupPrimitive(primitiveName);
 
-    obj* func_obj = calloc(1, sizeof(obj));
-    func_obj->objtype = primitive_obj;
+  obj* second = getList(pair)->cdr;
+  dispose(getList(second)->car);
+  getList(second)->car = wrapPrimitive(primitive);
+}
 
-    ssize_t i = indexof(getAtom(pairList->car), primitive_names, NUMBUILTINS);
+/**
+ * Function: wrapPrimitive
+ * -----------------------
+ * Wraps the provided primitive in a primitive object in dynamically allocated memory
+ * @param primitive : A primitive to wrap in an object
+ * @return : A pointer to the object in dynamically allocated memory
+ */
+static obj* wrapPrimitive(primitive_t primitive) {
+  obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
+  o->objtype = primitive_obj;
+  primitive_t* primp = getPrimitive(o);
+  *primp = primitive;
+  return o;
+}
 
-    primitive_t f = getPrimitive(func_obj);
-
-//    *f = kFuncPts[i];
-    pairList->cdr = func_obj;
-
-    l = getList(l->cdr);
-  }
-  return envp;
+/**
+ * Function: lookupPrimitive
+ * -------------------------
+ * Get the function pointer to the primitive that the atom refers to by name
+ * @return : A primitive function pointer if the atom is found, NULL otherwise
+ */
+static primitive_t lookupPrimitive(atom_t atm) {
+  ssize_t i = indexof(atm, primitive_names, NUMBUILTINS);
+  if (i == -1) return NULL;
+  return kFuncPts[i];
 }
 
 /**

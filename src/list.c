@@ -17,16 +17,18 @@ atom_t getAtom(obj* o) {
   return (atom_t) getContents(o);
 }
 
-primitive_t getPrimitive(obj* o) {
-  return (primitive_t) getContents(o);
+primitive_t* getPrimitive(obj* o) {
+  return (primitive_t*) getContents(o);
 }
 
 obj* copy(obj* o) {
   if (o == NULL) return NULL;
-  // TODO
+  // todo
+  return NULL;
 }
 
 void dispose(obj* o) {
+  if (o == NULL) return;
   if (o->objtype == list_obj) {
     list_t *l = getList(o);
     dispose(l->car);
