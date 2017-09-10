@@ -8,6 +8,7 @@
 #include <string.h>
 #include <assert.h>
 #include <evaluator.h>
+#include <list.h>
 
 // Static function declarations
 static bool cmp(obj* x, obj* y);
@@ -25,7 +26,7 @@ obj* empty = &empty_atom;
 
 obj* quote(obj* o, obj* env) {
   if (o == NULL) return NULL;
-  return o;
+  return getList(o)->car;
 }
 
 obj* atom(obj* o, obj* env) {
@@ -42,15 +43,15 @@ obj* eq(obj* o, obj* env) {
 obj* car(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  list_t* l = getList(o);
-  return eval(l->car, env);
+  obj* result = eval(getList(o)->car, env);
+  return getList(result)->car;
 }
 
 obj* cdr(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  list_t* l = getList(o);
-  return eval(l->cdr, env);
+  obj* result = eval(getList(o)->car, env);
+  return getList(result)->cdr;
 }
 
 obj* cons(obj* o, obj* env) {

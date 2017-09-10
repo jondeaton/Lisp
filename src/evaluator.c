@@ -29,8 +29,8 @@ obj* eval(obj* o, obj* env) {
   // which means evaluate the operator (return a procedure or a primitive)
   // to which we call apply on the arguments
   if (o->objtype == list_obj) {
-    obj* operator = eval(getList(o)->car, env);
-    return apply(operator, getList(o)->cdr, env);
+    obj* oper = eval(getList(o)->car, env);
+    return apply(oper, getList(o)->cdr, env);
   }
   else return NULL;
 };
@@ -40,7 +40,7 @@ obj* apply(obj* closure, obj* args, obj* env) {
 
   if (closure->objtype == primitive_obj) {
     primitive_t f = *getPrimitive(closure);
-    return f(eval(args, env), env);
+    return f(args, env);
   }
 
   if (closure->objtype == closure_obj) {
@@ -67,7 +67,8 @@ static obj* lookup(obj* o, obj* env) {
   if (o->objtype != atom_obj) return NULL;
 
   obj* pair = getList(env)->car;
-  if (strcmp(getAtom(o), getAtom(getList(pair)->car)) == 0) return getList(pair)->cdr;
+  if (strcmp(getAtom(o), getAtom(getList(pair)->car)) == 0)
+    return getList(getList(pair)->cdr)->car;
   else return lookup(o, getList(env)->cdr);
 }
 

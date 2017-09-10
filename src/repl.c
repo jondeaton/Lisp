@@ -41,15 +41,13 @@ void print(FILE* fd, obj* o) {
 
   expression_t result = unparse(o);
 
-  if (result) fprintf(fd, "%s", (char*) result);
+  if (result) fprintf(fd, "%s\n", (char*) result);
   else perror("Error\n");
   free(result);
 };
 
 int repl() {
   obj* env = initEnv(); // The REPL global environment
-  printf("%s\n", unparse(env));
-
   while (true) {
     obj* o = readExpression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;
