@@ -25,7 +25,7 @@ set(SOURCES
         src/list.c
         src/main.c)
 
-add_executable(lisp.o ${SOURCES})
+add_executable(lisp ${SOURCES})
 
 include_directories(test)
 set(TEST_SOURCES
@@ -45,4 +45,4 @@ set(TEST_SOURCES
         src/list.c
         test/test.c)
 
-add_executable(test.o ${TEST_SOURCES})
+add_executable(test_lisp ${TEST_SOURCES})

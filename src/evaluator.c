@@ -29,8 +29,8 @@ obj* eval(obj* o, obj* env) {
   // which means evaluate the operator (return a procedure or a primitive)
   // to which we call apply on the arguments
   if (o->objtype == list_obj) {
-    obj* oper = eval(getList(o)->car, env);
-    return apply(oper, getList(o)->cdr, env);
+    obj* operator = eval(getList(o)->car, env);
+    return apply(operator, getList(o)->cdr, env);
   }
   else return NULL;
 };
