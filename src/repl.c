@@ -7,7 +7,8 @@
 
 #include <repl.h>
 #include <parser.h>
-#include <stdio.h>
+#include <environment.h>
+#include <evaluator.h>
 #include <string.h>
 #include <errno.h>
 
@@ -23,9 +24,9 @@ obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
   expression_t input = getExpression(fd);
   if (input == NULL) return NULL;
 
-  obj* o = parse((expression_t) input, NULL);
+  size_t n;
+  obj* o = parseExpression(input, &n);
   unparse(o);
-
 
   free(input);
   return o;
@@ -33,35 +34,33 @@ obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
 
 // Stringifies the lisp data structure, prints it to stdout
 void print(FILE* fd, obj* o) {
-  if (o == NULL) {
+  if (o == NULL || fd == NULL) {
     perror("Error\n");
     return;
   }
 
   expression_t result = unparse(o);
 
-  if (result) fprintf(fd, "%s", (char*) result);
+  if (result) fprintf(fd, "%s\n", (char*) result);
   else perror("Error\n");
   free(result);
 };
 
-// Self explanatory
 int repl() {
+  obj* env = initEnv(); // The REPL global environment
   while (true) {
     obj* o = readExpression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;
-    obj* evaluation = eval(o);
+    obj* evaluation = eval(o, env);
     print(stdout, evaluation);
   }
 };
 
-// Static functions
-
 /**
  * Function: getExpression
  * -----------------------
- * Gets an expression from the user
- * @return : The expression in a dynamically allocated location
+ * Gets an expression from the user or file
+ * @return : The expression in a dynamically allocated memory location
  */
 static expression_t getExpression(FILE* fd) {
   printf(PROMPT);

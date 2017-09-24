@@ -30,5 +30,5 @@ static const char* lispBootstrapPath = "../bootstrap.lisp";
 int main(int argc, char* argv[]) {
 //  run(lispBootstrapPath);
   if (argc == 1) return repl();
-  else return run(argv[1]);
+  else return run(argv[1], NULL);
 }

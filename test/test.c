@@ -6,28 +6,44 @@
 
 #include <lisp.h>
 #include <parser.h>
-#include <stdbool.h>
+#include <environment.h>
+#include <stdio.h>
 
-bool parserTest() {
-  obj* o;
-  expression_t e;
+static bool parserTest();
+static bool envTest();
 
-  o = parse("()", NULL);
-  e = unparse(o);
+int main(int argc, char* argv[]) {
+  envTest();
+  parserTest();
+  return 0;
+}
 
-  o = parse("(a)", NULL);
-  e = unparse(o);
-
-  o = parse("(a b c)", NULL);
-  e = unparse(o);
-
-  o = parse("(car (quote (a b c))", NULL);
-  e = unparse(o);
-
+static bool envTest() {
   return true;
 }
 
-int main(int argc, char* argv[]) {
-  parserTest();
-  return 0;
+static bool parserTest() {
+  size_t n;
+
+  char* exprs[] = {"atom!",
+                   "()",
+                   "(hello) there (jon)",
+                   "(a)",
+                   "(a b c)",
+                   "(test (a b c))",
+                   "      (test(a b c )          )          ",
+                   "(quote (a b c d e f hello 123456789098))",
+                   "\'(a b c)",
+                   "(car (quote (a b c)))",
+                   "(car \'(a b c))",
+                   NULL};
+
+  for (int i = 0; exprs[i] != NULL; i++) {
+    expression_t e = exprs[i];
+    obj* o = parseExpression(e, &n);
+    expression_t expr = unparse(o);
+    printf("%s => %s\n", (char*) e, (char*) expr);
+  }
+
+  return true;
 }

@@ -12,13 +12,14 @@
 typedef char* expression_t;
 
 /**
- * Function: parse
- * ---------------
- * Converts a lisp expression into a lisp data structure
- * @param input : The lisp expression to objectify
- * @return : Pointer to the lisp data structure
+ * Function: parseExpression
+ * -------------------------
+ * Parses a lisp expression that represents either a lisp atom or list
+ * @param e : A balanced, valid lisp expression
+ * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
+ * @return : Pointer to a lisp data structure object representing that the lisp expression represents
  */
-obj* parse(expression_t e, size_t* numParsedP);
+obj* parseExpression(expression_t e, size_t* numParsedP);
 
 /**
  * Function: unparse
