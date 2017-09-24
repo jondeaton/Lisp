@@ -91,27 +91,23 @@ expression_t unparse(obj* o) {
 static expression_t unparseList(obj* o) {
   if (o == NULL) return NULL;
 
-  expression_t e = calloc(sizeof(char), UNPARSE_BUFF);
-  if (e == NULL) return NULL;
+  expression_t e;
 
   expression_t carExp = unparse(getList(o)->car);
-  if (carExp == NULL) return e;
+  if (carExp == NULL) return NULL;
   expression_t cdrExp = unparseList(getList(o)->cdr);
 
   size_t carExpSize = strlen(carExp);
   if (cdrExp == NULL) {
-    if (carExpSize + 2 > UNPARSE_BUFF) {
-      e = realloc(e, 2 + carExpSize);
-      if (e == NULL) return NULL;
-    }
+    e = calloc(1, 2 + carExpSize);
+    if (e == NULL) return NULL;
     strcpy(e, carExp);
 
   } else {
     size_t cdrExpSize = strlen(cdrExp);
-    if (carExpSize + 1 + cdrExpSize + 1 > UNPARSE_BUFF) {
-      e = realloc(e, carExpSize + 1 + cdrExpSize + 1);
-      if (e == NULL) return NULL;
-    }
+    e = calloc(1, carExpSize + 1 + cdrExpSize + 1);
+    if (e == NULL) return NULL;
+
     strcpy(e, carExp);
     strcpy((char*) e + carExpSize, " ");
     strcpy((char*) e + carExpSize + 1, cdrExp);
