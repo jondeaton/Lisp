@@ -5,10 +5,10 @@
  * for Lisp
  */
 
-#include <repl.h>
-#include <parser.h>
-#include <environment.h>
-#include <evaluator.h>
+#include "repl.h"
+#include "parser.h"
+#include "environment.h"
+#include "evaluator.h"
 #include <string.h>
 #include <errno.h>
 

@@ -4,7 +4,7 @@
  * Presents the implementation of the lisp evaluator
  */
 
-#include <evaluator.h>
+#include "evaluator.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,6 +16,7 @@ static obj* associate(obj* names, obj* values);
 static obj* pushFrame(obj* frame, obj* env);
 static obj* evalList(obj* list, obj* env);
 
+// Evaluate a lisp expression
 obj* eval(obj* o, obj* env) {
   if (o == NULL) return NULL;
 
@@ -35,6 +36,7 @@ obj* eval(obj* o, obj* env) {
   else return NULL;
 };
 
+// Apply a closure object to a list of arguments
 obj* apply(obj* closure, obj* args, obj* env) {
   if (closure == NULL) return NULL;
 
@@ -63,12 +65,20 @@ obj* apply(obj* closure, obj* args, obj* env) {
  */
 static obj* lookup(obj* o, obj* env) {
   if (o == NULL || env == NULL) return NULL;
+
+  // Error: The environment should be a list
   if (env->objtype != list_obj) return NULL;
+
+  // Error: Can't lookup something that isn't an atom
   if (o->objtype != atom_obj) return NULL;
 
+  // Get the list
   obj* pair = getList(env)->car;
+
+
   if (strcmp(getAtom(o), getAtom(getList(pair)->car)) == 0)
     return getList(getList(pair)->cdr)->car;
+
   else return lookup(o, getList(env)->cdr);
 }
 

@@ -4,7 +4,7 @@
  * Lisp interpreter tester
  */
 
-#include <lisp.h>
+#include <primitives.h>
 #include <parser.h>
 #include <environment.h>
 #include <stdio.h>

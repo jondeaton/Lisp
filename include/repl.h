@@ -7,7 +7,7 @@
 #ifndef _REPL_H
 #define _REPL_H
 
-#include <lisp.h>
+#include <primitives.h>
 #include <stdio.h>
 
 /**

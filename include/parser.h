@@ -7,7 +7,7 @@
 #ifndef _LISP_PARSER_H
 #define _LISP_PARSER_H
 
-#include <lisp.h>
+#include <primitives.h>
 
 typedef char* expression_t;
 

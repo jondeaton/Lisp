@@ -4,11 +4,10 @@
  * Presents the implementation of the lisp primitives
  */
 
-#include <lisp.h>
+#include "primitives.h"
+#include "evaluator.h"
 #include <string.h>
 #include <assert.h>
-#include <evaluator.h>
-#include <list.h>
 
 // Static function declarations
 static bool cmp(obj* x, obj* y);

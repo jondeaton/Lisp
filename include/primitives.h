@@ -4,8 +4,8 @@
  * Presents the interface to the lisp primitives
  */
 
-#ifndef _LISP_H
-#define _LISP_H
+#ifndef _LISP_H_INCLUDED
+#define _LISP_H_INCLUDED
 
 #include <list.h>
 #include <stdbool.h>
@@ -15,9 +15,9 @@
  * Primitive: quote
  * ----------------
  * Returns the unevaluated version of the object
- * @param o : The object to quote
- * @param env : The environment to evaluate this primitive in
- * @return : Pointer to the object without evaluating it
+ * @param o: The object to quote
+ * @param env: The environment to evaluate this primitive in
+ * @return: Pointer to the object without evaluating it
  */
 obj* quote(obj* o, obj* env);
 
@@ -25,9 +25,9 @@ obj* quote(obj* o, obj* env);
  * Primitive: atom
  * ---------------
  * Checks if an object is an atom
- * @param o : An object to check if it is an atom
- * @param env : The environment to evaluate this primitive in
- * @return : t if it is an atom, else the empty list
+ * @param o: An object to check if it is an atom
+ * @param env: The environment to evaluate this primitive in
+ * @return: t if it is an atom, else the empty list
  */
 obj* atom(obj* o, obj* env);
 
@@ -63,7 +63,7 @@ obj* cdr(obj* o, obj* env);
 
 /**
  * Primitive: cons
- * -------------
+ * ---------------
  * Expects the value of y to be a list and returns a list containing the value
  * of x followed by the elements of the value of y 
  * @param o : the argument to the cons call
@@ -85,4 +85,4 @@ obj* cons(obj* o, obj* env);
  */
 obj* cond(obj* o, obj* env);
 
-#endif
+#endif // _LISP_H_INCLUDED

@@ -1,10 +1,11 @@
 /*
  * File: list.c
  * ------------
- * Implements the list data structure basic operations
+ * Implements the list data structure along with basic operations
+ * such as copying and and disposal
  */
 
-#include <list.h>
+#include "list.h"
 #include <stdlib.h>
 
 static void* getContents(obj* o);

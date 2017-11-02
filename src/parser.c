@@ -8,8 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define UNPARSE_BUFF 16
-
 static obj* parseAtom(expression_t e, size_t* numParsedP);
 static obj* parseList(expression_t e, size_t* numParsedP);
 static obj* getQuoteList();
@@ -85,8 +83,8 @@ expression_t unparse(obj* o) {
  * Turn a list into an expression that represents that list. Note: the produced lisp
  * expression will be in dynamically allocated space and will NOT contain opening and closing
  * parentheses.
- * @param o : A lisp object that is a list to be unparsed
- * @return : A lisp expression that represents the passed lisp object
+ * @param o: A lisp object that is a list to be unparsed
+ * @return: A lisp expression that represents the passed lisp object
  */
 static expression_t unparseList(obj* o) {
   if (o == NULL) return NULL;
@@ -264,12 +262,16 @@ static obj* putIntoList(obj* o) {
  * Determines if a list object is an empty list. Note: this is for checking
  * if the object is a list object that is empty, which is NOT the same thing as
  * checking if the list object is the empty-list atom.
- * @param o : A list object to check
- * @return : True if the object is a list object that is empty, false otherwise
+ * @param o: A list object to check
+ * @return: True if the object is a list object that is empty, false otherwise
  */
 static bool isEmptyList(obj *o) {
+
+  //
   if (o->objtype != list_obj) return false;
+
   list_t* l = getList(o);
+
   return l->car == NULL && l->cdr == NULL;
 }
 
