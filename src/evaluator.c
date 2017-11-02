@@ -9,12 +9,12 @@
 #include <string.h>
 
 // Static function declarations
-static obj* putIntoList(obj* o);
+static obj* put_into_list(obj *o);
 static obj* lookup(obj* o, obj* env);
 static obj* bind(obj* params, obj* args, obj* env);
 static obj* associate(obj* names, obj* values);
-static obj* pushFrame(obj* frame, obj* env);
-static obj* evalList(obj* list, obj* env);
+static obj* push_frame(obj *frame, obj *env);
+static obj* eval_list(obj *list, obj *env);
 
 // Evaluate a lisp expression
 obj* eval(obj* o, obj* env) {
@@ -30,8 +30,8 @@ obj* eval(obj* o, obj* env) {
   // which means evaluate the operator (return a procedure or a primitive)
   // to which we call apply on the arguments
   if (o->objtype == list_obj) {
-    obj* operator = eval(getList(o)->car, env);
-    return apply(operator, getList(o)->cdr, env);
+    obj* operator = eval(get_list(o)->car, env);
+    return apply(operator, get_list(o)->cdr, env);
   }
   else return NULL;
 };
@@ -41,15 +41,15 @@ obj* apply(obj* closure, obj* args, obj* env) {
   if (closure == NULL) return NULL;
 
   if (closure->objtype == primitive_obj) {
-    primitive_t f = *getPrimitive(closure);
+    primitive_t f = *get_primitive(closure);
     return f(args, env);
   }
 
   if (closure->objtype == closure_obj) {
-    obj* evaluatedArguments = evalList(args, env);
-    obj* params = getList(getList(closure)->cdr)->car;
+    obj* evaluatedArguments = eval_list(args, env);
+    obj* params = get_list(get_list(closure)->cdr)->car;
     obj* newEnv = bind(params, evaluatedArguments, env);
-    obj* exp = getList(getList(closure)->cdr)->cdr;
+    obj* exp = get_list(get_list(closure)->cdr)->cdr;
     return eval(exp, newEnv);
   }
   else return NULL;
@@ -73,13 +73,13 @@ static obj* lookup(obj* o, obj* env) {
   if (o->objtype != atom_obj) return NULL;
 
   // Get the list
-  obj* pair = getList(env)->car;
+  obj* pair = get_list(env)->car;
 
 
-  if (strcmp(getAtom(o), getAtom(getList(pair)->car)) == 0)
-    return getList(getList(pair)->cdr)->car;
+  if (strcmp(get_atom(o), get_atom(get_list(pair)->car)) == 0)
+    return get_list(get_list(pair)->cdr)->car;
 
-  else return lookup(o, getList(env)->cdr);
+  else return lookup(o, get_list(env)->cdr);
 }
 
 /**
@@ -93,7 +93,7 @@ static obj* lookup(obj* o, obj* env) {
  */
 static obj* bind(obj* params, obj* args, obj* env) {
   obj* frame = associate(params, args);
-  return pushFrame(frame, env);
+  return push_frame(frame, env);
 }
 
 /**
@@ -104,11 +104,11 @@ static obj* bind(obj* params, obj* args, obj* env) {
  * @param env : Environment to evaluate each element of the list
  * @return : A new list with the evaluated values of the passed list
  */
-static obj* evalList(obj* list, obj* env) {
+static obj* eval_list(obj *list, obj *env) {
   if (list == NULL) return NULL;
   if (list->objtype != list_obj) return NULL;
-  obj* o = putIntoList(eval(getList(list)->car, env));
-  getList(o)->cdr = evalList(getList(list)->cdr, env);
+  obj* o = put_into_list(eval(get_list(list)->car, env));
+  get_list(o)->cdr = eval_list(get_list(list)->cdr, env);
   return o;
 }
 
@@ -124,14 +124,14 @@ static obj* associate(obj* names, obj* values) {
   if (names == NULL || values == NULL) return NULL;
   if (names->objtype != list_obj || values->objtype != list_obj) return NULL;
 
-  obj* nameCopy = copy(getList(names)->car);
-  obj* valueCopy = copy(getList(values)->car);
+  obj* nameCopy = copy(get_list(names)->car);
+  obj* valueCopy = copy(get_list(values)->car);
 
-  obj* pair = putIntoList(nameCopy);
-  getList(pair)->cdr = valueCopy;
+  obj* pair = put_into_list(nameCopy);
+  get_list(pair)->cdr = valueCopy;
 
-  obj* pairs = putIntoList(pair);
-  getList(pairs)->cdr = associate(getList(names)->cdr, getList(values)->cdr);
+  obj* pairs = put_into_list(pair);
+  get_list(pairs)->cdr = associate(get_list(names)->cdr, get_list(values)->cdr);
   return pairs;
 }
 
@@ -143,13 +143,13 @@ static obj* associate(obj* names, obj* values) {
  * @param env : List of name-value pairs to append the frame to
  * @return : The new augmented list of pairs, with the frame on the front
  */
-static obj* pushFrame(obj* frame, obj* env) {
+static obj* push_frame(obj *frame, obj *env) {
   if (frame == NULL) return env;
   if (env == NULL) return frame;
   if (frame ->objtype != list_obj || env->objtype != list_obj) return NULL;
 
-  if (getList(frame)->cdr == NULL) getList(frame)->cdr = env;
-  else pushFrame(getList(frame)->cdr, env);
+  if (get_list(frame)->cdr == NULL) get_list(frame)->cdr = env;
+  else push_frame(get_list(frame)->cdr, env);
   return frame;
 }
 
@@ -160,10 +160,10 @@ static obj* pushFrame(obj* frame, obj* env) {
  * @param o : The object that the list's car should point to
  * @return : A pointer to the list object containing only the argument object
  */
-static obj* putIntoList(obj* o) {
+static obj* put_into_list(obj *o) {
   obj* listObj = calloc(1, sizeof(obj) + sizeof(list_t));
   if (listObj == NULL) return NULL;
   listObj->objtype = list_obj;
-  getList(listObj)->car = o;
+  get_list(listObj)->car = o;
   return listObj;
 }

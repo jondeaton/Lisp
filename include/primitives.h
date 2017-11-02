@@ -1,7 +1,7 @@
 /*
  * File: lisp.h
  * ------------
- * Presents the interface to the lisp primitives
+ * Presents the interface to the lisp primitives. Th
  */
 
 #ifndef _LISP_H_INCLUDED
@@ -17,7 +17,7 @@
  * Returns the unevaluated version of the object
  * @param o: The object to quote
  * @param env: The environment to evaluate this primitive in
- * @return: Pointer to the object without evaluating it
+ * @return: Pointer to the lisp object without evaluating it
  */
 obj* quote(obj* o, obj* env);
 
@@ -55,9 +55,9 @@ obj* car(obj* o, obj* env);
  * Primitive: cdr
  * -------------
  * Expects the value of l to be a list and returns everything after the first element
- * @param o : A list object (will be asserted)
- * @param env : The environment to evaluate this primitive in
- * @return : Everything after the first element of the list
+ * @param o: A list object (will be asserted)
+ * @param env: The environment to evaluate this primitive in
+ * @return: Everything after the first element of the list
  */
 obj* cdr(obj* o, obj* env);
 
@@ -66,9 +66,9 @@ obj* cdr(obj* o, obj* env);
  * ---------------
  * Expects the value of y to be a list and returns a list containing the value
  * of x followed by the elements of the value of y 
- * @param o : the argument to the cons call
- * @param env : The environment to evaluate this primitive in
- * @return
+ * @param o: the argument to the cons call
+ * @param env: The environment to evaluate this primitive in
+ * @return: todo
  */
 obj* cons(obj* o, obj* env);
 
@@ -79,10 +79,22 @@ obj* cons(obj* o, obj* env);
  * The p expressions are evaluated in order until one returns t
  * When one is found  the value of the corresp onding e expression
  * is returned as the expression
- * @param o : The argument to the cond call
- * @param env : The environment to evaluate this primitive in
- * @return
+ * @param o: The argument to the cond call
+ * @param env: The environment to evaluate this primitive in
+ * @return: todo
  */
 obj* cond(obj* o, obj* env);
+
+/**
+ * Primitive: set
+ * --------------
+ * Primitive function for setting a value in the environment that the
+ * primitive is evaluated in
+ * Usage: (set 'foo 42)
+ * @param o: The pointer to the argument to the set function
+ * @param env: The environment to evaluate this primitive in (will be modified!)
+ * @return: todo
+ */
+obj* set(obj* o, obj* env);
 
 #endif // _LISP_H_INCLUDED

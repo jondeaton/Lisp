@@ -25,7 +25,7 @@ obj* empty = &empty_atom;
 
 obj* quote(obj* o, obj* env) {
   if (o == NULL) return NULL;
-  return getList(o)->car;
+  return get_list(o)->car;
 }
 
 obj* atom(obj* o, obj* env) {
@@ -42,15 +42,15 @@ obj* eq(obj* o, obj* env) {
 obj* car(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  obj* result = eval(getList(o)->car, env);
-  return getList(result)->car;
+  obj* result = eval(get_list(o)->car, env);
+  return get_list(result)->car;
 }
 
 obj* cdr(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  obj* result = eval(getList(o)->car, env);
-  return getList(result)->cdr;
+  obj* result = eval(get_list(o)->car, env);
+  return get_list(result)->cdr;
 }
 
 obj* cons(obj* o, obj* env) {
@@ -62,7 +62,7 @@ obj* cons(obj* o, obj* env) {
 
   obj* new_obj = calloc(1, sizeof(obj) + sizeof(list_t));
   new_obj->objtype = list_obj;
-  list_t* l = getList(new_obj);
+  list_t* l = get_list(new_obj);
   l->car = x;
   l->cdr = y;
   return new_obj;
@@ -71,17 +71,17 @@ obj* cons(obj* o, obj* env) {
 obj* cond(obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  list_t* l = getList(o);
+  list_t* l = get_list(o);
 
   while (true) {
     obj* pair_obj = l->car;
     assert(pair_obj->objtype == list_obj);
-    list_t* pair = getList(pair_obj);
+    list_t* pair = get_list(pair_obj);
     if (eval(pair->car, env) == t) return pair->cdr;
 
     if (l->cdr == NULL) return empty;
     assert(l->cdr->objtype == list_obj);
-    l = getList(l->cdr);
+    l = get_list(l->cdr);
   }
 }
 
@@ -95,9 +95,9 @@ obj* cond(obj* o, obj* env) {
  */
 static bool cmp(obj* x, obj* y) {
   if (x->objtype != y->objtype) return false;
-  if (x->objtype == atom_obj) return strcmp(getAtom(x), getAtom(y)) == 0;
-  if (x->objtype == primitive_obj) return getPrimitive(x) == getPrimitive(y);
+  if (x->objtype == atom_obj) return strcmp(get_atom(x), get_atom(y)) == 0;
+  if (x->objtype == primitive_obj) return get_primitive(x) == get_primitive(y);
   if (x->objtype == list_obj)
-    return cmp(getList(x)->car, getList(y)->car) && cmp(getList(x)->cdr, getList(y)->cdr);
+    return cmp(get_list(x)->car, get_list(y)->car) && cmp(get_list(x)->cdr, get_list(y)->cdr);
   else return x == y;
 }

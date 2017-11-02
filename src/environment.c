@@ -42,7 +42,7 @@ static expression_t kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond 
 
 obj* initEnv() {
   size_t unused;
-  obj* env = parseExpression(kEnvExp, &unused); // cheeky
+  obj* env = parse_expression(kEnvExp, &unused); // cheeky
   if (env == NULL) return NULL; // ERROR
   insertPrimitives(env);
   return env;
@@ -56,9 +56,9 @@ obj* initEnv() {
  */
 static void insertPrimitives(obj* pairList) {
   if (pairList == NULL) return;
-  obj* pair = getList(pairList)->car;
+  obj* pair = get_list(pairList)->car;
   replacePrimitivePlaceholder(pair);
-  insertPrimitives(getList(pairList)->cdr);
+  insertPrimitives(get_list(pairList)->cdr);
 }
 
 /**
@@ -72,12 +72,12 @@ static void insertPrimitives(obj* pairList) {
  */
 static void replacePrimitivePlaceholder(obj* pair) {
   if (pair == NULL) return;
-  atom_t primitiveName = getAtom(getList(pair)->car);
+  atom_t primitiveName = get_atom(get_list(pair)->car);
   primitive_t primitive = lookupPrimitive(primitiveName);
 
-  obj* second = getList(pair)->cdr;
-  dispose(getList(second)->car);
-  getList(second)->car = wrapPrimitive(primitive);
+  obj* second = get_list(pair)->cdr;
+  dispose(get_list(second)->car);
+  get_list(second)->car = wrapPrimitive(primitive);
 }
 
 /**
@@ -90,7 +90,7 @@ static void replacePrimitivePlaceholder(obj* pair) {
 static obj* wrapPrimitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
   o->objtype = primitive_obj;
-  primitive_t* primp = getPrimitive(o);
+  primitive_t* primp = get_primitive(o);
   *primp = primitive;
   return o;
 }

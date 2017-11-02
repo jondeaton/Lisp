@@ -25,7 +25,7 @@ obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
   if (input == NULL) return NULL;
 
   size_t n;
-  obj* o = parseExpression(input, &n);
+  obj* o = parse_expression(input, &n);
   unparse(o);
 
   free(input);

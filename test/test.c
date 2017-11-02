@@ -4,9 +4,9 @@
  * Lisp interpreter tester
  */
 
-#include <primitives.h>
-#include <parser.h>
-#include <environment.h>
+#include "primitives.h"
+#include "parser.h"
+#include "environment.h"
 #include <stdio.h>
 
 static bool parserTest();
@@ -40,7 +40,7 @@ static bool parserTest() {
 
   for (int i = 0; exprs[i] != NULL; i++) {
     expression_t e = exprs[i];
-    obj* o = parseExpression(e, &n);
+    obj* o = parse_expression(e, &n);
     expression_t expr = unparse(o);
     printf("%s => %s\n", (char*) e, (char*) expr);
   }

@@ -19,7 +19,7 @@ typedef char* expression_t;
  * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
  * @return : Pointer to a lisp data structure object representing that the lisp expression represents
  */
-obj* parseExpression(expression_t e, size_t* numParsedP);
+obj* parse_expression(expression_t e, size_t *numParsedP);
 
 /**
  * Function: unparse
