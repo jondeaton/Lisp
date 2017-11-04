@@ -1,11 +1,12 @@
 /*
  * File: list.h
  * ------------
- * Exports the interface to the list data structure
+ * Exports the interface to the list data structure along with basic operations
+ * such as copying and and disposal
  */
 
-#ifndef _LIST_H
-#define _LIST_H
+#ifndef _LIST_H_INCLUDED
+#define _LIST_H_INCLUDED
 
 #include <stdbool.h>
 
@@ -22,7 +23,7 @@ typedef struct {
   obj* cdr;
 } list_t;
 
-typedef obj*(*primitive_t)(obj*, obj*);
+typedef obj*(*primitive_t)(const obj*, obj*);
 
 /**
  * Function: copy
@@ -69,5 +70,4 @@ atom_t get_atom(const obj *o);
  */
 primitive_t* get_primitive(const obj *o);
 
-
-#endif
+#endif // _LIST_H_INCLUDED

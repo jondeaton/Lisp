@@ -79,8 +79,8 @@ expression_t unparse(obj* o) {
 }
 
 /**
- * Function: unparseList
- * ---------------------
+ * Function: unparse_list
+ * ----------------------
  * Turn a list into an expression that represents that list. Note: the produced lisp
  * expression will be in dynamically allocated space and will NOT contain opening and closing
  * parentheses.
@@ -117,11 +117,11 @@ static expression_t unparse_list(obj *o) {
 }
 
 /**
- * Function: unparseAtom
- * ---------------------
+ * Function: unparse_atom
+ * ----------------------
  * Unparses an atom into dynamically allocated
- * @param o : Pointer to an atom object
- * @return : Pointer to dynamically allocated memory with the an expression representing the atom
+ * @param o: Pointer to an atom object
+ * @return: Pointer to dynamically allocated memory with the an expression representing the atom
  */
 static expression_t unparse_atom(obj *o) {
   if (o == NULL) return NULL;
@@ -131,28 +131,28 @@ static expression_t unparse_atom(obj *o) {
 }
 
 /**
- * Function: unparsePrimitive
- * --------------------------
+ * Function: unparse_primitive
+ * ---------------------------
  * Turns a primitive atom into a string in dynamically allocated memory
- * @param o : A pointer to a lisp object of primitive type
- * @return : An expression in dynamically allocated memory that
+ * @param o: A pointer to a lisp object of primitive type
+ * @return: An expression in dynamically allocated memory that
  */
 static expression_t unparse_primitive(obj *o) {
   if (o == NULL) return NULL;
   expression_t e = malloc(2 + sizeof(void*) * 16 + 1);
-  sprintf(e, "%p", *get_primitive(o));
+  sprintf(e, "%p", *get_primitive(o)); // just print the raw pointer
   return e;
 }
 
 /**
- * Function: isBalanced
- * --------------------
+ * Function: is_balanced
+ * ---------------------
  * Determines if an expression has balanced parenthesis
- * @param e : The lisp expression to check
- * @return : True if each opening parentheses in the expression is balanced by a closing parentheses
+ * @param e: The lisp expression to check
+ * @return: True if each opening parentheses in the expression is balanced by a closing parentheses
  * and there are no extra closing parentheses, false otherwise.
  */
-bool isBalanced(expression_t e) {
+bool is_balanced(expression_t e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;

@@ -86,10 +86,10 @@ static obj* lookup(obj* o, obj* env) {
  * Function: bind
  * ---------------
  * binds a list of arguments to parameters and pushes them onto an environment
- * @param params : Parameters
- * @param args : Arguments
- * @param env : Environment
- * @return : Environment now with bound arguments appended
+ * @param params: Parameters
+ * @param args: Arguments
+ * @param env: Environment
+ * @return: Environment now with bound arguments appended
  */
 static obj* bind(obj* params, obj* args, obj* env) {
   obj* frame = associate(params, args);
@@ -114,7 +114,7 @@ static obj* eval_list(obj *list, obj *env) {
 
 /**
  * Function: associate
- * -----------------------
+ * -------------------
  * Takes a list of variable names and pairs them up with values in a list of pairs
  * @param names : List of names to associate with values
  * @param values : List of values each associated with the name in the name list
@@ -136,12 +136,12 @@ static obj* associate(obj* names, obj* values) {
 }
 
 /**
- * Function: pushFrame
- * -------------------
+ * Function: push_frame
+ * --------------------
  * Pushes a list of pairs of associated keys and values onto a list of such pairs
- * @param frame : List of name-value pairs
- * @param env : List of name-value pairs to append the frame to
- * @return : The new augmented list of pairs, with the frame on the front
+ * @param frame: List of name-value pairs
+ * @param env: List of name-value pairs to append the frame to
+ * @return: The new augmented list of pairs, with the frame on the front
  */
 static obj* push_frame(obj *frame, obj *env) {
   if (frame == NULL) return env;
@@ -154,11 +154,11 @@ static obj* push_frame(obj *frame, obj *env) {
 }
 
 /**
- * Function: putIntoList
- * ---------------------
+ * Function: put_into_list
+ * -----------------------
  * Makes a list object with car pointing to the object passed
- * @param o : The object that the list's car should point to
- * @return : A pointer to the list object containing only the argument object
+ * @param o: The object that the list's car should point to
+ * @return: A pointer to the list object containing only the argument object
  */
 static obj* put_into_list(obj *o) {
   obj* listObj = calloc(1, sizeof(obj) + sizeof(list_t));

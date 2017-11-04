@@ -19,10 +19,11 @@ static void* get_contents(const obj *o);
 obj* copy(const obj* o) {
   if (o == NULL) return NULL;
 
+  // Different kind of copying for each object type
   if (o->objtype == atom_obj) return copy_atom(o);
-  else if (o->objtype == primitive_obj) return copy_primitive(o);
-  else if (o->objtype == list_obj) return copy_list(o);
-  else return NULL;
+  if (o->objtype == primitive_obj) return copy_primitive(o);
+  if (o->objtype == list_obj) return copy_list(o);
+  return NULL;
 }
 
 // Recursive disposal of an object

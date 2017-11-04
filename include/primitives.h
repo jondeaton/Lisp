@@ -19,7 +19,7 @@
  * @param env: The environment to evaluate this primitive in
  * @return: Pointer to the lisp object without evaluating it
  */
-obj* quote(obj* o, obj* env);
+obj* quote(const obj* o, obj* env);
 
 /**
  * Primitive: atom
@@ -29,7 +29,7 @@ obj* quote(obj* o, obj* env);
  * @param env: The environment to evaluate this primitive in
  * @return: t if it is an atom, else the empty list
  */
-obj* atom(obj* o, obj* env);
+obj* atom(const obj* o, obj* env);
 
 /**
  * Primitive: eq
@@ -39,7 +39,7 @@ obj* atom(obj* o, obj* env);
  * @param env : The environment to evaluate this primitive in
  * @return t if both are equal, empty list (false) otherwise
  */
-obj* eq(obj* o, obj* env);
+obj* eq(const obj* o, obj* env);
 
 /**
  * Primitive: car
@@ -49,7 +49,7 @@ obj* eq(obj* o, obj* env);
  * @param env : The environment to evaluate this primitive in
  * @return : The first element of the list
  */
-obj* car(obj* o, obj* env);
+obj* car(const obj* o, obj* env);
 
 /**
  * Primitive: cdr
@@ -59,7 +59,7 @@ obj* car(obj* o, obj* env);
  * @param env: The environment to evaluate this primitive in
  * @return: Everything after the first element of the list
  */
-obj* cdr(obj* o, obj* env);
+obj* cdr(const obj* o, obj* env);
 
 /**
  * Primitive: cons
@@ -70,7 +70,7 @@ obj* cdr(obj* o, obj* env);
  * @param env: The environment to evaluate this primitive in
  * @return: todo
  */
-obj* cons(obj* o, obj* env);
+obj* cons(const obj* o, obj* env);
 
 /**
  * Primitive: cons
@@ -83,7 +83,7 @@ obj* cons(obj* o, obj* env);
  * @param env: The environment to evaluate this primitive in
  * @return: todo
  */
-obj* cond(obj* o, obj* env);
+obj* cond(const obj* o, obj* env);
 
 /**
  * Primitive: set
@@ -95,6 +95,6 @@ obj* cond(obj* o, obj* env);
  * @param env: The environment to evaluate this primitive in (will be modified!)
  * @return: todo
  */
-obj* set(obj* o, obj* env);
+obj* set(const obj* o, obj* env);
 
 #endif // _LISP_H_INCLUDED

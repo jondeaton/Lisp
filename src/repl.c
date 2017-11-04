@@ -1,8 +1,7 @@
 /*
  * File: repl.c
  * ------------
- * Presents the implementation of the Read-Eval-Print Loop
- * for Lisp
+ * Presents the implementation of the Read-Eval-Print Loop for Lisp
  */
 
 #include "repl.h"
@@ -17,11 +16,11 @@
 #define REPROMPT ">> "
 
 // Static function declarations
-static expression_t getExpression(FILE* fd);
+static expression_t get_expression(FILE *fd);
 
 // Get expression_t from stdin, turn it into a list, return the list
 obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
-  expression_t input = getExpression(fd);
+  expression_t input = get_expression(fd);
   if (input == NULL) return NULL;
 
   size_t n;
@@ -57,12 +56,12 @@ int repl() {
 };
 
 /**
- * Function: getExpression
+ * Function: get_expression
  * -----------------------
  * Gets an expression from the user or file
- * @return : The expression in a dynamically allocated memory location
+ * @return: The expression in a dynamically allocated memory location
  */
-static expression_t getExpression(FILE* fd) {
+static expression_t get_expression(FILE *fd) {
   printf(PROMPT);
 
   char buff[BUFSIZE];
@@ -76,7 +75,7 @@ static expression_t getExpression(FILE* fd) {
   strcpy(e, buff);
 
   bool valid;
-  while ((valid = isValid(e)) && !isBalanced(e)) {
+  while ((valid = isValid(e)) && !is_balanced(e)) {
     printf(REPROMPT);
     scanf("%s", buff);
     inputSize = strlen(buff);

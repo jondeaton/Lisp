@@ -12,11 +12,21 @@
 static bool parserTest();
 static bool envTest();
 
+
+
+static bool car_cdr_test() {
+return true;
+}
+
+
+
 int main(int argc, char* argv[]) {
   envTest();
   parserTest();
   return 0;
 }
+
+
 
 static bool envTest() {
   return true;

@@ -39,7 +39,7 @@ expression_t unparse(obj* o);
  * @param e : A lisp expression
  * @return : True if there are at least as many
  */
-bool isBalanced(expression_t e);
+bool is_balanced(expression_t e);
 
 /**
  * Function: isValid
