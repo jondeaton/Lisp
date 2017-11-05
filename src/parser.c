@@ -9,29 +9,29 @@
 #include <string.h>
 #include <stdio.h>
 
-static obj* parse_atom(expression_t e, size_t *numParsedP);
-static obj* parse_list(expression_t e, size_t *numParsedP);
+static obj* parse_atom(const_expression e, size_t *numParsedP);
+static obj* parse_list(const_expression e, size_t *numParsedP);
 static obj* get_quote_list();
 static obj* put_into_list(obj *o);
-static bool is_empty_list(obj *o);
+static bool is_empty_list(const obj *o);
 static obj* to_empty_atom(obj *o);
 static obj* get_empty_atom();
 
-static expression_t unparse_list(obj *o);
-static expression_t unparse_atom(obj *o);
-static expression_t unparse_primitive(obj *o);
+static expression unparse_list(const obj *o);
+static expression unparse_atom(const obj *o);
+static expression unparse_primitive(const obj *o);
 
-static size_t atom_size(expression_t e);
+static size_t atom_size(const_expression e);
 static bool is_white_space(char character);
-static int distance_to_next_element(expression_t e);
+static int distance_to_next_element(const_expression e);
 
-obj* parse_expression(expression_t e, size_t *num_parsed_p) {
+obj* parse_expression(const_expression e, size_t *num_parsed_p) {
   ssize_t start = distance_to_next_element(e);
   if (start == -1) {
     if (num_parsed_p != NULL) *num_parsed_p = strlen(e);
     return NULL;
   }
-  expression_t expr_start = (char*) e + start;
+  expression expr_start = (char*) e + start;
 
   if (expr_start[0] == ')') {
     if (num_parsed_p != NULL) *num_parsed_p = (size_t) start + 1;
@@ -58,7 +58,7 @@ obj* parse_expression(expression_t e, size_t *num_parsed_p) {
   return o;
 }
 
-expression_t unparse(obj* o) {
+expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
   if (o->objtype == atom_obj) return unparse_atom(o);
@@ -66,10 +66,10 @@ expression_t unparse(obj* o) {
   if (o->objtype == primitive_obj) return unparse_primitive(o);
 
   if (o->objtype == list_obj) {
-    expression_t listExp = unparse_list(o);
+    expression listExp = unparse_list(o);
     if (listExp == NULL) return strdup("()");
 
-    expression_t e = malloc(1 + strlen(listExp) + 2); // open, close, null
+    expression e = malloc(1 + strlen(listExp) + 2); // open, close, null
     e[0] = '(';
     strcpy((char*) e + 1, listExp);
     strcpy((char*) e + 1 + strlen(listExp), ")");
@@ -87,14 +87,14 @@ expression_t unparse(obj* o) {
  * @param o: A lisp object that is a list to be unparsed
  * @return: A lisp expression that represents the passed lisp object
  */
-static expression_t unparse_list(obj *o) {
+static expression unparse_list(const obj *o) {
   if (o == NULL) return NULL;
 
-  expression_t e;
+  expression e;
 
-  expression_t carExp = unparse(get_list(o)->car);
+  expression carExp = unparse(get_list(o)->car);
   if (carExp == NULL) return NULL;
-  expression_t cdrExp = unparse_list(get_list(o)->cdr);
+  expression cdrExp = unparse_list(get_list(o)->cdr);
 
   size_t carExpSize = strlen(carExp);
   if (cdrExp == NULL) {
@@ -123,10 +123,10 @@ static expression_t unparse_list(obj *o) {
  * @param o: Pointer to an atom object
  * @return: Pointer to dynamically allocated memory with the an expression representing the atom
  */
-static expression_t unparse_atom(obj *o) {
+static expression unparse_atom(const obj *o) {
   if (o == NULL) return NULL;
   atom_t atm = get_atom(o);
-  expression_t e = malloc(strlen(atm) + 1);
+  expression e = malloc(strlen(atm) + 1);
   return strcpy(e, atm);
 }
 
@@ -137,9 +137,9 @@ static expression_t unparse_atom(obj *o) {
  * @param o: A pointer to a lisp object of primitive type
  * @return: An expression in dynamically allocated memory that
  */
-static expression_t unparse_primitive(obj *o) {
+static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
-  expression_t e = malloc(2 + sizeof(void*) * 16 + 1);
+  expression e = malloc(2 + sizeof(void*) * 16 + 1);
   sprintf(e, "%p", *get_primitive(o)); // just print the raw pointer
   return e;
 }
@@ -152,7 +152,7 @@ static expression_t unparse_primitive(obj *o) {
  * @return: True if each opening parentheses in the expression is balanced by a closing parentheses
  * and there are no extra closing parentheses, false otherwise.
  */
-bool is_balanced(expression_t e) {
+bool is_balanced(const_expression e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;
@@ -168,7 +168,7 @@ bool is_balanced(expression_t e) {
  * @param e : A lisp expression
  * @return : True is there are no extra closing parentheses, false otherwise
  */
-bool isValid(expression_t e) {
+bool is_valid(const_expression e) {
   int net = 0;
   for (size_t i = 0; i < strlen(e); i++) {
     if (e[i] == '(') net++;
@@ -186,7 +186,7 @@ bool isValid(expression_t e) {
  * @param numParsedP : Pointer to a location to be populated with the number of characters parsed
  * @return : A lisp object representing the parsed atom in dynamically allocated memory
  */
-static obj* parse_atom(expression_t e, size_t *numParsedP) {
+static obj* parse_atom(const_expression e, size_t *numParsedP) {
   size_t size = atom_size(e);
   obj* o = calloc(1, sizeof(obj) + size + 1);
   if (o == NULL) return NULL; // fuck me right?
@@ -208,9 +208,9 @@ static obj* parse_atom(expression_t e, size_t *numParsedP) {
  * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
  * @return : Pointer to a lisp data structure object representing the lisp expression
  */
-static obj* parse_list(expression_t e, size_t *numParsedP) {
+static obj* parse_list(const_expression e, size_t *numParsedP) {
   int start = distance_to_next_element(e);
-  expression_t exprStart = (char*) e + start;
+  expression exprStart = (char*) e + start;
 
   if (exprStart[0] == ')') {
     *numParsedP = (size_t) start + 1;
@@ -222,7 +222,7 @@ static obj* parse_list(expression_t e, size_t *numParsedP) {
   obj* o = put_into_list(nextElement);
 
   size_t restSize;
-  expression_t restOfList = (char*) exprStart + exprSize;
+  expression restOfList = (char*) exprStart + exprSize;
   get_list(o)->cdr = parse_list(restOfList, &restSize);
 
   *numParsedP = start + exprSize + restSize;
@@ -266,7 +266,7 @@ static obj* put_into_list(obj *o) {
  * @param o: A list object to check
  * @return: True if the object is a list object that is empty, false otherwise
  */
-static bool is_empty_list(obj *o) {
+static bool is_empty_list(const obj *o) {
   if (o->objtype != list_obj) return false;
 
   list_t* l = get_list(o);
@@ -305,7 +305,7 @@ static obj* get_empty_atom() {
  * @param e: A lisp expression
  * @return: The number of characters of whitespace in the beginning
  */
-static int distance_to_next_element(expression_t e) {
+static int distance_to_next_element(const_expression e) {
   size_t i;
   for (i = 0; i < strlen(e); i++)
     if (!is_white_space(e[i])) break;
@@ -320,7 +320,7 @@ static int distance_to_next_element(expression_t e) {
  * @param e: An expression that represents an atom
  * @return: The number of characters in that atom
  */
-static size_t atom_size(expression_t e) {
+static size_t atom_size(const_expression e) {
   size_t i;
   for(i = 0; i < strlen(e); i++) {
     if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')') return i;

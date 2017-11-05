@@ -16,11 +16,11 @@
 #define REPROMPT ">> "
 
 // Static function declarations
-static expression_t get_expression(FILE *fd);
+static expression get_expression(FILE *fd);
 
-// Get expression_t from stdin, turn it into a list, return the list
+// Get expression from stdin, turn it into a list, return the list
 obj* read_expression(FILE *fd, const char *prompt, const char *reprompt) {
-  expression_t input = get_expression(fd);
+  expression input = get_expression(fd);
   if (input == NULL) return NULL;
 
   size_t n;
@@ -38,7 +38,7 @@ void print(FILE* fd, obj* o) {
     return;
   }
 
-  expression_t result = unparse(o);
+  expression result = unparse(o);
 
   if (result) fprintf(fd, "%s\n", (char*) result);
   else perror("Error\n");
@@ -61,7 +61,7 @@ int repl() {
  * Gets an expression from the user or file
  * @return: The expression in a dynamically allocated memory location
  */
-static expression_t get_expression(FILE *fd) {
+static expression get_expression(FILE *fd) {
   printf(PROMPT);
 
   char buff[BUFSIZE];
@@ -69,13 +69,13 @@ static expression_t get_expression(FILE *fd) {
   size_t inputSize = strlen(buff);
 
   size_t totalSize = inputSize;
-  expression_t e = malloc(sizeof(char) * (inputSize + 1));
+  expression e = malloc(sizeof(char) * (inputSize + 1));
   if (e == NULL) return NULL;
 
   strcpy(e, buff);
 
   bool valid;
-  while ((valid = isValid(e)) && !is_balanced(e)) {
+  while ((valid = is_valid(e)) && !is_balanced(e)) {
     printf(REPROMPT);
     scanf("%s", buff);
     inputSize = strlen(buff);
