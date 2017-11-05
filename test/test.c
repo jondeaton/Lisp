@@ -143,7 +143,7 @@ static int test_single_set(const_expression set_expr, const_expression expr, con
   expression result_exp = unparse(eval_result);
   bool test_result = strcmp(result_exp, expected) == 0;
 
-  printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+  printf("Evaluating:\t%s\t%s\n", set_expr, test_result ? PASS : FAIL);
 
 
   if (!test_result) {
@@ -293,6 +293,7 @@ static int test_set() {
   int num_fails = 0;
   num_fails += test_single_set("(set 'x '5)", "x", "5") ? 0 : 1;
   num_fails += test_single_set("(set 'y '10)", "y", "10") ? 0 : 1;
+  num_fails += test_single_set("(set 'x (eq (car '(a b c)) 'a))", "(cond (x '5) ('() '6))", "5") ? 0 : 1;
   printf("Test set: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

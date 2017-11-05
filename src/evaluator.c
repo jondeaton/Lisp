@@ -60,9 +60,9 @@ obj* apply(const obj* closure, const obj* args, obj* env) {
  * Function: lookup
  * ----------------
  * Looks up an object in an environment
- * @param o : A lisp object that is of the atom type
- * @param env : An environment to lookup the atom in
- * @return : The lisp object that was associated with the object in the environment
+ * @param o: A lisp object that is of the atom type
+ * @param env: An environment to lookup the atom in
+ * @return: The lisp object that was associated with the object in the environment
  */
 static obj* lookup(const obj* o, const obj* env) {
   if (o == NULL || env == NULL) return NULL;
