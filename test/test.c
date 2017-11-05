@@ -39,6 +39,7 @@ static int test_eq();
 static int test_cons();
 static int test_cond();
 static int test_set();
+static int test_lambda();
 
 /**
  * Function: main
@@ -71,6 +72,7 @@ static int run_all_tests() {
   num_fails += test_cons();
   num_fails += test_cond();
   num_fails += test_set();
+  num_fails += test_lambda();
   return num_fails;
 }
 
@@ -113,7 +115,6 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
-
 
   if (!test_result) {
     printf(KRED "\tExpecting:\t%s\n", expected);
@@ -173,6 +174,7 @@ static int test_parser() {
   num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
   num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
   num_fails += test_single_parse("(quote (a b c d e f hello 123456789098))", "(quote (a b c d e f hello 123456789098))") ? 0 : 1;
+  num_fails += test_single_parse("((((((()))))))", "((((((()))))))") ? 0 : 1;
   num_fails += test_single_parse("'(a b c)", "(quote (a b c))") ? 0 : 1;
   num_fails += test_single_parse("(car (quote (a b c)))", "(car (quote (a b c)))") ? 0 : 1;
   num_fails += test_single_parse("(car '(a b c))", "(car (quote (a b c)))") ? 0 : 1;
@@ -298,3 +300,17 @@ static int test_set() {
   return num_fails;
 }
 
+/**
+ * Function: test_lambda
+ * ---------------------
+ * Tests the functionality of the lambda function language feature
+ * @return: The number of tests that failed
+ */
+static int test_lambda() {
+  printf(KMAG "\nTesting lambda...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("((lambda (x) (car x)) '(a b c))", "a") ? 0 : 1;
+  num_fails += test_single_eval("((lambda (x) (cdr x)) '(a b c))", "(b c)") ? 0 : 1;
+  printf("Test cond: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}

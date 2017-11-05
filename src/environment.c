@@ -50,6 +50,18 @@ obj* init_env() {
   return env;
 }
 
+obj* make_pair(const obj* name, const obj* value) {
+  obj* first_item = new_list();
+  list_of(first_item)->car = copy(name);
+
+  obj* second_item = new_list();
+  list_of(second_item)->car = copy(value);
+
+  list_of(first_item)->cdr = second_item;
+
+  return first_item;
+}
+
 /**
  * Function: insert_primitives
  * ---------------------------

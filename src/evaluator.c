@@ -6,8 +6,12 @@
 
 #include "evaluator.h"
 #include "list.h"
+#include "environment.h"
 #include <stdlib.h>
 #include <string.h>
+#include <list.h>
+
+#define LAMBDA_RESV "lambda"
 
 // Static function declarations
 static obj* put_into_list(obj *o);
@@ -16,6 +20,7 @@ static obj* bind(obj* params, obj* args, obj* env);
 static obj* associate(obj* names, obj* values);
 static obj* push_frame(obj *frame, obj *env);
 static obj* eval_list(const obj* list, obj *env);
+static bool is_lambda(const obj* o);
 
 // Evaluate a lisp expression
 obj* eval(const obj* o, obj* env) {
@@ -31,7 +36,9 @@ obj* eval(const obj* o, obj* env) {
   // which means evaluate the operator (return a procedure or a primitive)
   // to which we call apply on the arguments
   if (o->objtype == list_obj) {
-    if (is_empty(o)) return (obj*) o;
+    if (is_lambda(o)) return (obj*) o;  // Lambda function's value is itself
+    if (is_empty(o)) return (obj*) o;   // Empty list's value is itself
+
     obj* operator = eval(list_of(o)->car, env);
     return apply(operator, list_of(o)->cdr, env);
   }
@@ -49,10 +56,13 @@ obj* apply(const obj* closure, const obj* args, obj* env) {
 
   } else {
     obj* arg_values = eval_list(args, env);
+
+    if (!is_lambda(closure)) return NULL; // <-- not a lambda function
+
     obj* params = list_of(list_of(closure)->cdr)->car;
-    obj* newEnv = bind(params, arg_values, env);
-    obj* exp = list_of(list_of(closure)->cdr)->cdr;
-    return eval(exp, newEnv);
+    obj* new_env = bind(params, arg_values, env);
+    obj* exp = list_of(list_of(list_of(closure)->cdr)->cdr)->car;
+    return eval(exp, new_env);
   }
 }
 
@@ -86,9 +96,9 @@ static obj* lookup(const obj* o, const obj* env) {
  * Function: bind
  * --------------
  * binds a list of arguments to parameters and pushes them onto an environment
- * @param params: Parameters
- * @param args: Arguments
- * @param env: Environment
+ * @param params: List of parameters
+ * @param args: List of arguments to bind to the parameters
+ * @param env: Environment to prepend the bound arguments to
  * @return: Environment now with bound arguments appended
  */
 static obj* bind(obj* params, obj* args, obj* env) {
@@ -124,13 +134,11 @@ static obj* associate(obj* names, obj* values) {
   if (names == NULL || values == NULL) return NULL;
   if (names->objtype != list_obj || values->objtype != list_obj) return NULL;
 
-  obj* nameCopy = copy(list_of(names)->car);
-  obj* valueCopy = copy(list_of(values)->car);
+  obj* pair = make_pair(list_of(names)->car, list_of(values)->car);
 
-  obj* pair = put_into_list(nameCopy);
-  list_of(pair)->cdr = valueCopy;
+  obj* pairs = new_list();
+  list_of(pairs)->car = pair;
 
-  obj* pairs = put_into_list(pair);
   list_of(pairs)->cdr = associate(list_of(names)->cdr, list_of(values)->cdr);
   return pairs;
 }
@@ -143,13 +151,14 @@ static obj* associate(obj* names, obj* values) {
  * @param env: List of name-value pairs to append the frame to
  * @return: The new augmented list of pairs, with the frame on the front
  */
-static obj* push_frame(obj *frame, obj *env) {
+static obj* push_frame(obj* frame, obj* env) {
   if (frame == NULL) return env;
   if (env == NULL) return frame;
-  if (frame ->objtype != list_obj || env->objtype != list_obj) return NULL;
+  if (frame->objtype != list_obj || env->objtype != list_obj) return NULL;
 
   if (list_of(frame)->cdr == NULL) list_of(frame)->cdr = env;
   else push_frame(list_of(frame)->cdr, env);
+
   return frame;
 }
 
@@ -164,4 +173,20 @@ static obj* put_into_list(obj *o) {
   obj* wrapper = new_list();
   list_of(wrapper)->car = o;
   return wrapper;
+}
+
+/**
+ * Function: is_lambda
+ * -------------------
+ * Determines if a list object is a lambda function
+ * @param o: The object to determine if it is a lambda
+ * @return: True if the object is a lambda function, false otherwise
+ */
+static bool is_lambda(const obj* o) {
+  if (o == NULL) return false;
+  if (o->objtype != list_obj) return false;
+  obj* lambda_atom = list_of(o)->car;
+  if (lambda_atom == NULL) return false;
+  if (lambda_atom->objtype != atom_obj) return false;
+  return strcmp(atom_of(lambda_atom), LAMBDA_RESV) == 0;
 }

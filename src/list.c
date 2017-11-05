@@ -8,6 +8,7 @@
 #include "list.h"
 #include <stdlib.h>
 #include <string.h>
+#include <list.h>
 
 // Static function declarations
 static obj* copy_list(const obj* o);
@@ -112,14 +113,11 @@ static obj* copy_atom(const obj* o) {
 static obj* copy_list(const obj* o) {
   if (o == NULL) return NULL;
 
-  obj* new_list = malloc(sizeof(obj) + sizeof(list_obj));
-  new_list->objtype = list_obj; // New object is also a list
+  obj* list_copy = new_list();
+  list_of(list_copy)->car = copy(list_of(o)->car);
+  list_of(list_copy)->cdr = copy_list(list_of(o)->cdr);
 
-  // Recursive copying of car and cdr pointers
-  list_of(new_list)->car = copy(list_of(o)->car);
-  list_of(new_list)->cdr = copy(list_of(o)->cdr);
-
-  return new_list;
+  return list_copy;
 }
 
 /**
