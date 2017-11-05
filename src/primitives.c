@@ -76,7 +76,6 @@ obj* cdr(const obj* o, obj* env) {
 
 obj* cons(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  assert(o->objtype == list_obj);
 
   obj* x = car(o, env);
   obj* y = cdr(o, env);

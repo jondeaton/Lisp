@@ -35,6 +35,7 @@ static int test_car_cdr();
 static int test_quote();
 static int test_atom();
 static int test_eq();
+static int test_cons();
 
 /**
  * Function: main
@@ -64,6 +65,7 @@ static int run_all_tests() {
   num_fails += test_car_cdr();
   num_fails += test_atom();
   num_fails += test_eq();
+  num_fails += test_cons();
   return num_fails;
 }
 
@@ -208,6 +210,24 @@ static int test_eq() {
   num_fails += test_single_eval("(eq 'a 'a)", "t") ? 0 : 1;
   num_fails += test_single_eval("(eq 'a 'b)", "()") ? 0 : 1;
   num_fails += test_single_eval("(eq '() '())", "t") ? 0 : 1;
-  printf("Test atom: %s\n", num_fails == 0 ? PASS : FAIL);
+  num_fails += test_single_eval("(eq (car '(a b c)) 'a)", "t") ? 0 : 1;
+  printf("Test eq: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_cons
+ * -------------------
+ * Tests the functionality of the cons primitive
+ * @return: The number of cons tests that failed
+ */
+static int test_cons() {
+  printf(KMAG "\nTesting cons...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("(cons 'a '(b c))", "(a b c)") ? 0 : 1;
+  num_fails += test_single_eval("(cons 'a (cons 'b (cons 'c '())))", "(a b c)") ? 0 : 1;
+  num_fails += test_single_eval("(car (cons 'a '(b c)))", "a") ? 0 : 1;
+  num_fails += test_single_eval("(cdr (cons 'a '(b c)))", "(b c)") ? 0 : 1;
+  printf("Test cons: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
