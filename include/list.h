@@ -10,9 +10,10 @@
 
 #include <stdbool.h>
 
-typedef char* atom_t;
+// The different types of lists
+enum type {atom_obj, list_obj, primitive_obj};
 
-enum type {atom_obj, list_obj, closure_obj, primitive_obj};
+typedef char* atom_t;
 
 typedef struct {
   enum type objtype;
@@ -24,6 +25,14 @@ typedef struct {
 } list_t;
 
 typedef obj*(*primitive_t)(const obj*, obj*);
+
+/**
+ * Function: new_list
+ * ------------------
+ * Returns a list object in dynamically allocated memory
+ * @return: A pointer to a new list object in dynamically allocated memory
+ */
+obj* new_list();
 
 /**
  * Function: copy
@@ -50,7 +59,7 @@ void dispose(obj* o);
  * @param o: Pointer to a lisp data structure
  * @return: A pointer to that list data structure's list
  */
-list_t* get_list(const obj *o);
+list_t* list_of(const obj *o);
 
 /**
  * Function: get_atom
@@ -59,7 +68,7 @@ list_t* get_list(const obj *o);
  * @param o: Pointer to a lisp data structure
  * @return: A pointer to the atom in the object
  */
-atom_t get_atom(const obj *o);
+atom_t atom_of(const obj *o);
 
 /**
  * Function: get_primitive
@@ -68,7 +77,7 @@ atom_t get_atom(const obj *o);
  * @param o: Pointer to a lisp data structure
  * @return: Function pointer to primitive function
  */
-primitive_t* get_primitive(const obj *o);
+primitive_t* primitive_of(const obj *o);
 
 /**
  * Function: is_empty
@@ -87,7 +96,5 @@ bool is_empty(const obj* o);
  * @return: True if the two objects are identical, false otherwise
  */
 bool deep_compare(obj* x, obj* y);
-
-
 
 #endif // _LIST_H_INCLUDED

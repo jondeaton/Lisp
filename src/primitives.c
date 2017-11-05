@@ -29,27 +29,27 @@ obj* t() {
 obj* empty() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
   o->objtype = list_obj;
-  get_list(o)->car = NULL;
-  get_list(o)->cdr = NULL;
+  list_of(o)->car = NULL;
+  list_of(o)->cdr = NULL;
   return o;
 }
 
 obj* quote(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  return get_list(o)->car;
+  return list_of(o)->car;
 }
 
 obj* atom(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  obj* result = eval(get_list(o)->car, env);
+  obj* result = eval(list_of(o)->car, env);
   return is_empty(result) || result->objtype == atom_obj ? t() : empty();
 }
 
 obj* eq(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
-  obj* first_arg = get_list(o)->car;
-  obj* second_arg = get_list(get_list(o)->cdr)->car;
+  obj* first_arg = list_of(o)->car;
+  obj* second_arg = list_of(list_of(o)->cdr)->car;
 
   obj* x = eval(first_arg, env);
   obj* y = eval(second_arg, env);
@@ -58,32 +58,32 @@ obj* eq(const obj* o, obj* env) {
   if (x->objtype == list_obj)
     return is_empty(x) && is_empty(y) ? t() : empty();
 
-  return strcmp(get_atom(x), get_atom(y)) == 0 ? t() : empty();
+  return strcmp(atom_of(x), atom_of(y)) == 0 ? t() : empty();
 }
 
 obj* car(const obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  obj* result = eval(get_list(o)->car, env);
-  return get_list(result)->car;
+  obj* result = eval(list_of(o)->car, env);
+  return list_of(result)->car;
 }
 
 obj* cdr(const obj* o, obj* env) {
   if (o == NULL) return NULL;
   assert(o->objtype == list_obj);
-  obj* result = eval(get_list(o)->car, env);
-  return get_list(result)->cdr;
+  obj* result = eval(list_of(o)->car, env);
+  return list_of(result)->cdr;
 }
 
 obj* cons(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
-  obj* x = get_list(o)->car;
-  obj* y = get_list(get_list(o)->cdr)->car;
+  obj* x = list_of(o)->car;
+  obj* y = list_of(list_of(o)->cdr)->car;
 
   obj* new_obj = empty();
-  get_list(new_obj)->car = eval(x, env);
-  get_list(new_obj)->cdr = eval(y, env);
+  list_of(new_obj)->car = eval(x, env);
+  list_of(new_obj)->cdr = eval(y, env);
 
   return new_obj;
 }
@@ -91,16 +91,16 @@ obj* cons(const obj* o, obj* env) {
 obj* cond(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
-  obj* pair = get_list(o)->car;
-  list_t* pl = get_list(pair);
+  obj* pair = list_of(o)->car;
+  list_t* pl = list_of(pair);
 
   obj* predicate = eval(pl->car, env);
   if (is_t(predicate)) {
-    obj* e = get_list(pl->cdr)->car;
+    obj* e = list_of(pl->cdr)->car;
     return eval(e, env);
   } else {
     if (pl->cdr == NULL) return empty();
-    return cond(get_list(o)->cdr, env);
+    return cond(list_of(o)->cdr, env);
   }
 }
 
@@ -108,24 +108,24 @@ obj* set(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
   obj* new_link = empty();
-  get_list(new_link)->car = get_list(env)->car;
-  get_list(new_link)->cdr = get_list(env)->cdr;
+  list_of(new_link)->car = list_of(env)->car;
+  list_of(new_link)->cdr = list_of(env)->cdr;
 
-  obj* first_arg = get_list(o)->car;
-  obj* second_arg = get_list(get_list(o)->cdr)->car;
+  obj* first_arg = list_of(o)->car;
+  obj* second_arg = list_of(list_of(o)->cdr)->car;
 
   obj* var = eval(first_arg, env);
   obj* value = eval(second_arg, env);
 
   obj* pair_second = empty();
-  get_list(pair_second)->car = value;
+  list_of(pair_second)->car = value;
 
   obj* pair_first = empty();
-  get_list(pair_first)->car = var;
-  get_list(pair_first)->cdr = pair_second;
+  list_of(pair_first)->car = var;
+  list_of(pair_first)->cdr = pair_second;
 
-  get_list(env)->car = pair_first;
-  get_list(env)->cdr = new_link;
+  list_of(env)->car = pair_first;
+  list_of(env)->cdr = new_link;
   return value;
 }
 
@@ -139,5 +139,5 @@ obj* set(const obj* o, obj* env) {
 static bool is_t(const obj* o) {
   if (o == NULL) return false;
   if (o->objtype != atom_obj) return false;
-  return strcmp(get_atom(o), t_contents) == 0;
+  return strcmp(atom_of(o), t_contents) == 0;
 }

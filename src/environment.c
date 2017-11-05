@@ -58,9 +58,9 @@ obj* init_env() {
  */
 static void insert_primitives(obj *pair_list) {
   if (pair_list == NULL) return;
-  obj* pair = get_list(pair_list)->car;
+  obj* pair = list_of(pair_list)->car;
   replace_primitive_placeholder(pair);
-  insert_primitives(get_list(pair_list)->cdr);
+  insert_primitives(list_of(pair_list)->cdr);
 }
 
 /**
@@ -74,12 +74,12 @@ static void insert_primitives(obj *pair_list) {
  */
 static void replace_primitive_placeholder(obj *pair) {
   if (pair == NULL) return;
-  atom_t primitive_name = get_atom(get_list(pair)->car);
+  atom_t primitive_name = atom_of(list_of(pair)->car);
   primitive_t primitive = lookup_primitive(primitive_name);
 
-  obj* second = get_list(pair)->cdr;
-  dispose(get_list(second)->car);
-  get_list(second)->car = wrap_primitive(primitive);
+  obj* second = list_of(pair)->cdr;
+  dispose(list_of(second)->car);
+  list_of(second)->car = wrap_primitive(primitive);
 }
 
 /**
@@ -92,7 +92,7 @@ static void replace_primitive_placeholder(obj *pair) {
 static obj* wrap_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
   o->objtype = primitive_obj;
-  primitive_t* primp = get_primitive(o);
+  primitive_t* primp = primitive_of(o);
   *primp = primitive;
   return o;
 }

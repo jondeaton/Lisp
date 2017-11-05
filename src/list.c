@@ -15,6 +15,15 @@ static obj* copy_atom(const obj* o);
 static obj* copy_primitive(const obj* o);
 static void* get_contents(const obj *o);
 
+obj* new_list() {
+  obj* o = malloc(sizeof(obj) + sizeof(list_t));
+  if (o == NULL) return NULL;
+  o->objtype = list_obj;
+  list_of(o)->car = NULL;
+  list_of(o)->cdr = NULL;
+  return o;
+}
+
 // Copy an object recursively
 obj* copy(const obj* o) {
   if (o == NULL) return NULL;
@@ -30,39 +39,39 @@ obj* copy(const obj* o) {
 void dispose(obj* o) {
   if (o == NULL) return;
   if (o->objtype == list_obj) {
-    list_t *l = get_list(o);
+    list_t *l = list_of(o);
     dispose(l->car);
     dispose(l->cdr);
   }
   free(o);
 }
 
-list_t* get_list(const obj *o) {
+list_t* list_of(const obj *o) {
   return (list_t*) get_contents(o);
 }
 
-atom_t get_atom(const obj *o) {
+atom_t atom_of(const obj *o) {
   return (atom_t) get_contents(o);
 }
 
-primitive_t* get_primitive(const obj *o) {
+primitive_t* primitive_of(const obj *o) {
   return (primitive_t*) get_contents(o);
 }
 
 bool is_empty(const obj* o) {
   if (o == NULL) return false;
   if (o->objtype != list_obj) return false;
-  return get_list(o)->car == NULL && get_list(o)->cdr == NULL;
+  return list_of(o)->car == NULL && list_of(o)->cdr == NULL;
 }
 
 bool deep_compare(obj* x, obj* y) {
   if (x->objtype != y->objtype) return false;
-  if (x->objtype == atom_obj) return strcmp(get_atom(x), get_atom(y)) == 0;
-  if (x->objtype == primitive_obj) return get_primitive(x) == get_primitive(y);
+  if (x->objtype == atom_obj) return strcmp(atom_of(x), atom_of(y)) == 0;
+  if (x->objtype == primitive_obj) return primitive_of(x) == primitive_of(y);
 
   // List: cars must match and cdrs must match
   if (x->objtype == list_obj)
-    return deep_compare(get_list(x)->car, get_list(y)->car) && deep_compare(get_list(x)->cdr, get_list(y)->cdr);
+    return deep_compare(list_of(x)->car, list_of(y)->car) && deep_compare(list_of(x)->cdr, list_of(y)->cdr);
   else return x == y;
 }
 
@@ -77,7 +86,7 @@ bool deep_compare(obj* x, obj* y) {
 static obj* copy_atom(const obj* o) {
   if (o == NULL) return NULL;
 
-  atom_t atom_source = get_atom(o); // The atom contents to be copied
+  atom_t atom_source = atom_of(o); // The atom contents to be copied
 
   // Get the size of the atom to be copied
   size_t atom_size = strlen(atom_source);
@@ -107,8 +116,8 @@ static obj* copy_list(const obj* o) {
   new_list->objtype = list_obj; // New object is also a list
 
   // Recursive copying of car and cdr pointers
-  get_list(new_list)->car = copy(get_list(o)->car);
-  get_list(new_list)->cdr = copy(get_list(o)->cdr);
+  list_of(new_list)->car = copy(list_of(o)->car);
+  list_of(new_list)->cdr = copy(list_of(o)->cdr);
 
   return new_list;
 }
@@ -127,8 +136,8 @@ static obj* copy_primitive(const obj* o) {
   new_primitive_obj->objtype = primitive_obj; // New object should also be a primitive
 
   // Get pointer to the function pointers
-  primitive_t* new_prim = get_primitive(new_primitive_obj);
-  primitive_t* old_prim = get_primitive(o);
+  primitive_t* new_prim = primitive_of(new_primitive_obj);
+  primitive_t* old_prim = primitive_of(o);
 
   // Copy the function pointer over
   memcpy(new_prim, old_prim, sizeof(primitive_t));
