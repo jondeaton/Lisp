@@ -244,6 +244,7 @@ static int test_cond() {
   printf(KMAG "\nTesting cond...\n" RESET);
   int num_fails = 0;
   num_fails += test_single_eval("(cond ((eq 'a 'b) 'first) ((atom 'a) 'second))", "second") ? 0 : 1;
+  num_fails += test_single_eval("(cond ((eq 'a 'b) 'first) ((atom '(a)) 'second) ((eq (car (cdr '(a b c))) 'b) (cdr '(x y z !))))", "(y z !)") ? 0 : 1;
   printf("Test cond: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

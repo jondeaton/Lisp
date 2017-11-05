@@ -10,6 +10,7 @@
 #include <string.h>
 #include <assert.h>
 #include <list.h>
+#include <stdlib.h>
 
 const char* t_contents = "t";
 
@@ -80,7 +81,7 @@ obj* cons(const obj* o, obj* env) {
   obj* x = get_list(o)->car;
   obj* y = get_list(get_list(o)->cdr)->car;
 
-  obj* new_obj = calloc(1, sizeof(obj) + sizeof(list_t));
+  obj* new_obj = malloc(sizeof(obj) + sizeof(list_t));
   new_obj->objtype = list_obj;
 
   get_list(new_obj)->car = eval(x, env);
