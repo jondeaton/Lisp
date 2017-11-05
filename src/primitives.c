@@ -81,9 +81,7 @@ obj* cons(const obj* o, obj* env) {
   obj* x = get_list(o)->car;
   obj* y = get_list(get_list(o)->cdr)->car;
 
-  obj* new_obj = malloc(sizeof(obj) + sizeof(list_t));
-  new_obj->objtype = list_obj;
-
+  obj* new_obj = empty();
   get_list(new_obj)->car = eval(x, env);
   get_list(new_obj)->cdr = eval(y, env);
 
@@ -108,8 +106,27 @@ obj* cond(const obj* o, obj* env) {
 
 obj* set(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  return NULL;
-  // todo
+
+  obj* new_link = empty();
+  get_list(new_link)->car = get_list(env)->car;
+  get_list(new_link)->cdr = get_list(env)->cdr;
+
+  obj* first_arg = get_list(o)->car;
+  obj* second_arg = get_list(get_list(o)->cdr)->car;
+
+  obj* var = eval(first_arg, env);
+  obj* value = eval(second_arg, env);
+
+  obj* pair_second = empty();
+  get_list(pair_second)->car = value;
+
+  obj* pair_first = empty();
+  get_list(pair_first)->car = var;
+  get_list(pair_first)->cdr = pair_second;
+
+  get_list(env)->car = pair_first;
+  get_list(env)->cdr = new_link;
+  return value;
 }
 
 /**

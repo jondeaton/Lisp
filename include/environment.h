@@ -15,6 +15,6 @@
  * Initializes the default lisp environment
  * @return : Pointer to lisp environment object
  */
-obj* initEnv();
+obj* init_env();
 
 #endif

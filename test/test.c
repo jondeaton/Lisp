@@ -30,6 +30,7 @@
 static int run_all_tests();
 static bool test_single_eval(const_expression expr, const_expression expected);
 static bool test_single_parse(const_expression expr, const_expression expected);
+static int test_single_set(const_expression set_expr, const_expression expr, const_expression expected);
 static int test_parser();
 static int test_car_cdr();
 static int test_quote();
@@ -37,6 +38,7 @@ static int test_atom();
 static int test_eq();
 static int test_cons();
 static int test_cond();
+static int test_set();
 
 /**
  * Function: main
@@ -68,9 +70,9 @@ static int run_all_tests() {
   num_fails += test_eq();
   num_fails += test_cons();
   num_fails += test_cond();
+  num_fails += test_set();
   return num_fails;
 }
-
 
 /**
  * Function: test_single_parse
@@ -103,7 +105,38 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
  * @return: True if the expressoin evluated to the expected thing, false otherwise
  */
 static bool test_single_eval(const_expression expr, const_expression expected) {
-  obj* env = initEnv(); // The global environment
+  obj* env = init_env(); // The global environment
+
+  obj* to_eval = parse_expression(expr, NULL);
+  obj* eval_result = eval(to_eval, env);
+  expression result_exp = unparse(eval_result);
+  bool test_result = strcmp(result_exp, expected) == 0;
+
+  printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+
+
+  if (!test_result) {
+    printf(KRED "\tExpecting:\t%s\n", expected);
+    printf("\tResult:\t\t%s\n" RESET, result_exp);
+  }
+  // todo: dispose of unused things
+  return test_result;
+}
+
+/**
+ * Function: test_single_set
+ * -------------------------
+ * Tests if a single setting operation was done correctly
+ * @param set_expr: An expression that sets something in the environment
+ * @param expr: An expression to evaluate to test if the setting was done correctly
+ * @param expected: The expected output of the expression
+ * @return: True if the result of evaluating the expression after evaluating the setting expression
+ * was equal to the expected expression, false otherwise
+ */
+static int test_single_set(const_expression set_expr, const_expression expr, const_expression expected) {
+  obj* env = init_env(); // The global environment
+
+  eval(parse_expression(set_expr, NULL), env); // Set the stuff
 
   obj* to_eval = parse_expression(expr, NULL);
   obj* eval_result = eval(to_eval, env);
@@ -248,3 +281,19 @@ static int test_cond() {
   printf("Test cond: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
+
+/**
+ * Function: test_set
+ * ------------------
+ * Tests whether something can be set correctly in the environment
+ * @return: The number of tests that were failed
+ */
+static int test_set() {
+  printf(KMAG "\nTesting set...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_set("(set 'x '5)", "x", "5") ? 0 : 1;
+  num_fails += test_single_set("(set 'y '10)", "y", "10") ? 0 : 1;
+  printf("Test set: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+

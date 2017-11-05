@@ -23,7 +23,7 @@ int run(const char* lispProgramPath, obj* env) {
 
   FILE* fd = fopen(lispProgramPath, O_RDONLY);
 
-  if (env == NULL) env = initEnv();
+  if (env == NULL) env = init_env();
   while (!feof(fd)) eval(read_expression(fd, NULL, NULL), env);
   return 0;
 }
