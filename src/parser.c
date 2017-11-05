@@ -41,16 +41,18 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
   obj* o;
   size_t expr_size;
 
-  if (expr_start[0] == '\'') {
+  if (expr_start[0] == '\'') { // Expression starts with quote charactere
     o = get_quote_list();
     obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
+    expr_size += 1; // for the quote character
     get_list(o)->cdr = put_into_list(quoted);
 
-  } else if (expr_start[0] == '(')  {
+  } else if (expr_start[0] == '(')  { // Expression starts with opening paren
     o = parse_list((char *) expr_start + 1, &expr_size);
-    expr_size += 1;
+    expr_size += 1; // for the opening parentheses character
     if (o == NULL) o = to_empty_atom(o);
-  } else  {
+
+  } else {
     o = parse_atom(expr_start, &expr_size);
   }
 
