@@ -16,10 +16,10 @@ typedef char* expression_t;
  * -------------------------
  * Parses a lisp expression that represents either a lisp atom or list
  * @param e : A balanced, valid lisp expression
- * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
+ * @param num_parsed_p : A pointer to a place where the number of parsed characters may be written. Must be valid
  * @return : Pointer to a lisp data structure object representing that the lisp expression represents
  */
-obj* parse_expression(expression_t e, size_t *numParsedP);
+obj* parse_expression(expression_t e, size_t *num_parsed_p);
 
 /**
  * Function: unparse

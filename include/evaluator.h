@@ -17,7 +17,7 @@
  * @param env : Environment to evaluate the expression in
  * @return : The result of the evaluation of the object
  */
-obj* eval(obj* o, obj* env);
+obj* eval(const obj* o, obj* env);
 
 /**
  * Function: apply
@@ -28,6 +28,6 @@ obj* eval(obj* o, obj* env);
  * @param env : Environment to evaluate the expression in
  * @return : The result of the application of the function to the arguments
  */
-obj* apply(obj* closure,  obj* args, obj* env);
+obj* apply(const obj* closure, const obj* args, obj* env);
 
 #endif

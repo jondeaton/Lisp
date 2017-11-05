@@ -16,6 +16,7 @@ const char* t_contents = "t";
 // Static function declarations
 static bool deep_compare(obj* x, obj* y);
 static bool is_t(const obj* o);
+static bool is_empty(const obj* o);
 
 // Truth atom
 obj* t() {
@@ -41,10 +42,8 @@ obj* quote(const obj* o, obj* env) {
 
 obj* atom(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  if (o->objtype == list_obj)
-    return get_list(o)->car == NULL ? t() : empty();
-  else
-    return o->objtype == atom_obj ? t() : empty();
+  obj* result = eval(o, env);
+  return is_empty(result) || result->objtype == atom_obj ? t() : empty();
 }
 
 obj* eq(const obj* o, obj* env) {
@@ -109,7 +108,7 @@ obj* set(const obj* o, obj* env) {
 
 /**
  * Function: deep_compare
- * -------------
+ * ----------------------
  * Deep comparison of two lisp objects
  * @param x: The first object to compare
  * @param y: The second object to compare
@@ -129,11 +128,24 @@ static bool deep_compare(obj* x, obj* y) {
 /**
  * Function: is_t
  * --------------
- * Determined if a lisp object is the truth atom
+ * Determines if a lisp object is the truth atom
+ * @param o: A lisp object to determine if it is the t atom
  * @return: True if it is the truth atom, false otherwise
  */
 static bool is_t(const obj* o) {
   if (o == NULL) return false;
   if (o->objtype != atom_obj) return false;
   return strcmp(get_atom(o), t_contents) == 0;
+}
+
+/**
+ * Function: is_empty
+ * ------------------
+ * @param o: A lisp object to determine if it is the empty list
+ * @return: True if the object is the empty list, false otherwise
+ */
+static bool is_empty(const obj* o) {
+  if (o == NULL) return false;
+  if (o->objtype != list_obj) return false;
+  return get_list(o)->car == NULL && get_list(o)->cdr == NULL;
 }

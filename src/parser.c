@@ -21,40 +21,40 @@ static expression_t unparse_list(obj *o);
 static expression_t unparse_atom(obj *o);
 static expression_t unparse_primitive(obj *o);
 
-  static size_t atom_size(expression_t e);
+static size_t atom_size(expression_t e);
 static bool is_white_space(char character);
 static int distance_to_next_element(expression_t e);
 
-obj* parse_expression(expression_t e, size_t *numParsedP) {
+obj* parse_expression(expression_t e, size_t *num_parsed_p) {
   ssize_t start = distance_to_next_element(e);
   if (start == -1) {
-    *numParsedP = strlen(e);
+    if (num_parsed_p != NULL) *num_parsed_p = strlen(e);
     return NULL;
   }
-  expression_t exprStart = (char*) e + start;
+  expression_t expr_start = (char*) e + start;
 
-  if (exprStart[0] == ')') {
-    *numParsedP = (size_t) start + 1;
+  if (expr_start[0] == ')') {
+    if (num_parsed_p != NULL) *num_parsed_p = (size_t) start + 1;
     return NULL;
   } // End of list
 
   obj* o;
-  size_t exprSize;
+  size_t expr_size;
 
-  if (exprStart[0] == '\'') {
+  if (expr_start[0] == '\'') {
     o = get_quote_list();
-    obj* quoted = parse_expression((char *) exprStart + 1, &exprSize);
+    obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
     get_list(o)->cdr = put_into_list(quoted);
 
-  } else if (exprStart[0] == '(')  {
-    o = parse_list((char *) exprStart + 1, &exprSize);
-    exprSize += 1;
+  } else if (expr_start[0] == '(')  {
+    o = parse_list((char *) expr_start + 1, &expr_size);
+    expr_size += 1;
     if (o == NULL) o = to_empty_atom(o);
   } else  {
-    o = parse_atom(exprStart, &exprSize);
+    o = parse_atom(expr_start, &expr_size);
   }
 
-  *numParsedP = start + exprSize;
+  if (num_parsed_p != NULL) *num_parsed_p = start + expr_size;
   return o;
 }
 

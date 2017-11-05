@@ -24,6 +24,6 @@ int run(const char* lispProgramPath, obj* env) {
   FILE* fd = fopen(lispProgramPath, O_RDONLY);
 
   if (env == NULL) env = initEnv();
-  while (!feof(fd)) eval(readExpression(fd, NULL, NULL), env);
+  while (!feof(fd)) eval(read_expression(fd, NULL, NULL), env);
   return 0;
 }

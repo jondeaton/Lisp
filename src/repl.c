@@ -19,7 +19,7 @@
 static expression_t get_expression(FILE *fd);
 
 // Get expression_t from stdin, turn it into a list, return the list
-obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
+obj* read_expression(FILE *fd, const char *prompt, const char *reprompt) {
   expression_t input = get_expression(fd);
   if (input == NULL) return NULL;
 
@@ -48,7 +48,7 @@ void print(FILE* fd, obj* o) {
 int repl() {
   obj* env = initEnv(); // The REPL global environment
   while (true) {
-    obj* o = readExpression(stdin, PROMPT, REPROMPT);
+    obj* o = read_expression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;
     obj* evaluation = eval(o, env);
     print(stdout, evaluation);

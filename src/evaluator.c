@@ -10,21 +10,21 @@
 
 // Static function declarations
 static obj* put_into_list(obj *o);
-static obj* lookup(obj* o, obj* env);
+static obj* lookup(const obj* o, const obj* env);
 static obj* bind(obj* params, obj* args, obj* env);
 static obj* associate(obj* names, obj* values);
 static obj* push_frame(obj *frame, obj *env);
-static obj* eval_list(obj *list, obj *env);
+static obj* eval_list(const obj* list, obj *env);
 
 // Evaluate a lisp expression
-obj* eval(obj* o, obj* env) {
+obj* eval(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
   if (o->objtype == atom_obj) return lookup(o, env);
 
   // Primitive just means that there's nothing left to apply
-  if (o->objtype == primitive_obj) return o;
+  if (o->objtype == primitive_obj) return (obj*) o;
 
   // List type means its a operator being applied to operands
   // which means evaluate the operator (return a procedure or a primitive)
@@ -37,7 +37,7 @@ obj* eval(obj* o, obj* env) {
 };
 
 // Apply a closure object to a list of arguments
-obj* apply(obj* closure, obj* args, obj* env) {
+obj* apply(const obj* closure, const obj* args, obj* env) {
   if (closure == NULL) return NULL;
 
   if (closure->objtype == primitive_obj) {
@@ -63,7 +63,7 @@ obj* apply(obj* closure, obj* args, obj* env) {
  * @param env : An environment to lookup the atom in
  * @return : The lisp object that was associated with the object in the environment
  */
-static obj* lookup(obj* o, obj* env) {
+static obj* lookup(const obj* o, const obj* env) {
   if (o == NULL || env == NULL) return NULL;
 
   // Error: The environment should be a list
@@ -104,7 +104,7 @@ static obj* bind(obj* params, obj* args, obj* env) {
  * @param env : Environment to evaluate each element of the list
  * @return : A new list with the evaluated values of the passed list
  */
-static obj* eval_list(obj *list, obj *env) {
+static obj* eval_list(const obj *list, obj *env) {
   if (list == NULL) return NULL;
   if (list->objtype != list_obj) return NULL;
   obj* o = put_into_list(eval(get_list(list)->car, env));
