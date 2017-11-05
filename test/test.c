@@ -12,6 +12,20 @@
 #include <string.h>
 #include <stdio.h>
 
+// for colors
+#define KNRM  "\x1B[0m"
+#define KRED  "\x1B[31m"
+#define KGRN  "\x1B[32m"
+#define KYEL  "\x1B[33m"
+#define KBLU  "\x1B[34m"
+#define KMAG  "\x1B[35m"
+#define KCYN  "\x1B[36m"
+#define KWHT  "\x1B[37m"
+#define RESET "\033[0m"
+
+#define PASS "\x1B[32mPASS\033[0m"
+#define FAIL "\x1B[31mFAIL\033[0m"
+
 static int run_all_tests();
 static bool test_single_eval(const_expression expr, const_expression expected);
 static bool test_single_parse(const_expression expr, const_expression expected);
@@ -30,8 +44,8 @@ static int test_quote();
  */
 int main(int argc, char* argv[]) {
   int num_fails = run_all_tests();
-  if (num_fails == 0) printf("All tests passed.\n");
-  else printf("%d tests failed", num_fails);
+  if (num_fails == 0) printf(KGRN "All tests passed.\n");
+  else printf(KRED "%d test(s) failed\n" RESET, num_fails);
   return 0;
 }
 
@@ -46,7 +60,7 @@ static int run_all_tests() {
   num_fails += test_parser();
   num_fails += test_quote();
   num_fails += test_car_cdr();
-  //num_fails += test_atom();
+  num_fails += test_atom();
   return num_fails;
 }
 
@@ -94,8 +108,36 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
   expression result_exp = unparse(o);
   printf("\tResult:\t\t%s\n", result_exp);
   bool test_result = strcmp(result_exp, expected) == 0;
-  printf("\t\t%s\n", test_result ? "pass" : "fail");
+  printf("\t\t%s\n", test_result ? PASS : FAIL);
   return test_result;
+}
+
+/**
+ * Function: parser_test
+ * ---------------------
+ * Tests the functionality of the parser and un-parser.
+ * @return: The number of tests that failed
+ */
+static int test_parser() {
+  printf("\nTesting parsing...\n");
+
+  int num_fails = 0;
+
+  num_fails += test_single_parse("atom!", "atom!") ? 0 : 1;
+  num_fails += test_single_parse("()", "()") ? 0 : 1;
+  num_fails += test_single_parse("(hello) there (jon)", "(hello)") ? 0 : 1;
+  num_fails += test_single_parse("(a)", "(a)") ? 0 : 1;
+  num_fails += test_single_parse("(a b c)", "(a b c)") ? 0 : 1;
+  num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
+  num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
+  num_fails += test_single_parse("(quote (a b c d e f hello 123456789098))", "(quote (a b c d e f hello 123456789098))") ? 0 : 1;
+  num_fails += test_single_parse("'(a b c)", "(quote (a b c))") ? 0 : 1;
+  num_fails += test_single_parse("(car (quote (a b c)))", "(car (quote (a b c)))") ? 0 : 1;
+  num_fails += test_single_parse("(car '(a b c))", "(car (quote (a b c)))") ? 0 : 1;
+  num_fails += test_single_parse("(atom 'a)", "(atom (quote a))") ? 0 : 1;
+
+  printf("Test parsing: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
 }
 
 /**
@@ -105,13 +147,13 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
  * @return: True if all the tests pass, false otherwise
  */
 static int test_quote() {
-  printf("Testing quote...\n");
+  printf("\nTesting quote...\n");
   int num_fails = 0;
   num_fails += test_single_eval("(quote hello)", "hello") ? 0 : 1;
   num_fails += test_single_eval("(quote (a b c))", "(a b c)") ? 0 : 1;
   num_fails += test_single_eval("'hello", "hello") ? 0 : 1;
   num_fails += test_single_eval("'(a b c)", "(a b c)") ? 0 : 1;
-  printf("car/cdr: %s\n", num_fails ? "pass" : "fail");
+  printf("Test quote: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
 
@@ -122,14 +164,14 @@ static int test_quote() {
  * @return: True if all the tests passed, false otherwise
  */
 static int test_car_cdr() {
-  printf("Testing car and cdr...\n");
+  printf("\nTesting car/cdr...\n");
   int num_fails = 0;
   num_fails += test_single_eval("(car '(a b c))", "a") ? 0 : 1;
   num_fails += test_single_eval("(cdr '(a b c))", "(b c)") ? 0 : 1;
   num_fails += test_single_eval("(cdr (cdr '(a b c d)))", "(c d)") ? 0 : 1;
   num_fails += test_single_eval("(cdr (cdr '(a b c d)))", "(c d)") ? 0 : 1;
   num_fails += test_single_eval("(cdr (car '('(a b c) d e f)))", "((a b c))") ? 0 : 1;
-  printf("car/cdr: %s\n", num_fails ? "pass" : "fail");
+  printf("Test car/cdr: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
 
@@ -140,37 +182,11 @@ static int test_car_cdr() {
  * @return: True if all atom tests pass, false otherwise
  */
 static int test_atom() {
-  printf("Testing atom...\n");
+  printf("\nTesting atom...\n");
   int num_fails = 0;
   num_fails += test_single_eval("(atom 'a)", "t") ? 0 : 1;
   num_fails += test_single_eval("(atom ())", "t") ? 0 : 1;
   num_fails += test_single_eval("(atom (a b c))", "()") ? 0 : 1;
-  return num_fails;
-}
-
-/**
- * Function: parser_test
- * ---------------------
- * Tests the functionality of the parser and un-parser.
- * @return:
- */
-static int test_parser() {
-  printf("Testing parsing...");
-
-  int num_fails = 0;
-
-  num_fails += test_single_parse("atom!", "atom!") ? 0 : 1;
-  num_fails += test_single_parse("()", "()") ? 0 : 1;
-  num_fails += test_single_parse("(hello) there (jon)", "(hello)") ? 0 : 1;
-  num_fails += test_single_parse("(a)", "(a)") ? 0 : 1;
-  num_fails += test_single_parse("(a b c)", "(a b c)");
-  num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("(quote (a b c d e f hello 123456789098))", "(quote (a b c d e f hello 123456789098))") ? 0 : 1;
-  num_fails += test_single_parse("'(a b c)", "(quote (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("(car (quote (a b c)))", "(car (quote (a b c)))") ? 0 : 1;
-  num_fails += test_single_parse("(car '(a b c))", "(car (quote (a b c)))") ? 0 : 1;
-  num_fails += test_single_parse("(atom 'a)", "(atom (quote a))") ? 0 : 1;
-
+  printf("Test atom: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
