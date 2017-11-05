@@ -31,4 +31,4 @@ set(TEST_SOURCES
         include/evaluator.h         src/list.c
         test/test.c)
 
-add_executable(test_lisp ${TEST_SOURCES})
+add_executable(test-lisp ${TEST_SOURCES})

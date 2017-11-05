@@ -44,7 +44,7 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
     o = get_quote_list();
     obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
     expr_size += 1; // for the quote character
-    get_list(o)->cdr = put_into_list(quoted);
+    list_of(o)->cdr = put_into_list(quoted);
 
   } else if (expr_start[0] == '(')  { // Expression starts with opening paren
     o = parse_list((char *) expr_start + 1, &expr_size);
@@ -92,9 +92,9 @@ static expression unparse_list(const obj *o) {
 
   expression e;
 
-  expression car_expr = unparse(get_list(o)->car);
+  expression car_expr = unparse(list_of(o)->car);
   if (car_expr == NULL) return NULL;
-  expression cdrExp = unparse_list(get_list(o)->cdr);
+  expression cdrExp = unparse_list(list_of(o)->cdr);
 
   size_t carExpSize = strlen(car_expr);
   if (cdrExp == NULL) {
@@ -125,7 +125,7 @@ static expression unparse_list(const obj *o) {
  */
 static expression unparse_atom(const obj *o) {
   if (o == NULL) return NULL;
-  atom_t atm = get_atom(o);
+  atom_t atm = atom_of(o);
   expression e = malloc(strlen(atm) + 1);
   return strcpy(e, atm);
 }
@@ -140,7 +140,7 @@ static expression unparse_atom(const obj *o) {
 static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
   expression e = malloc(2 + sizeof(void*) * 16 + 1);
-  sprintf(e, "%p", *get_primitive(o)); // just print the raw pointer
+  sprintf(e, "%p", *primitive_of(o)); // just print the raw pointer
   return e;
 }
 
@@ -223,7 +223,7 @@ static obj* parse_list(const_expression e, size_t *numParsedP) {
 
   size_t restSize;
   expression restOfList = (char*) exprStart + exprSize;
-  get_list(o)->cdr = parse_list(restOfList, &restSize);
+  list_of(o)->cdr = parse_list(restOfList, &restSize);
 
   *numParsedP = start + exprSize + restSize;
   return o;
@@ -253,7 +253,7 @@ static obj* put_into_list(obj *o) {
   obj* listObj = calloc(1, sizeof(obj) + sizeof(list_t));
   if (listObj == NULL) return NULL;
   listObj->objtype = list_obj;
-  get_list(listObj)->car = o;
+  list_of(listObj)->car = o;
   return listObj;
 }
 
@@ -269,7 +269,7 @@ static obj* put_into_list(obj *o) {
 static bool is_empty_list(const obj *o) {
   if (o->objtype != list_obj) return false;
 
-  list_t* l = get_list(o);
+  list_t* l = list_of(o);
   return l->car == NULL && l->cdr == NULL;
 }
 

@@ -46,7 +46,7 @@ void print(FILE* fd, obj* o) {
 };
 
 int repl() {
-  obj* env = initEnv(); // The REPL global environment
+  obj* env = init_env(); // The REPL global environment
   while (true) {
     obj* o = read_expression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;

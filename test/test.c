@@ -30,6 +30,7 @@
 static int run_all_tests();
 static bool test_single_eval(const_expression expr, const_expression expected);
 static bool test_single_parse(const_expression expr, const_expression expected);
+static int test_single_set(const_expression set_expr, const_expression expr, const_expression expected);
 static int test_parser();
 static int test_car_cdr();
 static int test_quote();
@@ -37,6 +38,8 @@ static int test_atom();
 static int test_eq();
 static int test_cons();
 static int test_cond();
+static int test_set();
+static int test_lambda();
 
 /**
  * Function: main
@@ -68,9 +71,10 @@ static int run_all_tests() {
   num_fails += test_eq();
   num_fails += test_cons();
   num_fails += test_cond();
+  num_fails += test_set();
+  num_fails += test_lambda();
   return num_fails;
 }
-
 
 /**
  * Function: test_single_parse
@@ -103,7 +107,7 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
  * @return: True if the expressoin evluated to the expected thing, false otherwise
  */
 static bool test_single_eval(const_expression expr, const_expression expected) {
-  obj* env = initEnv(); // The global environment
+  obj* env = init_env(); // The global environment
 
   obj* to_eval = parse_expression(expr, NULL);
   obj* eval_result = eval(to_eval, env);
@@ -111,6 +115,36 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+
+  if (!test_result) {
+    printf(KRED "\tExpecting:\t%s\n", expected);
+    printf("\tResult:\t\t%s\n" RESET, result_exp);
+  }
+  // todo: dispose of unused things
+  return test_result;
+}
+
+/**
+ * Function: test_single_set
+ * -------------------------
+ * Tests if a single setting operation was done correctly
+ * @param set_expr: An expression that sets something in the environment
+ * @param expr: An expression to evaluate to test if the setting was done correctly
+ * @param expected: The expected output of the expression
+ * @return: True if the result of evaluating the expression after evaluating the setting expression
+ * was equal to the expected expression, false otherwise
+ */
+static int test_single_set(const_expression set_expr, const_expression expr, const_expression expected) {
+  obj* env = init_env(); // The global environment
+
+  eval(parse_expression(set_expr, NULL), env); // Set the stuff
+
+  obj* to_eval = parse_expression(expr, NULL);
+  obj* eval_result = eval(to_eval, env);
+  expression result_exp = unparse(eval_result);
+  bool test_result = strcmp(result_exp, expected) == 0;
+
+  printf("Evaluating:\t%s\t%s\n", set_expr, test_result ? PASS : FAIL);
 
 
   if (!test_result) {
@@ -140,6 +174,7 @@ static int test_parser() {
   num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
   num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
   num_fails += test_single_parse("(quote (a b c d e f hello 123456789098))", "(quote (a b c d e f hello 123456789098))") ? 0 : 1;
+  num_fails += test_single_parse("((((((()))))))", "((((((()))))))") ? 0 : 1;
   num_fails += test_single_parse("'(a b c)", "(quote (a b c))") ? 0 : 1;
   num_fails += test_single_parse("(car (quote (a b c)))", "(car (quote (a b c)))") ? 0 : 1;
   num_fails += test_single_parse("(car '(a b c))", "(car (quote (a b c)))") ? 0 : 1;
@@ -245,6 +280,37 @@ static int test_cond() {
   int num_fails = 0;
   num_fails += test_single_eval("(cond ((eq 'a 'b) 'first) ((atom 'a) 'second))", "second") ? 0 : 1;
   num_fails += test_single_eval("(cond ((eq 'a 'b) 'first) ((atom '(a)) 'second) ((eq (car (cdr '(a b c))) 'b) (cdr '(x y z !))))", "(y z !)") ? 0 : 1;
+  printf("Test cond: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_set
+ * ------------------
+ * Tests whether something can be set correctly in the environment
+ * @return: The number of tests that were failed
+ */
+static int test_set() {
+  printf(KMAG "\nTesting set...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_set("(set 'x '5)", "x", "5") ? 0 : 1;
+  num_fails += test_single_set("(set 'y '10)", "y", "10") ? 0 : 1;
+  num_fails += test_single_set("(set 'x (eq (car '(a b c)) 'a))", "(cond (x '5) ('() '6))", "5") ? 0 : 1;
+  printf("Test set: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_lambda
+ * ---------------------
+ * Tests the functionality of the lambda function language feature
+ * @return: The number of tests that failed
+ */
+static int test_lambda() {
+  printf(KMAG "\nTesting lambda...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("((lambda (x) (car x)) '(a b c))", "a") ? 0 : 1;
+  num_fails += test_single_eval("((lambda (x) (cdr x)) '(a b c))", "(b c)") ? 0 : 1;
   printf("Test cond: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
