@@ -7,7 +7,7 @@
 #ifndef _LISP_ENV_H
 #define _LISP_ENV_H
 
-#include <lisp.h>
+#include <primitives.h>
 
 /**
  * Function: initEnv

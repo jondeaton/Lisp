@@ -7,7 +7,7 @@
 #ifndef _REPL_H
 #define _REPL_H
 
-#include <lisp.h>
+#include <primitives.h>
 #include <stdio.h>
 
 /**
@@ -27,7 +27,7 @@ int repl();
  * an object and returns the object
  * @return : The object representation of the expression read from stdin
  */
-obj* readExpression(FILE* fd, const char* prompt, const char* reprompt);
+obj* read_expression(FILE *fd, const char *prompt, const char *reprompt);
 
 /**
  * Function: print

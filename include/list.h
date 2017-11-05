@@ -1,11 +1,12 @@
 /*
  * File: list.h
  * ------------
- * Exports the interface to the list data structure
+ * Exports the interface to the list data structure along with basic operations
+ * such as copying and and disposal
  */
 
-#ifndef _LIST_H
-#define _LIST_H
+#ifndef _LIST_H_INCLUDED
+#define _LIST_H_INCLUDED
 
 #include <stdbool.h>
 
@@ -22,51 +23,71 @@ typedef struct {
   obj* cdr;
 } list_t;
 
-typedef obj*(*primitive_t)(obj*, obj*);
-
-/**
- * Function: getList
- * -----------------
- * Gets a pointer to the list
- * @param o : Pointer to a lisp data structure
- * @return : A pointer to that list data structure's list
- */
-list_t* getList(obj* o);
-
-/**
- * Function: getAtom
- * -----------------
- * Gets a pointer to the atom
- * @param o : Pointer to a lisp data structure
- * @return : A pointer to the atom in the object
- */
-atom_t getAtom(obj* o);
-
-/**
- * Function: getPrimitive
- * ----------------------
- * Gets a pointer to a function pointer to the primitive function for a primitive object list
- * @param o : Pointer to a lisp data structure
- * @return : Function pointer to primitive function
- */
-primitive_t* getPrimitive(obj* o);
+typedef obj*(*primitive_t)(const obj*, obj*);
 
 /**
  * Function: copy
  * --------------
  * Copies an object, returning a new one, leaving the old one untouched
- * @param o : An object to copy
- * @return : A copy of the object
+ * @param o: An object to copy
+ * @return: A copy of the object
  */
-obj* copy(obj* o);
+obj* copy(const obj* o);
 
 /**
  * Function: dispose
  * -----------------
  * Frees the dynamically allocated memory used to store
  * the lisp object.
- * @param o : Pointer to the lisp objct to dispose of
+ * @param o: Pointer to the lisp objct to dispose of
  */
 void dispose(obj* o);
 
-#endif
+/**
+ * Function: get_list
+ * ------------------
+ * Gets a pointer to the list
+ * @param o: Pointer to a lisp data structure
+ * @return: A pointer to that list data structure's list
+ */
+list_t* get_list(const obj *o);
+
+/**
+ * Function: get_atom
+ * ------------------
+ * Gets a pointer to the atom
+ * @param o: Pointer to a lisp data structure
+ * @return: A pointer to the atom in the object
+ */
+atom_t get_atom(const obj *o);
+
+/**
+ * Function: get_primitive
+ * -----------------------
+ * Gets a pointer to a function pointer to the primitive function for a primitive object list
+ * @param o: Pointer to a lisp data structure
+ * @return: Function pointer to primitive function
+ */
+primitive_t* get_primitive(const obj *o);
+
+/**
+ * Function: is_empty
+ * ------------------
+ * @param o: A lisp object to determine if it is the empty list
+ * @return: True if the object is the empty list, false otherwise
+ */
+bool is_empty(const obj* o);
+
+/**
+ * Function: deep_compare
+ * ----------------------
+ * Deep comparison of two lisp objects
+ * @param x: The first object to compare
+ * @param y: The second object to compare
+ * @return: True if the two objects are identical, false otherwise
+ */
+bool deep_compare(obj* x, obj* y);
+
+
+
+#endif // _LIST_H_INCLUDED

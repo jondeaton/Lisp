@@ -1,14 +1,13 @@
 /*
  * File: repl.c
  * ------------
- * Presents the implementation of the Read-Eval-Print Loop
- * for Lisp
+ * Presents the implementation of the Read-Eval-Print Loop for Lisp
  */
 
-#include <repl.h>
-#include <parser.h>
-#include <environment.h>
-#include <evaluator.h>
+#include "repl.h"
+#include "parser.h"
+#include "environment.h"
+#include "evaluator.h"
 #include <string.h>
 #include <errno.h>
 
@@ -17,15 +16,15 @@
 #define REPROMPT ">> "
 
 // Static function declarations
-static expression_t getExpression(FILE* fd);
+static expression get_expression(FILE *fd);
 
-// Get expression_t from stdin, turn it into a list, return the list
-obj* readExpression(FILE* fd, const char* prompt, const char* reprompt) {
-  expression_t input = getExpression(fd);
+// Get expression from stdin, turn it into a list, return the list
+obj* read_expression(FILE *fd, const char *prompt, const char *reprompt) {
+  expression input = get_expression(fd);
   if (input == NULL) return NULL;
 
   size_t n;
-  obj* o = parseExpression(input, &n);
+  obj* o = parse_expression(input, &n);
   unparse(o);
 
   free(input);
@@ -39,7 +38,7 @@ void print(FILE* fd, obj* o) {
     return;
   }
 
-  expression_t result = unparse(o);
+  expression result = unparse(o);
 
   if (result) fprintf(fd, "%s\n", (char*) result);
   else perror("Error\n");
@@ -49,7 +48,7 @@ void print(FILE* fd, obj* o) {
 int repl() {
   obj* env = initEnv(); // The REPL global environment
   while (true) {
-    obj* o = readExpression(stdin, PROMPT, REPROMPT);
+    obj* o = read_expression(stdin, PROMPT, REPROMPT);
     if (o == NULL) return errno;
     obj* evaluation = eval(o, env);
     print(stdout, evaluation);
@@ -57,12 +56,12 @@ int repl() {
 };
 
 /**
- * Function: getExpression
+ * Function: get_expression
  * -----------------------
  * Gets an expression from the user or file
- * @return : The expression in a dynamically allocated memory location
+ * @return: The expression in a dynamically allocated memory location
  */
-static expression_t getExpression(FILE* fd) {
+static expression get_expression(FILE *fd) {
   printf(PROMPT);
 
   char buff[BUFSIZE];
@@ -70,13 +69,13 @@ static expression_t getExpression(FILE* fd) {
   size_t inputSize = strlen(buff);
 
   size_t totalSize = inputSize;
-  expression_t e = malloc(sizeof(char) * (inputSize + 1));
+  expression e = malloc(sizeof(char) * (inputSize + 1));
   if (e == NULL) return NULL;
 
   strcpy(e, buff);
 
   bool valid;
-  while ((valid = isValid(e)) && !isBalanced(e)) {
+  while ((valid = is_valid(e)) && !is_balanced(e)) {
     printf(REPROMPT);
     scanf("%s", buff);
     inputSize = strlen(buff);
