@@ -38,7 +38,7 @@ static ssize_t indexof(char* str, char* strings[], size_t numStrings);
 static primitive_t lookupPrimitive(atom_t atm);
 
 static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond};
-static expression kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cond x))";
+static expression kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cons x) (cond x))";
 
 obj* initEnv() {
   size_t unused;

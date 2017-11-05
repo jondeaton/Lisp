@@ -77,14 +77,15 @@ obj* cdr(const obj* o, obj* env) {
 obj* cons(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
-  obj* x = car(o, env);
-  obj* y = cdr(o, env);
+  obj* x = get_list(o)->car;
+  obj* y = get_list(get_list(o)->cdr)->car;
 
   obj* new_obj = calloc(1, sizeof(obj) + sizeof(list_t));
   new_obj->objtype = list_obj;
-  list_t* l = get_list(new_obj);
-  l->car = x;
-  l->cdr = y;
+
+  get_list(new_obj)->car = eval(x, env);
+  get_list(new_obj)->cdr = eval(y, env);
+
   return new_obj;
 }
 
