@@ -46,8 +46,18 @@ obj* atom(const obj* o, obj* env) {
 
 obj* eq(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  assert(o->objtype == list_obj);
-  return deep_compare(car(o, env), cdr(o, env)) ? t() : empty();
+
+  obj* first_arg = get_list(o)->car;
+  obj* second_arg = get_list(get_list(o)->cdr)->car;
+
+  obj* x = eval(first_arg, env);
+  obj* y = eval(second_arg, env);
+
+  if (x->objtype != y->objtype) return empty();
+  if (x->objtype == list_obj)
+    return is_empty(x) && is_empty(y) ? t() : empty();
+
+  return strcmp(get_atom(x), get_atom(y)) == 0 ? t() : empty();
 }
 
 obj* car(const obj* o, obj* env) {
