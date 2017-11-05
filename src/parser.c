@@ -337,7 +337,7 @@ static size_t atom_size(const_expression e) {
  * @param character : The character to check
  * @return : True if that character is whitespace, false otherwise
  */
-static const char* kWhitespace = " \t\n";
+static const char* kWhitespace = " \t\n\r";
 static bool is_white_space(char character) {
   return strchr(kWhitespace, character) != NULL;
 }
