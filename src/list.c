@@ -49,6 +49,23 @@ primitive_t* get_primitive(const obj *o) {
   return (primitive_t*) get_contents(o);
 }
 
+bool is_empty(const obj* o) {
+  if (o == NULL) return false;
+  if (o->objtype != list_obj) return false;
+  return get_list(o)->car == NULL && get_list(o)->cdr == NULL;
+}
+
+bool deep_compare(obj* x, obj* y) {
+  if (x->objtype != y->objtype) return false;
+  if (x->objtype == atom_obj) return strcmp(get_atom(x), get_atom(y)) == 0;
+  if (x->objtype == primitive_obj) return get_primitive(x) == get_primitive(y);
+
+  // List: cars must match and cdrs must match
+  if (x->objtype == list_obj)
+    return deep_compare(get_list(x)->car, get_list(y)->car) && deep_compare(get_list(x)->cdr, get_list(y)->cdr);
+  else return x == y;
+}
+
 /**
  * Function: copy_atom
  * -------------------

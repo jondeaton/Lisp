@@ -39,35 +39,55 @@ obj* copy(const obj* o);
  * -----------------
  * Frees the dynamically allocated memory used to store
  * the lisp object.
- * @param o : Pointer to the lisp objct to dispose of
+ * @param o: Pointer to the lisp objct to dispose of
  */
 void dispose(obj* o);
 
 /**
- * Function: getList
- * -----------------
+ * Function: get_list
+ * ------------------
  * Gets a pointer to the list
- * @param o : Pointer to a lisp data structure
- * @return : A pointer to that list data structure's list
+ * @param o: Pointer to a lisp data structure
+ * @return: A pointer to that list data structure's list
  */
 list_t* get_list(const obj *o);
 
 /**
- * Function: getAtom
- * -----------------
+ * Function: get_atom
+ * ------------------
  * Gets a pointer to the atom
- * @param o : Pointer to a lisp data structure
- * @return : A pointer to the atom in the object
+ * @param o: Pointer to a lisp data structure
+ * @return: A pointer to the atom in the object
  */
 atom_t get_atom(const obj *o);
 
 /**
- * Function: getPrimitive
- * ----------------------
+ * Function: get_primitive
+ * -----------------------
  * Gets a pointer to a function pointer to the primitive function for a primitive object list
- * @param o : Pointer to a lisp data structure
- * @return : Function pointer to primitive function
+ * @param o: Pointer to a lisp data structure
+ * @return: Function pointer to primitive function
  */
 primitive_t* get_primitive(const obj *o);
+
+/**
+ * Function: is_empty
+ * ------------------
+ * @param o: A lisp object to determine if it is the empty list
+ * @return: True if the object is the empty list, false otherwise
+ */
+bool is_empty(const obj* o);
+
+/**
+ * Function: deep_compare
+ * ----------------------
+ * Deep comparison of two lisp objects
+ * @param x: The first object to compare
+ * @param y: The second object to compare
+ * @return: True if the two objects are identical, false otherwise
+ */
+bool deep_compare(obj* x, obj* y);
+
+
 
 #endif // _LIST_H_INCLUDED

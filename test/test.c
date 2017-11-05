@@ -11,8 +11,9 @@
 #include "list.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
-// for colors
+// Terminal colors
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
 #define KGRN  "\x1B[32m"
@@ -31,8 +32,9 @@ static bool test_single_eval(const_expression expr, const_expression expected);
 static bool test_single_parse(const_expression expr, const_expression expected);
 static int test_parser();
 static int test_car_cdr();
-static int test_atom();
 static int test_quote();
+static int test_atom();
+static int test_eq();
 
 /**
  * Function: main
@@ -61,7 +63,30 @@ static int run_all_tests() {
   num_fails += test_quote();
   num_fails += test_car_cdr();
   num_fails += test_atom();
+  num_fails += test_eq();
   return num_fails;
+}
+
+
+/**
+ * Function: test_single_parse
+ * ---------------------------
+ * Tests to see if a single parsing works correctly
+ * @param expr: The expression to parse and then unparse
+ * @param expected: The expected result of parsing and then un-parsing the expression
+ * @return: True if the result of parsing and un-parsing the expression is equal to the expected expression
+ */
+static bool test_single_parse(const_expression expr, const_expression expected) {
+  obj* o = parse_expression(expr, NULL);
+  expression result_exp = unparse(o);
+  bool test_result = strcmp(result_exp, expected) == 0;
+
+  printf("Parsing:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+  if (!test_result) {
+    printf(KRED "\tExpecting:\t%s\n", expected);
+    printf("\tResult:\t\t%s\n" RESET, result_exp);
+  }
+  return test_result;
 }
 
 /**
@@ -76,39 +101,19 @@ static int run_all_tests() {
 static bool test_single_eval(const_expression expr, const_expression expected) {
   obj* env = initEnv(); // The global environment
 
-  printf("Evaluating:\t%s\n", expr);
-  printf("\tExpecting:\t%s\n", expected);
   obj* to_eval = parse_expression(expr, NULL);
   obj* eval_result = eval(to_eval, env);
   expression result_exp = unparse(eval_result);
-  printf("\tResult:\t\t%s\n", result_exp);
-
   bool test_result = strcmp(result_exp, expected) == 0;
 
+  printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+
+
+  if (!test_result) {
+    printf(KRED "\tExpecting:\t%s\n", expected);
+    printf("\tResult:\t\t%s\n" RESET, result_exp);
+  }
   // todo: dispose of unused things
-
-  printf("\t\t%s\n", test_result ? "pass" : "fail");
-  return test_result;
-}
-
-/**
- * Function: test_single_parse
- * ---------------------------
- * Tests to see if a single parsing works correctly
- * @param expr: The expression to parse and then unparse
- * @param expected: The expected result of parsing and then un-parsing the expression
- * @return: True if the result of parsing and un-parsing the expression is equal to the expected expression
- */
-static bool test_single_parse(const_expression expr, const_expression expected) {
-
-  printf("Parsing:\t%s\n", expr);
-  printf("\tExpecting:\t%s\n", expected);
-
-  obj* o = parse_expression(expr, NULL);
-  expression result_exp = unparse(o);
-  printf("\tResult:\t\t%s\n", result_exp);
-  bool test_result = strcmp(result_exp, expected) == 0;
-  printf("\t\t%s\n", test_result ? PASS : FAIL);
   return test_result;
 }
 
@@ -119,7 +124,7 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
  * @return: The number of tests that failed
  */
 static int test_parser() {
-  printf("\nTesting parsing...\n");
+  printf(KMAG "\nTesting parsing...\n" RESET);
 
   int num_fails = 0;
 
@@ -147,7 +152,7 @@ static int test_parser() {
  * @return: True if all the tests pass, false otherwise
  */
 static int test_quote() {
-  printf("\nTesting quote...\n");
+  printf(KMAG "\nTesting quote...\n" RESET);
   int num_fails = 0;
   num_fails += test_single_eval("(quote hello)", "hello") ? 0 : 1;
   num_fails += test_single_eval("(quote (a b c))", "(a b c)") ? 0 : 1;
@@ -164,7 +169,7 @@ static int test_quote() {
  * @return: True if all the tests passed, false otherwise
  */
 static int test_car_cdr() {
-  printf("\nTesting car/cdr...\n");
+  printf(KMAG "\nTesting car/cdr...\n" RESET);
   int num_fails = 0;
   num_fails += test_single_eval("(car '(a b c))", "a") ? 0 : 1;
   num_fails += test_single_eval("(cdr '(a b c))", "(b c)") ? 0 : 1;
@@ -182,11 +187,27 @@ static int test_car_cdr() {
  * @return: True if all atom tests pass, false otherwise
  */
 static int test_atom() {
-  printf("\nTesting atom...\n");
+  printf(KMAG "\nTesting atom...\n" RESET);
   int num_fails = 0;
   num_fails += test_single_eval("(atom 'a)", "t") ? 0 : 1;
   num_fails += test_single_eval("(atom ())", "t") ? 0 : 1;
-  num_fails += test_single_eval("(atom (a b c))", "()") ? 0 : 1;
+  num_fails += test_single_eval("(atom '(a b c))", "()") ? 0 : 1;
+  printf("Test atom: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_eq
+ * -----------------
+ * Tests the functionality of the eq primitive
+ * @return: The number of tests that were failed
+ */
+static int test_eq() {
+  printf(KMAG "\nTesting eq...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("(eq 'a 'a)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(eq 'a 'b)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(eq '() '())", "t") ? 0 : 1;
   printf("Test atom: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

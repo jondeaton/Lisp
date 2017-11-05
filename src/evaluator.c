@@ -30,6 +30,7 @@ obj* eval(const obj* o, obj* env) {
   // which means evaluate the operator (return a procedure or a primitive)
   // to which we call apply on the arguments
   if (o->objtype == list_obj) {
+    if (is_empty(o)) return (obj*) o;
     obj* operator = eval(get_list(o)->car, env);
     return apply(operator, get_list(o)->cdr, env);
   }

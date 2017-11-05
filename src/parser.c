@@ -15,7 +15,6 @@ static obj* get_quote_list();
 static obj* put_into_list(obj *o);
 static bool is_empty_list(const obj *o);
 static obj* to_empty_atom(obj *o);
-static obj* get_empty_atom();
 
 static expression unparse_list(const obj *o);
 static expression unparse_atom(const obj *o);
@@ -50,7 +49,7 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
   } else if (expr_start[0] == '(')  { // Expression starts with opening paren
     o = parse_list((char *) expr_start + 1, &expr_size);
     expr_size += 1; // for the opening parentheses character
-    if (o == NULL) o = to_empty_atom(o);
+    if (o == NULL) o = empty();
 
   } else {
     o = parse_atom(expr_start, &expr_size);
@@ -64,17 +63,16 @@ expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
   if (o->objtype == atom_obj) return unparse_atom(o);
-
   if (o->objtype == primitive_obj) return unparse_primitive(o);
 
   if (o->objtype == list_obj) {
-    expression listExp = unparse_list(o);
-    if (listExp == NULL) return strdup("()");
+    expression list_expr = unparse_list(o);
+    if (list_expr == NULL) return strdup("()");
 
-    expression e = malloc(1 + strlen(listExp) + 2); // open, close, null
+    expression e = malloc(1 + strlen(list_expr) + 2); // open, close, null
     e[0] = '(';
-    strcpy((char*) e + 1, listExp);
-    strcpy((char*) e + 1 + strlen(listExp), ")");
+    strcpy((char*) e + 1, list_expr);
+    strcpy((char*) e + 1 + strlen(list_expr), ")");
     return e;
   }
   return NULL;
@@ -94,27 +92,27 @@ static expression unparse_list(const obj *o) {
 
   expression e;
 
-  expression carExp = unparse(get_list(o)->car);
-  if (carExp == NULL) return NULL;
+  expression car_expr = unparse(get_list(o)->car);
+  if (car_expr == NULL) return NULL;
   expression cdrExp = unparse_list(get_list(o)->cdr);
 
-  size_t carExpSize = strlen(carExp);
+  size_t carExpSize = strlen(car_expr);
   if (cdrExp == NULL) {
     e = calloc(1, 2 + carExpSize);
     if (e == NULL) return NULL;
-    strcpy(e, carExp);
+    strcpy(e, car_expr);
 
   } else {
     size_t cdrExpSize = strlen(cdrExp);
     e = calloc(1, carExpSize + 1 + cdrExpSize + 1);
     if (e == NULL) return NULL;
 
-    strcpy(e, carExp);
+    strcpy(e, car_expr);
     strcpy((char*) e + carExpSize, " ");
     strcpy((char*) e + carExpSize + 1, cdrExp);
     free(cdrExp);
   }
-  free(carExp);
+  free(car_expr);
   return e;
 }
 
@@ -273,31 +271,6 @@ static bool is_empty_list(const obj *o) {
 
   list_t* l = get_list(o);
   return l->car == NULL && l->cdr == NULL;
-}
-
-/**
- * Function: to_empty_atom
- * -----------------------
- * Frees the passed object and returns the empty list atom
- * @param o: Object to be discarded
- * @return: Empty list atom object
- */
-static obj* to_empty_atom(obj *o) {
-  free(o);
-  return get_empty_atom();
-}
-
-/**
- * Function: getEmptyAtom
- * ----------------------
- * Makes a new empty list atom
- * @return : Pointer to a new empty list atom in dynamically allocated memory
- */
-static obj* get_empty_atom() {
-  obj* atomObj = calloc(1, sizeof(obj) + 3);
-  atomObj->objtype = atom_obj;
-  strcpy(get_atom(atomObj), "()");
-  return atomObj;
 }
 
 /**

@@ -7,9 +7,29 @@
 #ifndef _LISP_H_INCLUDED
 #define _LISP_H_INCLUDED
 
-#include <list.h>
+#include "list.h"
 #include <stdbool.h>
 #include <stdlib.h>
+
+/**
+ * Function: t
+ * -----------
+ * Get the truth atom. This is defined to be a lisp object of type atom with
+ * the contents being the C-string "t". This object will be in dynamically allocated
+ * memory and must be freed
+ * @return: A pointer to a new truth atom in dynamically allocated memory
+ */
+obj* t();
+
+/**
+ * Function: empty
+ * ---------------
+ * Get an empty list. This is defined to be a lisp object of type lisp with
+ * NULL for both car and cdr. This object will be in newly dynamically allocated
+ * memory and must be freed
+ * @return: A pointer to the a new empty list in dynamically allocated memory
+ */
+obj* empty();
 
 /**
  * Primitive: quote
