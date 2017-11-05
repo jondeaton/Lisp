@@ -91,20 +91,17 @@ obj* cons(const obj* o, obj* env) {
 
 obj* cond(const obj* o, obj* env) {
   if (o == NULL) return NULL;
-  assert(o->objtype == list_obj);
-  list_t* l = get_list(o);
 
-  while (true) {
-    obj* pair_obj = l->car;
-    assert(pair_obj->objtype == list_obj);
-    list_t* pair = get_list(pair_obj);
+  obj* pair = get_list(o)->car;
+  list_t* pl = get_list(pair);
 
-    obj* predicate = eval(pair->car, env);
-    if (is_t(predicate)) return pair->cdr;
-
-    if (l->cdr == NULL) return empty();
-    assert(l->cdr->objtype == list_obj);
-    l = get_list(l->cdr);
+  obj* predicate = eval(pl->car, env);
+  if (is_t(predicate)) {
+    obj* e = get_list(pl->cdr)->car;
+    return eval(e, env);
+  } else {
+    if (pl->cdr == NULL) return empty();
+    return cond(get_list(o)->cdr, env);
   }
 }
 
