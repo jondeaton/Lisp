@@ -21,7 +21,7 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
         - `atom_obj`: The raw C-string is stored adjacent to the `enum`.
         - `list_obj`: Two pointers to other list object (`obj*`) are stored after the `enum`, and are named `car` and `cdr`, respectively.
         - `primitive_obj`: A function pointer to a primitive operation is stored adjacent to the `enum`.
-- The empty list shall be a a list object with two `NULL` pointers in `car` and `cdr`.
+- The empty list, despite being considered an atom type, shall be a a list object (`list_obj`) with two `NULL` pointers in `car` and `cdr`.
 - Single environment
     - In a Lisp-1 manner, there is only a single environment that stores both variables and functions.
 - Dynamic scoping
@@ -48,8 +48,8 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - ~~set primitive~~
 - ~~Implement testing framework~~
 - ~~`set` overwrites instead of always pushing~~
-- Get macros working
-- Implement memory management
-- Add an `env` primitive that prints the environment
-- Add error messages with stack trace
-- Get lexical scoping from dynamic scoping
+- `defmacro`
+- memory management
+- `env` primitive to print the environment
+- Error messages and stack trace
+- [Derive lexical scoping from dynamic scoping](https://stackoverflow.com/questions/29347648/can-dynamic-scoping-implement-lexical-scoping)

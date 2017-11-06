@@ -1,8 +1,11 @@
 ;;; Lisp Bootstrapper
 
-;;; definition of defun
-(set 'defun (lambda (name params body)
-              (set 'name (lambda params body))))
+
+(defmacro when (considion &rest body)
+  `(if ,condition (progn ,@body)))
+
+(defmacro unless (condition &rest body)
+  `(if (not ,condition) (progn ,@body)))
 
 ;;; null - tests whether its argument is the empty list
 (defun null (x)

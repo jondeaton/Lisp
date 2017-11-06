@@ -9,7 +9,7 @@
 #include <string.h>
 #include <list.h>
 
-#define NUMBUILTINS 8
+#define NUMBUILTINS 9
 #define QUOTE_RESV "quote"
 #define ATOM_RESV "atom"
 #define EQ_RESV "eq"
@@ -18,6 +18,7 @@
 #define CONS_RESV "cons"
 #define COND_RESV "cond"
 #define SET_RESV "set"
+#define DEFMACRO_RESV "defmacro"
 
 static atom_t primitive_names[NUMBUILTINS] = {
   QUOTE_RESV,
@@ -28,6 +29,7 @@ static atom_t primitive_names[NUMBUILTINS] = {
   CONS_RESV,
   COND_RESV,
   SET_RESV,
+  DEFMACRO_RESV
 };
 
 // Static function declarations
@@ -39,8 +41,8 @@ static obj* makeFuncPair(atom_t a, void* fp);
 static ssize_t index_of(char *query, char **strings, size_t num_strings);
 static primitive_t lookup_primitive(atom_t atm);
 
-static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond, &set};
-static expression kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cons x) (cond x) (set x))";
+static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond, &set, &defmacro};
+static expression kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cons x) (cond x) (set x) (defmacro x)";
 
 obj* init_env() {
   size_t unused;

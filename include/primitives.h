@@ -117,4 +117,14 @@ obj* cond(const obj* o, obj* env);
  */
 obj* set(const obj* o, obj* env);
 
+/**
+ * Primitive: defmacro
+ * -------------------
+ * Defines a macro
+ * @param o: The pointer to the argument list to defmacro
+ * @param env: The environment to define the macro in
+ * @return: nothing really?
+ */
+obj* defmacro(const obj* o, obj* env);
+
 #endif // _LISP_H_INCLUDED

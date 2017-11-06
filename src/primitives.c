@@ -139,6 +139,11 @@ obj* set(const obj* o, obj* env) {
   return value;
 }
 
+obj* defmacro(const obj* o, obj* env) {
+  // todo: implement this quintessential shit
+  return NULL;
+}
+
 /**
  * Function: is_t
  * --------------
