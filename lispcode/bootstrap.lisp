@@ -1,5 +1,9 @@
 ;;; Lisp Bootstrapper
 
+;;; definition of defun
+(set 'defun (lambda (name params body)
+              (set 'name (lambda params body))))
+
 ;;; null - tests whether its argument is the empty list
 (defun null (x)
   (eq x '()))

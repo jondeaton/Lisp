@@ -125,6 +125,41 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
 }
 
 /**
+ * Function: test_multi_eval
+ * -------------------------
+ * Tests if a single expression evaluates to the correct thing after first executing a series of
+ * expressions beforehand
+ * @param before: NULL terminated list of expressions to evaluate in the same environment beforehand
+ * @param expr: The expression to evaluate after the list of expression, and verify the output of
+ * @param expected: The expected output of evaluating expr
+ * @return: True if expr evaluates to expected, and false otherwise
+ */
+static bool test_multi_eval(const_expression before[], const_expression expr, const_expression expected) {
+  obj* env = init_env(); // The global environment
+
+  const_expression next = before[0];
+  for (int i = 0; before[i]; i++) {
+    next = before[i];
+    obj* next_to_eval = parse_expression(next, NULL);
+    eval(next_to_eval, env);
+  }
+
+  obj* to_eval = parse_expression(expr, NULL);
+  obj* result = eval(to_eval, env);
+  expression result_exp = unparse(result);
+  bool test_result = strcmp(result_exp, expected) == 0;
+
+  printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+
+  if (!test_result) {
+    printf(KRED "\tExpecting:\t%s\n", expected);
+    printf("\tResult:\t\t%s\n" RESET, result_exp);
+  }
+
+  return test_result;
+}
+
+/**
  * Function: test_single_set
  * -------------------------
  * Tests if a single setting operation was done correctly
@@ -311,6 +346,18 @@ static int test_lambda() {
   int num_fails = 0;
   num_fails += test_single_eval("((lambda (x) (car x)) '(a b c))", "a") ? 0 : 1;
   num_fails += test_single_eval("((lambda (x) (cdr x)) '(a b c))", "(b c)") ? 0 : 1;
-  printf("Test cond: %s\n", num_fails == 0 ? PASS : FAIL);
+  num_fails += test_single_eval("((lambda (x y) (cons x (cdr y))) 'a '(z b c))", "(a b c)") ? 0 : 1;
+  num_fails += test_single_eval("((lambda (x) (cons 'z x)) '(a b c))", "(z a b c)") ? 0 : 1;
+
+  const_expression before[] = {
+    "(set 'caar (lambda (x) (car (car x))))",
+    "(set 'f    (lambda (x) (cons 'z x)))",
+    "(set 'g    (lambda (x) (f (caar x))))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before,"(g '(((a b) c) d) )", "(z a b)") ? 0 : 1;
+
+
+  printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
