@@ -32,7 +32,7 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
     - When evaluating an object, the interpreter will check if `caar` of the object is equal to the C-string `lambda`.
     - If it is, then the arguments will be evaluated into a new list, bound to the parameters, and prepended onto the current environment
     - The body of the lambda expression will then be evaluated in this augmented environment
-- Garbage Collection
+- Memory Management
     - Uhh... yeah this still needs to be implemented. Just you wait, it's gonna be great.
 - Error reporting
 
@@ -41,13 +41,15 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
 A testing framework for the interpreter is also included in the `test-lisp` executable.
 
 ## To do
-- ~~REPL prompt and reprompt~~
+- ~~REPL prompt and re-prompt~~
 - ~~Correct parsing and un-parsing~~
 - ~~`eval` and `apply`~~
 - ~~Seven primitives~~
-- ~~set primitive~~ 
+- ~~set primitive~~
 - ~~Implement testing framework~~
-- `set` overwrites instead of pushing
+- `set` overwrites instead of always pushing
 - Get macros working
-- Get garbage collection working 
+- Implement memory management
+- Add an `env` primitive that prints the environment
 - Add error messages with stack trace
+- Get lexical scoping from dynamic scoping

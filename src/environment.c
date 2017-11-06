@@ -36,7 +36,7 @@ static void replace_primitive_placeholder(obj *pair);
 static obj* wrap_primitive(primitive_t primitive);
 
 static obj* makeFuncPair(atom_t a, void* fp);
-static ssize_t indexof(char* str, char* strings[], size_t numStrings);
+static ssize_t index_of(char *query, char **strings, size_t num_strings);
 static primitive_t lookup_primitive(atom_t atm);
 
 static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond, &set};
@@ -60,6 +60,31 @@ obj* make_pair(const obj* name, const obj* value) {
   list_of(first_item)->cdr = second_item;
 
   return first_item;
+}
+
+
+obj** lookup_entry(const obj* o, const obj* env) {
+  if (o == NULL || env == NULL) return NULL;
+
+  // Error: The environment should be a list
+  if (env->objtype != list_obj) return NULL;
+
+  // Error: Can't lookup something that isn't an atom
+  if (o->objtype != atom_obj) return NULL;
+
+  // Get the list
+  obj* pair = list_of(env)->car;
+
+  if (strcmp(atom_of(o), atom_of(list_of(pair)->car)) == 0)
+    return &list_of(list_of(pair)->cdr)->car;
+
+  else return lookup_entry(o, list_of(env)->cdr);
+}
+
+
+obj* lookup(const obj* o, const obj* env) {
+  obj** entry = lookup_entry(o, env);
+  return entry ? *entry : NULL;
 }
 
 /**
@@ -116,24 +141,23 @@ static obj* wrap_primitive(primitive_t primitive) {
  * @return : A primitive function pointer if the atom is found, NULL otherwise
  */
 static primitive_t lookup_primitive(atom_t atm) {
-  ssize_t i = indexof(atm, primitive_names, NUMBUILTINS);
+  ssize_t i = index_of(atm, primitive_names, NUMBUILTINS);
   if (i == -1) return NULL;
   return kFuncPts[i];
 }
 
 /**
- * Function: indexof
- * -----------------
- * Determines which (if any) string in a list of strings match
- * some query string.
- * @param str : Query string
- * @param strings : List of strings to search through
- * @param numStrings : Number of strings in the search list
- * @return : Index of the matching string, or -1 if no match
+ * Function: index_of
+ * ------------------
+ * Determines which (if any) string in a list of strings match some query string.
+ * @param query: Query string
+ * @param strings: List of strings to search through
+ * @param num_strings: Number of strings in the search list
+ * @return: Index of the matching string, or -1 if no match
  */
-static ssize_t indexof(char* str, char* strings[], size_t numStrings) {
-  for(size_t i = 0; i < numStrings; i++) {
-    if (strcmp(str, strings[i]) == 0) return i;
+static ssize_t index_of(char *query, char **strings, size_t num_strings) {
+  for(size_t i = 0; i < num_strings; i++) {
+    if (strcmp(query, strings[i]) == 0) return i;
   }
   return -1;
 }

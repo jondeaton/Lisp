@@ -6,6 +6,7 @@
 
 #include "primitives.h"
 #include "evaluator.h"
+#include "environment.h"
 #include "list.h"
 #include <string.h>
 #include <assert.h>
@@ -107,25 +108,34 @@ obj* cond(const obj* o, obj* env) {
 obj* set(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
-  obj* new_link = empty();
-  list_of(new_link)->car = list_of(env)->car;
-  list_of(new_link)->cdr = list_of(env)->cdr;
-
   obj* first_arg = list_of(o)->car;
   obj* second_arg = list_of(list_of(o)->cdr)->car;
 
   obj* var = eval(first_arg, env);
   obj* value = eval(second_arg, env);
 
-  obj* pair_second = empty();
-  list_of(pair_second)->car = value;
+  obj** prev_value_p = lookup_entry(var, env);
+  if (prev_value_p != NULL) {
+    // This is the part of the language that implements dynamic scoping
+    dispose(*prev_value_p);
+    *prev_value_p = copy(value);
 
-  obj* pair_first = empty();
-  list_of(pair_first)->car = var;
-  list_of(pair_first)->cdr = pair_second;
+  } else {
 
-  list_of(env)->car = pair_first;
-  list_of(env)->cdr = new_link;
+    obj* pair_second = new_list();
+    list_of(pair_second)->car = value;
+
+    obj* pair_first = new_list();
+    list_of(pair_first)->car = var;
+    list_of(pair_first)->cdr = pair_second;
+
+    obj* new_link = new_list();
+    list_of(new_link)->car = list_of(env)->car;
+    list_of(new_link)->cdr = list_of(env)->cdr;
+
+    list_of(env)->car = pair_first;
+    list_of(env)->cdr = new_link;
+  }
   return value;
 }
 

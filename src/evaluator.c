@@ -15,7 +15,6 @@
 
 // Static function declarations
 static obj* put_into_list(obj *o);
-static obj* lookup(const obj* o, const obj* env);
 static obj* bind(obj* params, obj* args, obj* env);
 static obj* associate(obj* names, obj* values);
 static obj* push_frame(obj *frame, obj *env);
@@ -64,32 +63,6 @@ obj* apply(const obj* closure, const obj* args, obj* env) {
     obj* exp = list_of(list_of(list_of(closure)->cdr)->cdr)->car;
     return eval(exp, new_env);
   }
-}
-
-/**
- * Function: lookup
- * ----------------
- * Looks up an object in an environment
- * @param o: A lisp object that is of the atom type
- * @param env: An environment to lookup the atom in
- * @return: The lisp object that was associated with the object in the environment
- */
-static obj* lookup(const obj* o, const obj* env) {
-  if (o == NULL || env == NULL) return NULL;
-
-  // Error: The environment should be a list
-  if (env->objtype != list_obj) return NULL;
-
-  // Error: Can't lookup something that isn't an atom
-  if (o->objtype != atom_obj) return NULL;
-
-  // Get the list
-  obj* pair = list_of(env)->car;
-
-  if (strcmp(atom_of(o), atom_of(list_of(pair)->car)) == 0)
-    return list_of(list_of(pair)->cdr)->car;
-
-  else return lookup(o, list_of(env)->cdr);
 }
 
 /**

@@ -18,6 +18,27 @@
 obj* init_env();
 
 /**
+ * Function: lookup
+ * ----------------
+ * Looks up an object in an environment
+ * @param o: A lisp object that is of the atom type
+ * @param env: An environment to lookup the atom in
+ * @return: The lisp object that was associated with the object in the environment
+ */
+obj* lookup(const obj* o, const obj* env);
+
+/**
+ * Function: lookup_entry
+ * ----------------------
+ * Looks up an object in an environment, returning a pointer to the place in the environment
+ * that points to the value that is equal to
+ * @param o: A lisp object that is of the atom type
+ * @param env: An environment to lookup the atom in
+ * @return: A pointer to obj* inside the environment that
+ */
+obj** lookup_entry(const obj* o, const obj* env);
+
+/**
  * Function: make_pair
  * -------------------
  * Associated a name with a value in a two-item list (pair) by copying the name

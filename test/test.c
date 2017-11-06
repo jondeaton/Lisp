@@ -331,6 +331,24 @@ static int test_set() {
   num_fails += test_single_set("(set 'x '5)", "x", "5") ? 0 : 1;
   num_fails += test_single_set("(set 'y '10)", "y", "10") ? 0 : 1;
   num_fails += test_single_set("(set 'x (eq (car '(a b c)) 'a))", "(cond (x '5) ('() '6))", "5") ? 0 : 1;
+
+  // Dynamic scoping test
+  const_expression before[] = {
+    "(set 'y '(a b c))",
+    "(set 'f    (lambda (x) (cons x y)))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before, "(f '(1 2 3))", "((1 2 3) a b c)") ? 0 : 1;
+
+  // Dynamic scoping test
+  const_expression before2[] = {
+    "(set 'y '(a b c))",
+    "(set 'y '(4 5 6))",
+    "(set 'f    (lambda (x) (cons x y)))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before2, "(f '(1 2 3))", "((1 2 3) 4 5 6)") ? 0 : 1;
+
   printf("Test set: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
