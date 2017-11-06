@@ -44,10 +44,9 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - ~~REPL prompt and re-prompt~~
 - ~~Correct parsing and un-parsing~~
 - ~~`eval` and `apply`~~
-- ~~Seven primitives~~
-- ~~set primitive~~
 - ~~Implement testing framework~~
-- ~~`set` overwrites instead of always pushing~~
+- ~~Seven primitives~~
+- ~~set primitive with dynamic scoping~~
 - `defmacro`
 - memory management
 - `env` primitive to print the environment
