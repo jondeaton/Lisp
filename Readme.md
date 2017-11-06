@@ -39,3 +39,9 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
 
 ## Testing
 A testing framework for the interpreter is also included in the `test-lisp` executable.
+
+## TODO
+1. Make `set` over-write things instead of always pushing
+2. Get macros working
+3. Get garbage collection working 
+4. Add error messages with stack trace
