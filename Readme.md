@@ -47,7 +47,7 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - ~~Seven primitives~~
 - ~~set primitive~~
 - ~~Implement testing framework~~
-- `set` overwrites instead of always pushing
+- ~~`set` overwrites instead of always pushing~~
 - Get macros working
 - Implement memory management
 - Add an `env` primitive that prints the environment
