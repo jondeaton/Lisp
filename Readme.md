@@ -47,8 +47,10 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - ~~Implement testing framework~~
 - ~~Seven primitives~~
 - ~~set primitive with dynamic scoping~~
-- `defmacro`
+- ~~basic `lambda` functionality~~
 - memory management
+- Closures
+- `defmacro`
 - `env` primitive to print the environment
 - Error messages and stack trace
 - [Derive lexical scoping from dynamic scoping](https://stackoverflow.com/questions/29347648/can-dynamic-scoping-implement-lexical-scoping)
