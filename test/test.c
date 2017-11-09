@@ -375,6 +375,12 @@ static int test_lambda() {
   };
   num_fails += test_multi_eval(before,"(g '(((a b) c) d) )", "(z a b)") ? 0 : 1;
 
+  const_expression before1[] = {
+    "(set 'make-prepender (lambda (x) (lambda (y) (cons x y))))",
+    "(set 'prepend-z (make-prepender 'z))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before1, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1; 
 
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
