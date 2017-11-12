@@ -53,4 +53,6 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - `defmacro`
 - `env` primitive to print the environment
 - Error messages and stack trace
+- Smart indentation in re-prompt'
+- Math library
 - [Derive lexical scoping from dynamic scoping](https://stackoverflow.com/questions/29347648/can-dynamic-scoping-implement-lexical-scoping)
