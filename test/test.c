@@ -89,7 +89,7 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
   expression result_exp = unparse(o);
   bool test_result = strcmp(result_exp, expected) == 0;
 
-  printf("Parsing:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+  printf("%s Parsing:\t%s\n", test_result ? PASS : FAIL, expr);
   if (!test_result) {
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
@@ -114,7 +114,7 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
   expression result_exp = unparse(eval_result);
   bool test_result = strcmp(result_exp, expected) == 0;
 
-  printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+  printf("%s Evaluation:\t%s\n", test_result ? PASS : FAIL, expr);
 
   if (!test_result) {
     printf(KRED "\tExpecting:\t%s\n", expected);
@@ -149,7 +149,7 @@ static bool test_multi_eval(const_expression before[], const_expression expr, co
   expression result_exp = unparse(result);
   bool test_result = strcmp(result_exp, expected) == 0;
 
-  printf("Evaluating:\t%s\t%s\n", expr, test_result ? PASS : FAIL);
+  printf("%s Multi eval:\t%s\n", test_result ? PASS : FAIL, expr);
 
   if (!test_result) {
     printf(KRED "\tExpecting:\t%s\n", expected);
@@ -179,7 +179,7 @@ static int test_single_set(const_expression set_expr, const_expression expr, con
   expression result_exp = unparse(eval_result);
   bool test_result = strcmp(result_exp, expected) == 0;
 
-  printf("Evaluating:\t%s\t%s\n", set_expr, test_result ? PASS : FAIL);
+  printf("%s Evaluating:\t%s\n", test_result ? PASS : FAIL, set_expr);
 
 
   if (!test_result) {
