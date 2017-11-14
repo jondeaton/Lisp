@@ -117,7 +117,7 @@ static void replace_primitive_placeholder(obj *pair) {
   primitive_t primitive = lookup_primitive(primitive_name);
 
   obj* second = list_of(pair)->cdr;
-  dispose(list_of(second)->car);
+  dispose_recursive(list_of(second)->car);
   list_of(second)->car = wrap_primitive(primitive);
 }
 

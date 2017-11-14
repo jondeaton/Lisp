@@ -11,8 +11,6 @@
 #include "cvector.h"
 #include <stdlib.h>
 
-
-
 /**
  * Function: eval
  * --------------
@@ -38,8 +36,10 @@ obj* apply(const obj* operator, const obj* args, obj* env);
 /**
  * Function: init_allocated
  * ------------------------
- * Initializes the CVector of pointers to allocated objects. Call this
- * before any calls to eval are made. Calling eval without first calling this
+ * Initializes a CVector of pointers to allocated objects. Note that this list
+ * should not contain the environment, or parsed lisp objects. This list should
+ * only contain lisp objects that needed to be created during calls to eval.
+ * Call this before any calls to eval are made. Calling eval without first calling this
  * method results in undefined behavior.
  */
 void init_allocated();
@@ -47,8 +47,9 @@ void init_allocated();
 /**
  *  Function: add_allocated
  * -----------------------
- * Add a pointer to a lisp object in dynamically allocated memory that
- * needs to be freed.
+ * Adds a lisp object that was created during evaluation and needs to be
+ * freed. This method should be called by any function internal to
+ * eval that allocated lisp objects in dynamically allocated memory.
  * @param o: A pointer to a lisp object that needs to be free'd
  */
 void add_allocated(const obj* o);
@@ -56,9 +57,9 @@ void add_allocated(const obj* o);
 /**
  * Function: clear_allocated
  * -------------------------
- * Frees all of the allocated lisp objects. Suggested usage is to
- * call this function after each use of eval, once the object returned
- * from eval has been copied/processed.
+ * Frees all of the allocated lisp objects in the allocated list. Suggested usage is to
+ * call this function after each call to eval, after the object returned from
+ * eval has been completely processed (e.g. copied into environment, serialized, etc...).
  */
 void clear_allocated();
 
@@ -67,7 +68,7 @@ void clear_allocated();
  * ---------------------------
  * Disposes of the CVector of allocated objects. Call this method after
  * all calls to eval are completed to free the memory used to store the
- * CVector.
+ * CVector of allocated objects.
  */
 void dispose_allocated();
 

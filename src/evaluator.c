@@ -66,7 +66,7 @@ obj* apply(const obj* operator, const obj* args, obj* env) {
 }
 
 void init_allocated() {
-  allocated = cvec_create(sizeof(obj*), 0, &free);
+  allocated = cvec_create(sizeof(obj*), 0, (void*) &dispose);
 }
 
 void add_allocated(const obj* o) {

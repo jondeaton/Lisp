@@ -46,11 +46,19 @@ obj* copy(const obj* o);
 /**
  * Function: dispose
  * -----------------
- * Frees the dynamically allocated memory used to store
- * the lisp object.
- * @param o: Pointer to the lisp objct to dispose of
+ * Free the dynamically allocated memory used to store the lisp object.
+ * @param o: Pointer to the lisp object to dispose of
  */
 void dispose(obj* o);
+
+/**
+ * Function: dispose_recursive
+ * ---------------------------
+ * Free the allocated memory used to store this lisp object, recursing
+ * on any child lisp objects in the case that the object is of the list type.
+ * @param o: Pointer to the lisp object to dispose of recursively
+ */
+void dispose_recursive(obj *o);
 
 /**
  * Function: get_list

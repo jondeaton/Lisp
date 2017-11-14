@@ -36,13 +36,16 @@ obj* copy(const obj* o) {
   return NULL;
 }
 
-// Recursive disposal of an object
 void dispose(obj* o) {
+  free(o);
+}
+
+void dispose_recursive(obj *o) {
   if (o == NULL) return;
-  if (o->objtype == list_obj) {
+  if (o->objtype == list_obj) { // Recursive disposal of lists
     list_t *l = list_of(o);
-    dispose(l->car);
-    dispose(l->cdr);
+    dispose_recursive(l->car);
+    dispose_recursive(l->cdr);
   }
   free(o);
 }

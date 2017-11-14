@@ -57,7 +57,7 @@ int repl() {
     clear_allocated();
   }
   dispose_allocated();
-  dispose(env);
+  dispose_recursive(env);
   return errno;
 };
 

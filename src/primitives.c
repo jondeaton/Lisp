@@ -117,7 +117,7 @@ obj* set(const obj* o, obj* env) {
   obj** prev_value_p = lookup_entry(var, env);
   if (prev_value_p != NULL) {
     // This is the part of the language that implements dynamic scoping
-    dispose(*prev_value_p);
+    dispose_recursive(*prev_value_p);
     *prev_value_p = copy(value);
 
   } else {
