@@ -17,20 +17,22 @@ const char* t_contents = "t";
 // Static function declarations
 static bool is_t(const obj* o);
 
-// Truth atom
+// Allocate new truth atom
 obj* t() {
   obj* o = malloc(sizeof(obj) + strlen(t_contents) + 1);
   strcpy((char*) o + sizeof(obj), t_contents);
   o->objtype = atom_obj;
+  add_allocated(o);
   return o;
 }
 
-// Empty list
+// Allocate new empty list
 obj* empty() {
-  obj* o = malloc(sizeof(obj) + sizeof(list_t));
+  obj* o = new_list();
   o->objtype = list_obj;
   list_of(o)->car = NULL;
   list_of(o)->cdr = NULL;
+  add_allocated(o);
   return o;
 }
 
@@ -82,7 +84,7 @@ obj* cons(const obj* o, obj* env) {
   obj* y = list_of(list_of(o)->cdr)->car;
 
   obj* new_obj = new_list();
-  add_allocated(new_obj); // Since cons allocates new memory
+  add_allocated(new_obj); // Record allocation
   list_of(new_obj)->car = eval(x, env);
   list_of(new_obj)->cdr = eval(y, env);
 

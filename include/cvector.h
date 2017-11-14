@@ -146,7 +146,7 @@ void *cvec_nth(const CVector *cv, int index);
  *
  * Usage: cvec_insert(v, &elem, 0)
  */
-void cvec_insert(CVector *cv, const void *addr, int index);
+void cvec_insert(CVector *cv, const void *source, int index);
 
 /**
  * Function: cvec_append
