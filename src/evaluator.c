@@ -12,6 +12,9 @@
 
 #define LAMBDA_RESV "lambda"
 
+// Vector of allocated objects needing to be free'd
+CVector* allocated;
+
 // Static function declarations
 static obj* put_into_list(obj *o);
 static obj* bind(obj* params, obj* args, obj* env);
@@ -60,6 +63,22 @@ obj* apply(const obj* operator, const obj* args, obj* env) {
     obj* exp = list_of(list_of(list_of(operator)->cdr)->cdr)->car;
     return eval(exp, new_env);
   }
+}
+
+void init_allocated() {
+  allocated = cvec_create(sizeof(obj*), 0, &free);
+}
+
+void add_allocated(const obj* o) {
+  cvec_append(allocated, o);
+}
+
+void clear_allocated() {
+  cvec_clear(allocated);
+}
+
+void dispose_allocated() {
+  cvec_dispose(allocated);
 }
 
 /**

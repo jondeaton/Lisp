@@ -38,7 +38,7 @@ static void replace_primitive_placeholder(obj *pair);
 static obj* wrap_primitive(primitive_t primitive);
 
 static obj* makeFuncPair(atom_t a, void* fp);
-static ssize_t index_of(char *query, char **strings, size_t num_strings);
+static int index_of(char *query, char **strings, size_t num_strings);
 static primitive_t lookup_primitive(atom_t atm);
 
 static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond, &set, &defmacro};
@@ -143,7 +143,7 @@ static obj* wrap_primitive(primitive_t primitive) {
  * @return : A primitive function pointer if the atom is found, NULL otherwise
  */
 static primitive_t lookup_primitive(atom_t atm) {
-  ssize_t i = index_of(atm, primitive_names, NUMBUILTINS);
+  int i = index_of(atm, primitive_names, NUMBUILTINS);
   if (i == -1) return NULL;
   return kFuncPts[i];
 }
@@ -157,8 +157,8 @@ static primitive_t lookup_primitive(atom_t atm) {
  * @param num_strings: Number of strings in the search list
  * @return: Index of the matching string, or -1 if no match
  */
-static ssize_t index_of(char *query, char **strings, size_t num_strings) {
-  for(size_t i = 0; i < num_strings; i++) {
+static int index_of(char *query, char **strings, size_t num_strings) {
+  for(int i = 0; i < num_strings; i++) {
     if (strcmp(query, strings[i]) == 0) return i;
   }
   return -1;

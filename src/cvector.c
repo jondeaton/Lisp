@@ -45,7 +45,7 @@ CVector* cvec_create(size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
   cvec->nelems = 0; // Store starting
 
   // Use DEFAULT_CAPACITY if an invalid capacity_hint is given
-  cvec->capacity = capacity_hint > 0 ? capacity_hint : DEFAULT_CAPACITY;
+  cvec->capacity = (int) (capacity_hint > 0 ? capacity_hint : DEFAULT_CAPACITY);
   cvec->elemsz = elemsz;
 
   // Store the callback function for laster cleanup of elements
@@ -107,23 +107,10 @@ void cvec_replace(CVector* cv, const void* addr, int index) {
 }
 
 void cvec_remove(CVector* cv, int index) {
-  void* to_be_removed = cvec_nth(cv, index); // Get the element. Valid index asserted therein
-
-  // Cleanup element if necessary
-  if (cv->cleanup != NULL) cv->cleanup(to_be_removed);
-
-  // Get pointer to the elements after the one that was removed
-  void* to_be_shifted = (char*) cv->elems + (index + 1) * cv->elemsz;
-
-  // The number of bytes to shift down. If zero then nothing will happen.
-  size_t num_bytes_shift = (cv->nelems - index - 1) * cv->elemsz;
-
-  // Allocate buffer since memcpy doesn't work on overlapping regions
-  // todo: make this more memory efficient
-  char* buffer[num_bytes_shift];
-  memcpy(buffer, to_be_shifted, num_bytes_shift);
-  memcpy(to_be_removed, buffer, num_bytes_shift);
-
+  void* el = cvec_nth(cv, index); // Get the element. Valid index asserted therein
+  if (cv->cleanup != NULL) cv->cleanup(el); // Cleanup if necessary
+  for(void* next = cvec_next(cv, el); next != NULL; next = cvec_next(cv, next))
+    memcpy((char*) next - cv->elemsz, next, cv->elemsz);
   cv->nelems--;
 }
 

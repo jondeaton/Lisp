@@ -4,8 +4,8 @@
  * Presents the interface to the Read-Eval-Print Loop
  */
 
-#ifndef _REPL_H
-#define _REPL_H
+#ifndef _REPL_H_INCLUDED
+#define _REPL_H_INCLUDED
 
 #include <primitives.h>
 #include <stdio.h>
@@ -39,4 +39,4 @@ obj* read_expression(FILE *fd, const char *prompt, const char *reprompt);
  */
 void print(FILE* fd, obj* o);
 
-#endif
+#endif //_REPL_H_INCLUDED

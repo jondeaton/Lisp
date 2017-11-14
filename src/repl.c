@@ -56,6 +56,7 @@ int repl() {
     print(stdout, evaluation);
     clear_allocated();
   }
+  dispose_allocated();
   dispose(env);
   return errno;
 };
