@@ -9,7 +9,6 @@
 #include "environment.h"
 #include <stdlib.h>
 #include <string.h>
-#include <list.h>
 
 #define LAMBDA_RESV "lambda"
 

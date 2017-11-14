@@ -8,10 +8,9 @@
 #include "evaluator.h"
 #include "environment.h"
 #include "list.h"
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <list.h>
-#include <stdlib.h>
 
 const char* t_contents = "t";
 

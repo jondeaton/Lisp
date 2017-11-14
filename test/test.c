@@ -30,7 +30,6 @@
 static int run_all_tests();
 static bool test_single_eval(const_expression expr, const_expression expected);
 static bool test_single_parse(const_expression expr, const_expression expected);
-static int test_single_set(const_expression set_expr, const_expression expr, const_expression expected);
 static int test_parser();
 static int test_car_cdr();
 static int test_quote();
@@ -156,37 +155,6 @@ static bool test_multi_eval(const_expression before[], const_expression expr, co
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
 
-  return test_result;
-}
-
-/**
- * Function: test_single_set
- * -------------------------
- * Tests if a single setting operation was done correctly
- * @param set_expr: An expression that sets something in the environment
- * @param expr: An expression to evaluate to test if the setting was done correctly
- * @param expected: The expected output of the expression
- * @return: True if the result of evaluating the expression after evaluating the setting expression
- * was equal to the expected expression, false otherwise
- */
-static int test_single_set(const_expression set_expr, const_expression expr, const_expression expected) {
-  obj* env = init_env(); // The global environment
-
-  eval(parse_expression(set_expr, NULL), env); // Set the stuff
-
-  obj* to_eval = parse_expression(expr, NULL);
-  obj* eval_result = eval(to_eval, env);
-  expression result_exp = unparse(eval_result);
-  bool test_result = strcmp(result_exp, expected) == 0;
-
-  printf("%s Evaluating:\t%s\n", test_result ? PASS : FAIL, set_expr);
-
-
-  if (!test_result) {
-    printf(KRED "\tExpecting:\t%s\n", expected);
-    printf("\tResult:\t\t%s\n" RESET, result_exp);
-  }
-  // todo: dispose of unused things
   return test_result;
 }
 
@@ -328,9 +296,26 @@ static int test_cond() {
 static int test_set() {
   printf(KMAG "\nTesting set...\n" RESET);
   int num_fails = 0;
-  num_fails += test_single_set("(set 'x '5)", "x", "5") ? 0 : 1;
-  num_fails += test_single_set("(set 'y '10)", "y", "10") ? 0 : 1;
-  num_fails += test_single_set("(set 'x (eq (car '(a b c)) 'a))", "(cond (x '5) ('() '6))", "5") ? 0 : 1;
+
+  // Testing that you can set something
+  const_expression set_x[] = {
+    "(set 'x '5)",
+    NULL,
+  };
+  num_fails += test_multi_eval(set_x, "x", "5") ? 0 : 1;
+
+  const_expression set_y[] = {
+    "(set 'y '10)",
+    NULL,
+  };
+  num_fails += test_multi_eval(set_y, "y", "10") ? 0 : 1;
+
+  // Test that you can set something as the evaluation of another expression
+  const_expression set_x_eval[] = {
+    "(set 'x (eq (car '(a b c)) 'a))",
+    NULL
+  };
+  num_fails += test_multi_eval(set_x_eval, "(cond (x '5) ('() '6))", "5") ? 0 : 1;
 
   // Dynamic scoping test
   const_expression before[] = {

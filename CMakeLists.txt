@@ -16,6 +16,7 @@ set(SOURCES
         include/run_lisp.h          src/run_lisp.c
         include/list.h              src/evaluator.c
         include/evaluator.h         src/list.c
+        include/cvector.h           src/cvector.c
         src/main.c)
 
 add_executable(lisp ${SOURCES})
@@ -29,6 +30,7 @@ set(TEST_SOURCES
         include/run_lisp.h          src/run_lisp.c
         include/list.h              src/evaluator.c
         include/evaluator.h         src/list.c
+        include/cvector.h           src/cvector.c
         test/test.c)
 
 add_executable(test-lisp ${TEST_SOURCES})

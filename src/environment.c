@@ -4,10 +4,10 @@
  * Presents the implementation of the default lisp environment
  */
 
-#include <environment.h>
-#include <parser.h>
+#include "environment.h"
+#include "parser.h"
+#include "list.h"
 #include <string.h>
-#include <list.h>
 
 #define NUMBUILTINS 9
 #define QUOTE_RESV "quote"
