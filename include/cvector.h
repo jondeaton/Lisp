@@ -193,6 +193,14 @@ void cvec_replace(CVector *cv, const void *addr, int index);
 void cvec_remove(CVector *cv, int index);
 
 /**
+ * Function: cvec_clear
+ * -------------------
+ * Disposes of all elements in the CVector by calling the cleanup function on all elements
+ * @param cv: The CVector to clear of all elements
+ */
+void cvec_clear(CVector *cv);
+
+/**
  * Function: cvec_search
  * ---------------------
  * Searches the CVector for an element matching a key element from a starting

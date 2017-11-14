@@ -82,6 +82,7 @@ obj* cons(const obj* o, obj* env) {
   obj* y = list_of(list_of(o)->cdr)->car;
 
   obj* new_obj = empty();
+  cvec_append(allocated, new_obj); // Since cons allocates new memory
   list_of(new_obj)->car = eval(x, env);
   list_of(new_obj)->cdr = eval(y, env);
 

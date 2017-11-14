@@ -20,7 +20,6 @@ static obj* push_frame(obj *frame, obj *env);
 static obj* eval_list(const obj* list, obj *env);
 static bool is_lambda(const obj* o);
 
-// Evaluate a lisp expression
 obj* eval(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
@@ -43,23 +42,22 @@ obj* eval(const obj* o, obj* env) {
   else return NULL;
 };
 
-// Apply a closure object to a list of arguments
-obj* apply(const obj* closure, const obj* args, obj* env) {
-  if (closure == NULL) return NULL;
-  if (closure->objtype == atom_obj) return NULL;
+obj* apply(const obj* operator, const obj* args, obj* env) {
+  if (operator == NULL) return NULL;
+  if (operator->objtype == atom_obj) return NULL;
 
-  if (closure->objtype == primitive_obj) {
-    primitive_t prim = *primitive_of(closure);
+  if (operator->objtype == primitive_obj) {
+    primitive_t prim = *primitive_of(operator);
     return prim(args, env);
 
   } else {
     obj* arg_values = eval_list(args, env);
 
-    if (!is_lambda(closure)) return NULL; // <-- not a lambda function
+    if (!is_lambda(operator)) return NULL; // <-- not a lambda function
 
-    obj* params = list_of(list_of(closure)->cdr)->car;
+    obj* params = list_of(list_of(operator)->cdr)->car;
     obj* new_env = bind(params, arg_values, env);
-    obj* exp = list_of(list_of(list_of(closure)->cdr)->cdr)->car;
+    obj* exp = list_of(list_of(list_of(operator)->cdr)->cdr)->car;
     return eval(exp, new_env);
   }
 }

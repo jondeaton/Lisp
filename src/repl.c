@@ -38,26 +38,31 @@ void print(FILE* fd, obj* o) {
     return;
   }
 
-  expression result = unparse(o);
+  expression string_representation = unparse(o);
 
-  if (result) fprintf(fd, "%s\n", (char*) result);
-  else perror("Error\n");
-  free(result);
+  if (string_representation == NULL) perror("Error\n");
+  else fprintf(fd, "%s\n", (char*) string_representation);
+
+  free(string_representation);
 };
 
 int repl() {
   obj* env = init_env(); // The REPL global environment
+  init_allocated();
   while (true) {
     obj* o = read_expression(stdin, PROMPT, REPROMPT);
-    if (o == NULL) return errno;
+    if (o == NULL) break;
     obj* evaluation = eval(o, env);
     print(stdout, evaluation);
+    clear_allocated();
   }
+  dispose(env);
+  return errno;
 };
 
 /**
  * Function: get_expression
- * -----------------------
+ * ------------------------
  * Gets an expression from the user or file
  * @return: The expression in a dynamically allocated memory location
  */

@@ -56,12 +56,7 @@ CVector* cvec_create(size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
 }
 
 void cvec_dispose(CVector* cv) {
-  // Only if elements need to be cleaned up do we need to loop thorugh them
-  if (cv->cleanup != NULL) {
-    // Loop through elements and call the cleanup callback for each
-    for (void* elem = cvec_first(cv); elem != NULL; elem = cvec_next(cv, elem))
-      cv->cleanup(elem);
-  }
+  cvec_clear(cv);
   free(cv->elems);
   free(cv);
 }
@@ -130,6 +125,13 @@ void cvec_remove(CVector* cv, int index) {
   memcpy(to_be_removed, buffer, num_bytes_shift);
 
   cv->nelems--;
+}
+
+void cvec_clear(CVector* cv) {
+  cv->nelems = 0;
+  if (cv->cleanup == NULL) return;
+  for (void* el = cvec_first(cv); el != NULL; el = cvec_next(cv, el))
+    cv->cleanup(el);
 }
 
 int cvec_search(const CVector* cv, const void* key, CompareFn cmp, int start, bool sorted) {
