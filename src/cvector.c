@@ -38,6 +38,7 @@ struct CVectorImplementation {
 // Function declarations
 static void cvec_double_size(CVector* cv);
 static inline size_t index_of(const CVector* cv, const void* elementp);
+static void* el_at_index(const CVector *cv, int index);
 
 CVector* cvec_create(size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
 
@@ -67,28 +68,21 @@ int cvec_count(const CVector *cv) {
 
 void* cvec_nth(const CVector* cv, int index) {
   assert(index >= 0 && index < cv->nelems);
-  return (char*) cv->elems + index * cv->elemsz;
+  return el_at_index(cv, index);
 }
 
-void cvec_insert(CVector* cv, const void* addr, int index) {
-  // Assert valid index. 0 to nelems
-  assert(index >= 0 && index <= cv->nelems);
+void cvec_insert(CVector* cv, const void* source, int index) {
+  assert(index >= 0 && index <= cv->nelems); // Assert valid index
+  if (cv->capacity == cv->nelems) cvec_double_size(cv); // Resize vector if at capacity
 
-  // If not enough room, double CVector size
-  if (cv->capacity == cv->nelems) cvec_double_size(cv);
-
-  // Number of bytes to shift over
-  size_t num_bytes_shift = (cv->nelems - index) * cv->elemsz;
-
-  // Use a buffer because memcpy with overlapping areas is undefined behavior
-  char* buffer[num_bytes_shift];
-
-  void* shift_source = (char*) cv->elems + index * cv->elemsz; // Can't use cvec_nth since we might be inserting at the end
-
-  // todo: make this more memory efficient
-  memcpy(buffer, shift_source, num_bytes_shift); // Copy elements after the insert sight into the buffer
-  memcpy(shift_source, addr, cv->elemsz); // Copy the contents pointed to by address into the insertion site
-  memcpy((char*) shift_source + cv->elemsz, buffer, num_bytes_shift); // Copy trailing elements back from the buffer
+  // Loop through the elements after the target backwards, copying them forward
+  for (int i = cv->nelems; i > index; i--) {
+    void* next_target = el_at_index(cv, i);
+    void* next_source = el_at_index(cv, i - 1);
+    memcpy(next_source, next_target, cv->elemsz);
+  }
+  void* target = el_at_index(cv, index);
+  memcpy(target, source, cv->elemsz); // insert the
   cv->nelems++;
 }
 
@@ -128,10 +122,9 @@ int cvec_search(const CVector* cv, const void* key, CompareFn cmp, int start, bo
   size_t nitems = (size_t) cv->nelems - start;
   void* found_elem;
 
-  if (sorted) // Binary search for sorted elements
-    found_elem = bsearch(key, start_loc, nitems, cv->elemsz, cmp);
-  else // Linear search for unsorted elements
-    found_elem = lfind(key, start_loc, &nitems, cv->elemsz, cmp);
+  // Search with binary or linear search if sorted or not, respectively
+  if (sorted) found_elem = bsearch(key, start_loc, nitems, cv->elemsz, cmp);
+  else found_elem = lfind(key, start_loc, &nitems, cv->elemsz, cmp);
 
   if (found_elem == NULL) return -1; // Not found: -1
   else return (int) index_of(cv, found_elem);
@@ -155,13 +148,15 @@ void* cvec_next(const CVector* cv, const void* prev) {
   return (char*) prev + cv->elemsz; // Advance pointer one element
 }
 
-/* Function: cvec_double_size
+/**
+ * Function: cvec_double_size
  * -------------------------
  * This function is for doubling the size of the CVector. The memory
  * used to store the elements will be reallocated (using realloc) to
  * request for a block of memory twice as big as the current capacity.
  * The capacity and elems fields in the CVector struct are updated to reflect
  * the change of size and (potential) change of memory location of elements.
+ * @param cv: The CVector to double the capacity of
  */
 static void cvec_double_size(CVector* cv) {
   // Recall capacity is the number of elements that could be stored
@@ -184,4 +179,18 @@ static void cvec_double_size(CVector* cv) {
  */
 static inline size_t index_of(const CVector* cv, const void* elementp) {
   return ((char*) elementp - (char*) cv->elems) / cv->elemsz;
+}
+
+/**
+ * Function: el_at_index
+ * ---------------------
+ * Gets a pointer to where the element at a specified index is or should be.
+ * Does not assert anything because an element may or may not actually be at that
+ * position.
+ * @param cv: The CVector to get the element of
+ * @param index: The index (0 starting) to get the element of
+ * @return: Pointer to the place in memory where the element should be or is
+ */
+static void* el_at_index(const CVector *cv, int index) {
+  return (char*) cv->elems + index * cv->elemsz;
 }
