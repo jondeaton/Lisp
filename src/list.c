@@ -91,18 +91,11 @@ static obj* copy_atom(const obj* o) {
   if (o == NULL) return NULL;
 
   atom_t atom_source = atom_of(o); // The atom contents to be copied
+  size_t atom_size = strlen(atom_source); // Get the size of the atom to be copied
 
-  // Get the size of the atom to be copied
-  size_t atom_size = strlen(atom_source);
-
-  // Allocate space for copy
-  obj* obj_copy = malloc(sizeof(obj) + atom_size + 1);
-
-  // The copy is also an atom
-  obj_copy->objtype = atom_obj;
-
-  // Copy the atom contents itself
-  strcpy(get_contents(obj_copy), atom_source);
+  obj* obj_copy = malloc(sizeof(obj) + atom_size + 1);   // Allocate space for copy
+  obj_copy->objtype = atom_obj; // The copy is also an atom
+  strcpy(get_contents(obj_copy), atom_source); // Copy the atom contents itself
   return obj_copy;
 }
 
@@ -152,5 +145,6 @@ static obj* copy_primitive(const obj* o) {
  * the object type enum.
  */
 static void* get_contents(const obj *o) {
+  if (o == NULL) return NULL;
   return (void*) ((char*) o + sizeof(obj));
 }
