@@ -10,6 +10,15 @@
 #include <primitives.h>
 #include <stdio.h>
 
+// todo: document what these do
+void repl_init();
+void repl_run_program(const char* program_file);
+void repl_run();
+void repl_eval();
+void repl_dispose();
+
+// todo: delete these stupid functions
+
 /**
  * Function: repl
  * --------------
@@ -21,11 +30,12 @@
 int repl();
 
 /**
- * Function: readExpression
- * --------------
+ * Function: read_expression
+ * -------------------------
  * Takes an expression from standard input, turns it into
  * an object and returns the object
- * @return : The object representation of the expression read from stdin
+ *
+ * @return: The object representation of the expression read from standard input
  */
 obj* read_expression(FILE *fd, const char *prompt, const char *reprompt);
 
@@ -34,8 +44,7 @@ obj* read_expression(FILE *fd, const char *prompt, const char *reprompt);
  * ---------------
  * Converts an object to an expression and then prints it
  * to standard output
- * @param o : An object to print
- * @return : Nothing
+ * @param o: An object to print
  */
 void print(FILE* fd, obj* o);
 

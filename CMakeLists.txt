@@ -14,7 +14,7 @@ set(SOURCES
         include/repl.h              src/repl.c
         include/environment.h       src/environment.c
         include/parser.h            src/parser.c
-        include/run_lisp.h          src/run_lisp.c
+        include/run-lisp.h src/run-lisp.c
         include/list.h              src/evaluator.c
         include/evaluator.h         src/list.c
         include/cvector.h           src/cvector.c
@@ -28,7 +28,7 @@ set(TEST_SOURCES
         include/repl.h              src/repl.c
         include/environment.h       src/environment.c
         include/parser.h            src/parser.c
-        include/run_lisp.h          src/run_lisp.c
+        include/run-lisp.h src/run-lisp.c
         include/list.h              src/evaluator.c
         include/evaluator.h         src/list.c
         include/cvector.h           src/cvector.c

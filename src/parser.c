@@ -250,11 +250,9 @@ static obj* get_quote_list() {
  * @return : A pointer to the list object containing only the argument object
  */
 static obj* put_into_list(obj *o) {
-  obj* listObj = calloc(1, sizeof(obj) + sizeof(list_t));
-  if (listObj == NULL) return NULL;
-  listObj->objtype = list_obj;
-  list_of(listObj)->car = o;
-  return listObj;
+  obj* list = new_list();
+  list_of(list)->car = o;
+  return list;
 }
 
 /**
@@ -281,7 +279,7 @@ static bool is_empty_list(const obj *o) {
  * @return: The number of characters of whitespace in the beginning
  */
 static int distance_to_next_element(const_expression e) {
-  size_t i;
+  int i;
   for (i = 0; i < strlen(e); i++)
     if (!is_white_space(e[i])) break;
   if (i == strlen(e)) return -1;
