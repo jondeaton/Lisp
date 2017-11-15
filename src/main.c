@@ -25,7 +25,7 @@
 void parse_command_line_args(int argc, char* argv[]);
 
 const char* optstring = ":rb:";
-char const* bootstrap_path = "../bootstrap.lisp";
+char const* bootstrap_path = NULL;
 char const* program_path = NULL;
 bool run_repl = true;
 
@@ -52,22 +52,22 @@ int main(int argc, char* argv[]) {
  * @param argv: Argument array
  */
 void parse_command_line_args(int argc, char* argv[]) {
-  int c;
-  while ((c = getopt(argc, argv, optstring)) != -1) {
-    switch(c){
-      case 'r': {
-        run_repl = true;
-        break;
+  while (optind < argc) {
+    int c;
+    if ((c = getopt(argc, argv, optstring)) != -1) {
+      switch(c) {
+        case 'r': {
+          run_repl = true;
+          break;
+        }
+        case 'b': {
+          bootstrap_path = optarg;
+          break;
+        }
+        default: break;
       }
-      case 'b': {
-        bootstrap_path = optarg;
-        break;
-      }
-      default: {
-        // todo: get this command line parsing working...
-      }
+    } else {
+      if (optind < argc) program_path = argv[optind];
     }
   }
-
-
 }

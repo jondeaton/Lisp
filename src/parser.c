@@ -49,7 +49,7 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
   } else if (expr_start[0] == '(')  { // Expression starts with opening paren
     o = parse_list((char *) expr_start + 1, &expr_size);
     expr_size += 1; // for the opening parentheses character
-    if (o == NULL) o = empty();
+    if (o == NULL) o = new_list();
 
   } else {
     o = parse_atom(expr_start, &expr_size);

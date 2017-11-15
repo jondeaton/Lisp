@@ -5,11 +5,9 @@
  */
 
 #include "repl.h"
-#include "parser.h"
 #include "environment.h"
 #include "evaluator.h"
 #include <string.h>
-#include <errno.h>
 #include <sys/file.h>
 
 #define BUFSIZE 1024
@@ -17,61 +15,80 @@
 #define REPROMPT ">>"
 
 // Static function declarations
+static obj* read_expression(FILE *fd, bool prompt, bool* eof);
+static expression get_expression(FILE *fd, bool prompt, bool* eof);
+static void print_object(FILE *fd, const obj *o);
 static void reprompt(const_expression expr);
-static expression get_expression(FILE *fd);
 static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
+
+obj* env;
+
+void repl_init() {
+  env = init_env();
+  init_allocated();
+}
 
 void repl_run_program(const char* program_file) {
   if (program_file == NULL) return;
   FILE* fd = fopen(program_file, O_RDONLY);
 
-}
-
-
-
-// Get expression from stdin, turn it into a list, return the list
-obj* read_expression(FILE *fd, const char *prompt, const char *reprompt) {
-  expression input = get_expression(fd);
-  if (input == NULL) return NULL;
-
-  size_t n;
-  obj* o = parse_expression(input, &n);
-  unparse(o);
-
-  free(input);
-  return o;
-};
-
-// Stringifies the lisp data structure, prints it to stdout
-void print(FILE* fd, obj* o) {
-  if (o == NULL || fd == NULL) {
-    perror("Error\n");
-    return;
-  }
-
-  expression string_representation = unparse(o);
-
-  if (string_representation == NULL) perror("Error\n");
-  else fprintf(fd, "%s\n", (char*) string_representation);
-
-  free(string_representation);
-};
-
-int repl() {
-  obj* env = init_env(); // The REPL global environment
-  init_allocated();
-  while (true) {
-    obj* o = read_expression(stdin, PROMPT, REPROMPT);
-    if (o == NULL) break;
+  bool eof = false;
+  while (!eof) {
+    obj* o = read_expression(fd, false, &eof);
+    if (o == NULL) break; // Error -> end
     obj* evaluation = eval(o, env);
-    print(stdout, evaluation);
+    print_object(stdout, evaluation);
     clear_allocated();
   }
+}
+
+void repl_run() {
+  bool eof = false;
+  while (!eof) {
+    obj* o = read_expression(stdin, true, &eof);
+    if (o == NULL) {
+      fprintf(stderr, "Invalid expression\n");
+      continue;
+    };
+    obj* evaluation = eval(o, env);
+    print_object(stdout, evaluation);
+    clear_allocated();
+  }
+}
+
+expression repl_eval(const_expression expr) {
+  if (expr == NULL) return NULL;
+
+  obj* o = parse_expression(expr, NULL);
+  obj* result_obj = eval(o, env);
+  expression result = unparse(result_obj);
+  clear_allocated();
+  return result;
+}
+
+void repl_dispose() {
   dispose_allocated();
   dispose_recursive(env);
-  return errno;
+}
+
+/**
+ * Function: read_expression
+ * -------------------------
+ * Reads the next expression from standard input, turns it into a list object,
+ * and then returns the object (in dynamically allocated memory
+ * @param fd: The file descriptor to read the next expression from
+ * @param prompt: If true, print prompt to standard output (for interactive prompt)
+ * @return: The parsed lisp object from dynamically allocated memory
+ */
+static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
+  expression next_expr = get_expression(fd, prompt, eof);
+  if (next_expr == NULL) return NULL;
+
+  obj* o = parse_expression(next_expr, NULL);
+  free(next_expr);
+  return o;
 };
 
 /**
@@ -82,34 +99,65 @@ int repl() {
  * @param fd: A file descriptor to read input from
  * @return: An expression that was read from that file descriptor
  */
-static expression get_expression(FILE *fd, bool prompt) {
+static expression get_expression(FILE *fd, bool prompt, bool* eof) {
   if (prompt) printf(PROMPT);
 
   char buff[BUFSIZE];
-  fgets(buff, sizeof buff, stdin);
-  size_t inputSize = strlen(buff);
+  void* p = fgets(buff, sizeof buff, fd);
+  *eof = p == NULL;
+  size_t input_size = strlen(buff);
 
-  size_t totalSize = inputSize;
-  expression e = malloc(sizeof(char) * (inputSize + 1));
-  if (e == NULL) return NULL;
+  size_t total_size = input_size;
+  expression e = malloc(sizeof(char) * (input_size + 1));
+  if (e == NULL) {
+    fprintf(stderr, "Memory allocation failure.\n");
+    return NULL;
+  }
 
   strcpy(e, buff);
 
-  bool valid;
-  while ((valid = is_valid(e)) && !is_balanced(e)) {
+  while (true) {
+    bool valid = is_valid(e);
+    bool balanced = is_balanced(e);
+    if (valid && balanced) return e;
+    if (!valid || *eof) return NULL;
+
     if (prompt) reprompt(e);
-    scanf("%s", buff);
-    inputSize = strlen(buff);
+    void* p = fgets(buff, sizeof buff, fd);
+    *eof = p == NULL;
 
-    e = realloc(e, sizeof(char) * (totalSize + inputSize + 1));
-    if (e == NULL) return NULL;
+    input_size = strlen(buff);
 
-    strcpy(e + totalSize, buff);
-    totalSize += inputSize;
+    e = realloc(e, sizeof(char) * (total_size + input_size + 1));
+    if (e == NULL) {
+      fprintf(stderr, "Memory allocation failure.\n");
+      return NULL;
+    }
+
+    strcpy((char*) e + total_size, buff);
+    total_size += input_size;
   }
-  if (!valid) return NULL;
-  return e;
 }
+
+/**
+ * Function: print_object
+ * ----------------------
+ * Serializes an object and prints it to a file
+ * @param fd: File descriptor to print serialization to
+ * @param o: The object to serialize and print
+ */
+static void print_object(FILE *fd, const obj *o) {
+  if (fd == NULL) {
+    fprintf(stderr, "Invalid file descriptor\n");
+    return;
+  }
+
+  expression serialization = unparse(o);
+  if (serialization) fprintf(fd, "null\n");
+  else fprintf(fd, "%s\n", serialization);
+
+  free(serialization);
+};
 
 /**
  * Function: reprompt
@@ -167,6 +215,6 @@ static int get_net_balance(const_expression expr) {
  * @param netp: Pointer to the place where the net open parenthesis count is stored
  */
 static void update_net_balance(char next_character, int* netp) {
-  if (next_character == '(') *netp++;
-  if (next_character == ')') *netp--;
+  if (next_character == '(') (*netp)++;
+  if (next_character == ')') (*netp)--;
 }

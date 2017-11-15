@@ -34,7 +34,7 @@ int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl
 static bool check_read_permissions(const char* path) {
   if (access(path, R_OK) != 0) {
     if (errno == ENOENT) fprintf(stderr, "No such file: %s\n", path);
-    if (errno == EACCES) fprintf(stderr, "Permissions denied: %s\n", path);
+    if (errno == EACCES) fprintf(stderr, "Permission denied: %s\n", path);
     return false;
   }
   return true;

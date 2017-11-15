@@ -8,7 +8,7 @@
 #include "parser.h"
 #include "environment.h"
 #include "evaluator.h"
-#include "list.h"
+#include "repl.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -93,6 +93,7 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
+  free(result_exp);
   return test_result;
 }
 
@@ -106,11 +107,10 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
  * @return: True if the expressoin evluated to the expected thing, false otherwise
  */
 static bool test_single_eval(const_expression expr, const_expression expected) {
-  obj* env = init_env(); // The global environment
+  repl_init();
+  expression result_exp = repl_eval(expr);
+  repl_dispose();
 
-  obj* to_eval = parse_expression(expr, NULL);
-  obj* eval_result = eval(to_eval, env);
-  expression result_exp = unparse(eval_result);
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("%s Evaluation:\t%s\n", test_result ? PASS : FAIL, expr);
@@ -119,7 +119,7 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
-  // todo: dispose of unused things
+  free(result_exp);
   return test_result;
 }
 
@@ -134,18 +134,11 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
  * @return: True if expr evaluates to expected, and false otherwise
  */
 static bool test_multi_eval(const_expression before[], const_expression expr, const_expression expected) {
-  obj* env = init_env(); // The global environment
 
-  const_expression next = before[0];
-  for (int i = 0; before[i]; i++) {
-    next = before[i];
-    obj* next_to_eval = parse_expression(next, NULL);
-    eval(next_to_eval, env);
-  }
-
-  obj* to_eval = parse_expression(expr, NULL);
-  obj* result = eval(to_eval, env);
-  expression result_exp = unparse(result);
+  repl_init();
+  for (int i = 0; before[i]; i++) free(repl_eval(before[i]));
+  expression result_exp = repl_eval(expr);
+  repl_dispose();
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("%s Multi eval:\t%s\n", test_result ? PASS : FAIL, expr);
@@ -154,6 +147,7 @@ static bool test_multi_eval(const_expression before[], const_expression expr, co
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
+  free(result_exp);
 
   return test_result;
 }
