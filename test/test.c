@@ -72,6 +72,9 @@ static int run_all_tests() {
   num_fails += test_cond();
   num_fails += test_set();
   num_fails += test_lambda();
+    num_fails += test_math();
+    num_fails += test_Y_combinator();
+    num_fails += test_recursion();
   return num_fails;
 }
 
@@ -359,8 +362,60 @@ static int test_lambda() {
     "(set 'prepend-z (make-prepender 'z))",
     NULL,
   };
-  num_fails += test_multi_eval(before1, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1; 
+  num_fails += test_multi_eval(before1, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1;
 
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
+}
+
+/**
+ * Function: test_math
+ * -------------------
+ * Tests if arithmetic works correctly
+ * @return: The number of tests that failed
+ */
+static int test_math() {
+    printf(KMAG "\nTesting math...\n" RESET);
+    int num_fails = 0;
+    num_fails += test_single_eval("(= 1 1)", "t") ? 0 : 1;
+    num_fails += test_single_eval("(= 1 0)", "()") ? 0 : 1;
+    num_fails += test_single_eval("(+ 1 1)", "2") ? 0 : 1;
+    num_fails += test_single_eval("(+ 20 -25)", "-5") ? 0 : 1;
+    num_fails += test_single_eval("(- 13 7)", "6") ? 0 : 1;
+    num_fails += test_single_eval("(- 10 100)", "-90") ? 0 : 1;
+    num_fails += test_single_eval("(* 1337 0)", "0") ? 0 : 1;
+    num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
+    num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
+    num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
+    printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
+    return num_fails;
+}
+
+/**
+ * Function: test_Y_combinator
+ * ---------------------------
+ * Tests the functionality of purely functional recursion in the lisp interpreter
+ * @return: The number of tests that failed
+ */
+static int test_Y_combinator() {
+    printf(KMAG "Testing Y Combinator...\n" RESET);
+    int num_fails = 0;
+
+    // Testing Y combinator with factorial function definition
+    const_expression before[] = {
+            "(set 'Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x))))))"
+            "(set 'F (lambda (f) (lambda (n) (if (= n 0) 1 (* n (f (- n 1)))))))"
+    };
+    num_fails += test_multi_eval(before, "((Y F) 5)", "120") ? 0 : 1;
+    printf("Test Y Combinator: %s\n", num_fails == 0 ? PASS : FAIL);
+    return num_fails;
+}
+
+static int test_recursion() {
+    printf(KMAG "Testing recursion...\n" RESET);
+    // todo: implement some recursion tests
+    printf("No tests yet.\n");
+    int num_fails = 0;
+    printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
+    return num_fails;
 }
