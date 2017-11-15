@@ -2,10 +2,14 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
 cmake_minimum_required(VERSION 2.6)
 project(Lisp)
 
-set(CMAKE_BUILD_TYPE Debug)
-
-add_compile_options()
-SET(CMAKE_CXX_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
+# cmake -DCMAKE_BUILD_TYPE=Release
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Mode: Release")
+    set(CMAKE_CXX_FLAGS  "-Ofast")
+else()
+    message(STATUS "Mode: Debug")
+    set(CMAKE_CXX_FLAGS  "-g -O0 -Wall -Wextra -pedantic -asni")
+endif()
 
 include_directories(include src)
 
