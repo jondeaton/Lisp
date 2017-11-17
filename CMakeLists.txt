@@ -15,7 +15,6 @@ else()
     set(CMAKE_CXX_FLAGS  "-g -O0 -Wall -Wextra -pedantic -asni")
 endif()
 
-
 include_directories(include src test)
 set(COMMON_SRC
         include/primitives.h        src/primitives.c

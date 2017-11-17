@@ -117,20 +117,14 @@ static expression get_expression(FILE *fd, bool prompt, bool* eof) {
  * @return: The next expression entered on the interactive prompt
  */
 static expression get_expression_from_prompt(bool* eof) {
-  char* line = readline(PROMPT);
-  *eof = line == NULL;
-  size_t input_size = strlen(line);
+  char* e = readline(PROMPT);
+  *eof = e == NULL;
+  if (e == NULL) return NULL;
 
+  size_t input_size = strlen(e);
   size_t total_size = input_size;
-  expression e = malloc(sizeof(char) * (input_size + 1));
-  if (e == NULL) {
-    fprintf(stderr, "Memory allocation failure.\n");
-    free(line);
-    return NULL;
-  }
 
   strcpy(e, buff);
-  free(line);
 
   while (true) {
     bool valid = is_valid(e);
@@ -138,11 +132,10 @@ static expression get_expression_from_prompt(bool* eof) {
     if (valid && balanced) return e;
     if (!valid || *eof) return NULL;
 
-    line = reprompt(e);
+    char* line = reprompt(e);
     *eof = line == NULL;
 
     input_size = strlen(line);
-
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
       fprintf(stderr, "Memory allocation failure.\n");
@@ -150,7 +143,7 @@ static expression get_expression_from_prompt(bool* eof) {
       return NULL;
     }
 
-    strcpy((char*) e + total_size, line);
+    strcpy(e + total_size, line);
     free(line);
     total_size += input_size;
   }
