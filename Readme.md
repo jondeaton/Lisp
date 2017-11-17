@@ -12,7 +12,13 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
 
 
 ## Dependencies
-1. `C99`
+    1. `C99`
+    2. GNU Readline (not required)
+        - Ubuntu: `sudo apt-get install libedit-dev`
+        - Fedora: `su -c "yum install libedit-dev*"`
+        - MacOS: Should be installed already but if not `brew install editline`
+        - Cygwin: Install from Cygwin Setup
+        - Windows: http://gnuwin32.sourceforge.net/packages/readline.htm 
 
 ## Design choices
 - Object structure (`obj`)
