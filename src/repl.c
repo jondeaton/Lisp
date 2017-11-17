@@ -56,7 +56,7 @@ void repl_run() {
     if (o == NULL) {
       fprintf(stderr, "Invalid expression\n");
       continue;
-    };
+    }
     obj* evaluation = eval(o, env);
     print_object(stdout, evaluation);
     clear_allocated();
@@ -94,7 +94,7 @@ static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
   obj* o = parse_expression(next_expr, NULL);
   free(next_expr);
   return o;
-};
+}
 
 /**
  * Function: get_expression
@@ -123,8 +123,6 @@ static expression get_expression_from_prompt(bool* eof) {
 
   size_t input_size = strlen(e);
   size_t total_size = input_size;
-
-  strcpy(e, buff);
 
   while (true) {
     bool valid = is_valid(e);
@@ -208,11 +206,11 @@ static void print_object(FILE *fd, const obj *o) {
   }
 
   expression serialization = unparse(o);
-  if (serialization) fprintf(fd, "null\n");
+  if (!serialization) fprintf(fd, "null\n");
   else fprintf(fd, "%s\n", serialization);
 
   free(serialization);
-};
+}
 
 /**
  * Function: reprompt
@@ -226,9 +224,11 @@ static expression reprompt(const_expression expr) {
   int indentation = get_indentation_size(expr);
 
   // re-purpose the global buffer to store the prompt
+  char space = ' ';
   strcpy(buff, REPROMPT);
-  memset((char*) buff + sizeof(REPROMPT), ' ', indentation);
-  memset((char*) buff + sizeof(REPROMPT) + indentation, 0, indentation);
+  for (int i = 0; i < indentation; i++)
+    memcpy((char*) buff + strlen(REPROMPT) + i, &space, sizeof(char));
+  memset((char*) buff + strlen(REPROMPT) + indentation, 0, 1);
 
   return readline(buff);
 }
