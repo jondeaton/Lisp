@@ -39,6 +39,9 @@ static int test_cons();
 static int test_cond();
 static int test_set();
 static int test_lambda();
+static int test_math();
+static int test_Y_combinator();
+static int test_recursion();
 
 /**
  * Function: main
@@ -72,9 +75,9 @@ static int run_all_tests() {
   num_fails += test_cond();
   num_fails += test_set();
   num_fails += test_lambda();
-    num_fails += test_math();
-    num_fails += test_Y_combinator();
-    num_fails += test_recursion();
+  num_fails += test_math();
+  num_fails += test_Y_combinator();
+  num_fails += test_recursion();
   return num_fails;
 }
 
@@ -375,20 +378,20 @@ static int test_lambda() {
  * @return: The number of tests that failed
  */
 static int test_math() {
-    printf(KMAG "\nTesting math...\n" RESET);
-    int num_fails = 0;
-    num_fails += test_single_eval("(= 1 1)", "t") ? 0 : 1;
-    num_fails += test_single_eval("(= 1 0)", "()") ? 0 : 1;
-    num_fails += test_single_eval("(+ 1 1)", "2") ? 0 : 1;
-    num_fails += test_single_eval("(+ 20 -25)", "-5") ? 0 : 1;
-    num_fails += test_single_eval("(- 13 7)", "6") ? 0 : 1;
-    num_fails += test_single_eval("(- 10 100)", "-90") ? 0 : 1;
-    num_fails += test_single_eval("(* 1337 0)", "0") ? 0 : 1;
-    num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
-    num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
-    num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
-    printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
-    return num_fails;
+  printf(KMAG "\nTesting math...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("(= 1 1)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(= 1 0)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(+ 1 1)", "2") ? 0 : 1;
+  num_fails += test_single_eval("(+ 20 -25)", "-5") ? 0 : 1;
+  num_fails += test_single_eval("(- 13 7)", "6") ? 0 : 1;
+  num_fails += test_single_eval("(- 10 100)", "-90") ? 0 : 1;
+  num_fails += test_single_eval("(* 1337 0)", "0") ? 0 : 1;
+  num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
+  num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
+  num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
+  printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
 }
 
 /**
@@ -398,24 +401,24 @@ static int test_math() {
  * @return: The number of tests that failed
  */
 static int test_Y_combinator() {
-    printf(KMAG "Testing Y Combinator...\n" RESET);
-    int num_fails = 0;
+  printf(KMAG "Testing Y Combinator...\n" RESET);
+  int num_fails = 0;
 
-    // Testing Y combinator with factorial function definition
-    const_expression before[] = {
-            "(set 'Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x))))))"
-            "(set 'F (lambda (f) (lambda (n) (if (= n 0) 1 (* n (f (- n 1)))))))"
-    };
-    num_fails += test_multi_eval(before, "((Y F) 5)", "120") ? 0 : 1;
-    printf("Test Y Combinator: %s\n", num_fails == 0 ? PASS : FAIL);
-    return num_fails;
+  // Testing Y combinator with factorial function definition
+  const_expression before[] = {
+    "(set 'Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x))))))"
+      "(set 'F (lambda (f) (lambda (n) (if (= n 0) 1 (* n (f (- n 1)))))))"
+  };
+  num_fails += test_multi_eval(before, "((Y F) 5)", "120") ? 0 : 1;
+  printf("Test Y Combinator: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
 }
 
 static int test_recursion() {
-    printf(KMAG "Testing recursion...\n" RESET);
-    // todo: implement some recursion tests
-    printf("No tests yet.\n");
-    int num_fails = 0;
-    printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
-    return num_fails;
+  printf(KMAG "Testing recursion...\n" RESET);
+  // todo: implement some recursion tests
+  printf("No tests yet.\n");
+  int num_fails = 0;
+  printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
 }

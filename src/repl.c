@@ -10,7 +10,10 @@
 #include <string.h>
 #include <sys/file.h>
 
-#define BUFSIZE 1024
+#include <editline/readline.h>
+
+#define BUFSIZE 512
+char buff[BUFSIZE];
 #define PROMPT "> "
 #define REPROMPT ">>"
 
@@ -18,7 +21,9 @@
 static obj* read_expression(FILE *fd, bool prompt, bool* eof);
 static expression get_expression(FILE *fd, bool prompt, bool* eof);
 static void print_object(FILE *fd, const obj *o);
-static void reprompt(const_expression expr);
+static expression get_expression_from_prompt(bool* eof);
+static expression get_expression_from_file(FILE *fd, bool* eof);
+static expression reprompt(const_expression expr);
 static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
@@ -85,7 +90,7 @@ void repl_dispose() {
 static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
   expression next_expr = get_expression(fd, prompt, eof);
   if (next_expr == NULL) return NULL;
-
+  if (prompt) add_history(next_expr);
   obj* o = parse_expression(next_expr, NULL);
   free(next_expr);
   return o;
@@ -100,10 +105,68 @@ static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
  * @return: An expression that was read from that file descriptor
  */
 static expression get_expression(FILE *fd, bool prompt, bool* eof) {
-  if (prompt) printf(PROMPT);
+  if (prompt) return get_expression_from_prompt(eof);
+  else return get_expression_from_file(fd, eof);
+}
 
-  char buff[BUFSIZE];
-  void* p = fgets(buff, sizeof buff, fd);
+/**
+ * Function: get_expression_from_prompt
+ * ------------------------------------
+ * Gets the next expression from an interactive prompt from standard inupt
+ * @param eof: Pointer to a boolean to write either EOF was encountered
+ * @return: The next expression entered on the interactive prompt
+ */
+static expression get_expression_from_prompt(bool* eof) {
+  char* line = readline(PROMPT);
+  *eof = line == NULL;
+  size_t input_size = strlen(line);
+
+  size_t total_size = input_size;
+  expression e = malloc(sizeof(char) * (input_size + 1));
+  if (e == NULL) {
+    fprintf(stderr, "Memory allocation failure.\n");
+    free(line);
+    return NULL;
+  }
+
+  strcpy(e, buff);
+  free(line);
+
+  while (true) {
+    bool valid = is_valid(e);
+    bool balanced = is_balanced(e);
+    if (valid && balanced) return e;
+    if (!valid || *eof) return NULL;
+
+    line = reprompt(e);
+    *eof = line == NULL;
+
+    input_size = strlen(line);
+
+    e = realloc(e, sizeof(char) * (total_size + input_size + 1));
+    if (e == NULL) {
+      fprintf(stderr, "Memory allocation failure.\n");
+      free(line);
+      return NULL;
+    }
+
+    strcpy((char*) e + total_size, line);
+    free(line);
+    total_size += input_size;
+  }
+
+}
+
+/**
+ * Function: get_expression_from_file
+ * ----------------------------------
+ * Retrieves the next expression in the file
+ * @param fd: File descriptor to read from
+ * @param eof: Pointer to a bool to write whether or not EOF occured
+ * @return: The next expression read form the file descriptor
+ */
+static expression get_expression_from_file(FILE *fd, bool* eof) {
+  char* p = fgets(buff, sizeof buff, fd);
   *eof = p == NULL;
   size_t input_size = strlen(buff);
 
@@ -122,8 +185,7 @@ static expression get_expression(FILE *fd, bool prompt, bool* eof) {
     if (valid && balanced) return e;
     if (!valid || *eof) return NULL;
 
-    if (prompt) reprompt(e);
-    void* p = fgets(buff, sizeof buff, fd);
+    p = fgets(buff, sizeof buff, fd);
     *eof = p == NULL;
 
     input_size = strlen(buff);
@@ -165,10 +227,17 @@ static void print_object(FILE *fd, const obj *o) {
  * Prints the properly indented re-prompt
  * @param expr: The expression to reprompt for
  */
-static void reprompt(const_expression expr) {
-  printf(REPROMPT);
+static expression reprompt(const_expression expr) {
+
+  // figure out the number of spaces to put for smart indentation
   int indentation = get_indentation_size(expr);
-  for (int i = 0; i < indentation; i++) printf(" ");
+
+  // re-purpose the global buffer to store the prompt
+  strcpy(buff, REPROMPT);
+  memset((char*) buff + sizeof(REPROMPT), ' ', indentation);
+  memset((char*) buff + sizeof(REPROMPT) + indentation, 0, indentation);
+
+  return readline(buff);
 }
 
 /**
@@ -181,14 +250,7 @@ static void reprompt(const_expression expr) {
  * so that it is properly indented.
  */
 static int get_indentation_size(const_expression expr) {
-  int total_net = get_net_balance(expr);
-  int net = 0;
-  int i = 0;
-  for (i = 0; i < strlen(expr); i++) {
-    if (net == total_net) return i;
-    update_net_balance(expr[i], &net);
-  }
-  return i;
+  return get_net_balance(expr);
 }
 
 /**
