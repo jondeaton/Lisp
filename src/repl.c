@@ -10,7 +10,8 @@
 #include <string.h>
 #include <sys/file.h>
 
-#include <editline/readline.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #define BUFSIZE 512
 char buff[BUFSIZE];

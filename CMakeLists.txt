@@ -2,16 +2,13 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
 cmake_minimum_required(VERSION 2.6)
 project(Lisp)
 
- set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
- find_package(Libedit REQUIRED)
-
 # cmake -DCMAKE_BUILD_TYPE=Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Mode: Release")
-    set(CMAKE_C_FLAGS  "-Ofast")
+    set(CMAKE_C_FLAGS  "-Ofast -lreadline")
 else()
     message(STATUS "Mode: Debug")
-    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
+    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic -lreadline")
 endif()
 
 include_directories(include src test)
@@ -27,8 +24,6 @@ set(COMMON_SRC
 
 set(LISP_SRC ${COMMON_SRC} src/main.c)
 add_executable(lisp ${LISP_SRC})
-target_link_libraries(lisp ${LIBEDIT_LIBRARIES})
 
 set(TEST_SRC ${COMMON_SRC} test/test.c)
 add_executable(test-lisp ${TEST_SRC})
-target_link_libraries(test-lisp ${LIBEDIT_LIBRARIES})
