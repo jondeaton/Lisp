@@ -109,10 +109,13 @@ void cvec_remove(CVector* cv, int index) {
 }
 
 void cvec_clear(CVector* cv) {
-  cv->nelems = 0;
-  if (cv->cleanup == NULL) return;
+  if (cv->cleanup == NULL) {
+    cv->nelems = 0;
+    return;
+  }
   for (void* el = cvec_first(cv); el != NULL; el = cvec_next(cv, el))
     cv->cleanup(el);
+  cv->nelems = 0;
 }
 
 int cvec_search(const CVector* cv, const void* key, CompareFn cmp, int start, bool sorted) {

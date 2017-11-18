@@ -22,6 +22,7 @@ static obj* associate(obj* names, obj* values);
 static obj* push_frame(obj *frame, obj *env);
 static obj* eval_list(const obj* list, obj *env);
 static bool is_lambda(const obj* o);
+static void obj_cleanup(obj** o_ref);
 
 obj* eval(const obj* o, obj* env) {
   if (o == NULL) return NULL;
@@ -66,11 +67,11 @@ obj* apply(const obj* operator, const obj* args, obj* env) {
 }
 
 void init_allocated() {
-  allocated = cvec_create(sizeof(obj*), 0, (void*) &dispose);
+  allocated = cvec_create(sizeof(obj*), 0, (void*) &obj_cleanup);
 }
 
 void add_allocated(const obj* o) {
-  cvec_append(allocated, o);
+  cvec_append(allocated, &o);
 }
 
 void clear_allocated() {
@@ -178,4 +179,16 @@ static bool is_lambda(const obj* o) {
   if (lambda_atom == NULL) return false;
   if (lambda_atom->objtype != atom_obj) return false;
   return strcmp(atom_of(lambda_atom), LAMBDA_RESV) == 0;
+}
+
+/**
+ * Function: obj_cleanup
+ * ---------------------
+ * Cleanup an object given a pointer to a reference to the object. This
+ * function was declared to use as the cleanup function for the CVector of
+ * object references.
+ * @param o_ref: Pointer to a pointer to the object to dispose of
+ */
+static void obj_cleanup(obj** o_ref) {
+  dispose(*o_ref);
 }
