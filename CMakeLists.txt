@@ -20,7 +20,8 @@ set(COMMON_SRC
         include/run-lisp.h          src/run-lisp.c
         include/list.h              src/evaluator.c
         include/evaluator.h         src/list.c
-        include/cvector.h           src/cvector.c)
+        include/cvector.h           src/cvector.c
+        include/math.h              src/math.c)
 
 set(LISP_SRC ${COMMON_SRC} src/main.c)
 add_executable(lisp ${LISP_SRC})
