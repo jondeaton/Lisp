@@ -12,6 +12,14 @@
 #include <stdlib.h>
 
 /**
+ * Function: get_primitive_env
+ * ---------------------------
+ * Get the library of primitive operations
+ * @return: An environment constructed with the primitive operations
+ */
+obj* get_primitive_library();
+
+/**
  * Function: t
  * -----------
  * Get the truth atom. This is defined to be a lisp object of type atom with
@@ -88,20 +96,20 @@ obj* cdr(const obj* o, obj* env);
  * of x followed by the elements of the value of y 
  * @param o: the argument to the cons call
  * @param env: The environment to evaluate this primitive in
- * @return: todo
+ * @return: Pointer to the concatenated list
  */
 obj* cons(const obj* o, obj* env);
 
 /**
- * Primitive: cons
+ * Primitive: cond
  * ---------------
  * (cond (p1 e1) ... (pn en))
  * The p expressions are evaluated in order until one returns t
- * When one is found  the value of the corresp onding e expression
+ * When one is found  the value of the corresponding e expression
  * is returned as the expression
  * @param o: The argument to the cond call
  * @param env: The environment to evaluate this primitive in
- * @return: todo
+ * @return: Pointer to the evaluation of expression the predicated of which evaluated to true
  */
 obj* cond(const obj* o, obj* env);
 
@@ -123,7 +131,7 @@ obj* set(const obj* o, obj* env);
  * Defines a macro
  * @param o: The pointer to the argument list to defmacro
  * @param env: The environment to define the macro in
- * @return: nothing really?
+ * @return: todo
  */
 obj* defmacro(const obj* o, obj* env);
 

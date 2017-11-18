@@ -14,8 +14,15 @@
 
 const char* t_contents = "t";
 
+const atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons", "cond", "defmacro" };
+const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car,  &cdr,  &cons,  &cons,  &defmacro  };
+
 // Static function declarations
 static bool is_t(const obj* o);
+
+obj* get_primitive_library() {
+  return make_environment(primitive_reserved_names, primitive_functions);
+}
 
 // Allocate new truth atom
 obj* t() {

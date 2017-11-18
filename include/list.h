@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 // The different types of lists
-enum type {atom_obj, list_obj, primitive_obj};
+enum type {atom_obj, list_obj, primitive_obj, closure_obj, integer_obj, float_obj};
 
 typedef char* atom_t;
 
@@ -104,5 +104,15 @@ bool is_empty(const obj* o);
  * @return: True if the two objects are identical, false otherwise
  */
 bool deep_compare(obj* x, obj* y);
+
+/**
+ * Function: ith
+ * -------------
+ * Get the i'th element of a list
+ * @param o: The list to get the i'th element of
+ * @param i: The index (starting at 0) of the element to get
+ * @return: Pointer to the element of the list at index i, or NULL if there is no element there
+ */
+obj* ith(const obj* o, int i);
 
 #endif // _LIST_H_INCLUDED

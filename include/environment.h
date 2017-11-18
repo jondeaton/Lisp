@@ -10,12 +10,22 @@
 #include "primitives.h"
 
 /**
- * Function: initEnv
- * -----------------
+ * Function: init_env
+ * ------------------
  * Initializes the default lisp environment
- * @return : Pointer to lisp environment object
+ * @return: Pointer to lisp environment object
  */
 obj* init_env();
+
+/**
+ * Function: make_environment
+ * --------------------------
+ * Make an environment from an array of primitive names and an array of corresponding primitive functions
+ * @param primitive_names: Array of primitive names
+ * @param primitives: Array of corresponding primitive functions
+ * @return: An environment object made form pairing the names with the primitive functions
+ */
+obj* make_environment(const atom_t primitive_names[], const primitive_t primitives[]);
 
 /**
  * Function: lookup
@@ -41,9 +51,8 @@ obj** lookup_entry(const obj* o, const obj* env);
 /**
  * Function: make_pair
  * -------------------
- * Associated a name with a value in a two-item list (pair) by copying the name
- * and the value into a new list. Both the copyies and the list are in newly dynamically allocated
- * memory
+ * Associate a name with a value in a two-item list (pair) by copying the name and the
+ * value into a new list. Both the copies and the list are in newly dynamically allocated memory
  * @param name: A name to associate with a value (will be copied)
  * @param value: The value to associate with a name (will be copied)
  * @return: A list of length two where the first element is the copy of the name and the second element

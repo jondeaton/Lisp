@@ -5,32 +5,10 @@
  */
 
 #include "environment.h"
-#include "parser.h"
-#include "list.h"
+#include <list.h>
+#include <parser.h>
 #include <string.h>
-
-#define NUMBUILTINS 9
-#define QUOTE_RESV "quote"
-#define ATOM_RESV "atom"
-#define EQ_RESV "eq"
-#define CAR_RESV "car"
-#define CDR_RESV "cdr"
-#define CONS_RESV "cons"
-#define COND_RESV "cond"
-#define SET_RESV "set"
-#define DEFMACRO_RESV "defmacro"
-
-static atom_t primitive_names[NUMBUILTINS] = {
-  QUOTE_RESV,
-  ATOM_RESV,
-  EQ_RESV,
-  CAR_RESV,
-  CDR_RESV,
-  CONS_RESV,
-  COND_RESV,
-  SET_RESV,
-  DEFMACRO_RESV
-};
+#include <math.h>
 
 // Static function declarations
 static void insert_primitives(obj *pair_list);
@@ -40,16 +18,23 @@ static obj* wrap_primitive(primitive_t primitive);
 static obj* makeFuncPair(atom_t a, void* fp);
 static int index_of(char *query, char **strings, size_t num_strings);
 static primitive_t lookup_primitive(atom_t atm);
-
-static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond, &set, &defmacro};
-static expression kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cons x) (cond x) (set x) (defmacro x)";
+static obj* append_environments(obj* env1, const obj* env2);
 
 obj* init_env() {
-  size_t unused;
-  obj* env = parse_expression(kEnvExp, &unused); // cheeky
-  if (env == NULL) return NULL; // ERROR
-  insert_primitives(env);
+  obj* prim_env = get_primitive_library();
+  obj* math_env = get_math_library();
+  obj* env = append_environments(math_env, prim_env);
   return env;
+}
+
+obj* make_environment(const atom_t primitive_names[], const primitive_t primitives[]) {
+  // todo: do this
+  return NULL;
+}
+
+static obj* append_environments(obj* env1, const obj* env2) {
+  // todo: do this
+  return NULL;
 }
 
 obj* make_pair(const obj* name, const obj* value) {
@@ -125,8 +110,8 @@ static void replace_primitive_placeholder(obj *pair) {
  * Function: wrap_primitive
  * ------------------------
  * Wraps the provided primitive in a primitive object in dynamically allocated memory
- * @param primitive : A primitive to wrap in an object
- * @return : A pointer to the object in dynamically allocated memory
+ * @param primitive: A primitive to wrap in an object
+ * @return: A pointer to the object in dynamically allocated memory
  */
 static obj* wrap_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
@@ -140,10 +125,10 @@ static obj* wrap_primitive(primitive_t primitive) {
  * Function: lookup_primitive
  * --------------------------
  * Get the function pointer to the primitive that the atom refers to by name
- * @return : A primitive function pointer if the atom is found, NULL otherwise
+ * @return: A primitive function pointer if the atom is found, NULL otherwise
  */
 static primitive_t lookup_primitive(atom_t atm) {
-  int i = index_of(atm, primitive_names, NUMBUILTINS);
+  int i = index_of(atm, primitive_names, NUMPRIMITIVES);
   if (i == -1) return NULL;
   return kFuncPts[i];
 }
