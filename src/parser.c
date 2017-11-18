@@ -73,6 +73,7 @@ expression unparse(const obj* o) {
     e[0] = '(';
     strcpy((char*) e + 1, list_expr);
     strcpy((char*) e + 1 + strlen(list_expr), ")");
+    free(list_expr);
     return e;
   }
   return NULL;
@@ -94,23 +95,23 @@ static expression unparse_list(const obj *o) {
 
   expression car_expr = unparse(list_of(o)->car);
   if (car_expr == NULL) return NULL;
-  expression cdrExp = unparse_list(list_of(o)->cdr);
+  expression cdr_exp = unparse_list(list_of(o)->cdr);
 
-  size_t carExpSize = strlen(car_expr);
-  if (cdrExp == NULL) {
-    e = calloc(1, 2 + carExpSize);
+  size_t car_size = strlen(car_expr);
+  if (cdr_exp == NULL) {
+    e = calloc(2 + car_size, 1);
     if (e == NULL) return NULL;
     strcpy(e, car_expr);
 
   } else {
-    size_t cdrExpSize = strlen(cdrExp);
-    e = calloc(1, carExpSize + 1 + cdrExpSize + 1);
+    size_t cdr_size = strlen(cdr_exp);
+    e = calloc(car_size + 1 + cdr_size + 1, 1);
     if (e == NULL) return NULL;
 
     strcpy(e, car_expr);
-    strcpy((char*) e + carExpSize, " ");
-    strcpy((char*) e + carExpSize + 1, cdrExp);
-    free(cdrExp);
+    strcpy((char*) e + car_size, " ");
+    strcpy((char*) e + car_size + 1, cdr_exp);
+    free(cdr_exp);
   }
   free(car_expr);
   return e;
@@ -204,9 +205,9 @@ static obj* parse_atom(const_expression e, size_t *numParsedP) {
  * with an opening parentheses. This function will parse until there is a closing parentheses
  * that closes the implicit opening parentheses. Note: this is NOT necessarily the first closing
  * parentheses as there may be lists nested inside of this list.
- * @param e : An expression representing a list
- * @param numParsedP : A pointer to a place where the number of parsed characters may be written. Must be valid
- * @return : Pointer to a lisp data structure object representing the lisp expression
+ * @param e: An expression representing a list
+ * @param numParsedP: A pointer to a place where the number of parsed characters may be written. Must be valid
+ * @return: Pointer to a lisp data structure object representing the lisp expression
  */
 static obj* parse_list(const_expression e, size_t *numParsedP) {
   int start = distance_to_next_element(e);
@@ -233,7 +234,7 @@ static obj* parse_list(const_expression e, size_t *numParsedP) {
  * Function: getQuoteList
  * ----------------------
  * Creates a list where car points to a "quote" atom and cdr points to nothing
- * @return : Pointer to the list object
+ * @return: Pointer to the list object
  */
 static obj* get_quote_list() {
   size_t i;

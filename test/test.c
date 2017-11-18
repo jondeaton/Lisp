@@ -47,11 +47,9 @@ static int test_recursion();
  * Function: main
  * --------------
  * Entry point to the testing program
- * @param argc: Size of elements in argv
- * @param argv: Null terminated list of command line arguments
  * @return: Program exit code
  */
-int main(int argc, char* argv[]) {
+int main() {
   int num_fails = run_all_tests();
   if (num_fails == 0) printf(KGRN "All tests passed.\n");
   else printf(KRED "%d test(s) failed\n" RESET, num_fails);
@@ -67,14 +65,14 @@ int main(int argc, char* argv[]) {
 static int run_all_tests() {
   int num_fails = 0;
   num_fails += test_parser();
-  num_fails += test_quote();
-  num_fails += test_car_cdr();
-  num_fails += test_atom();
-  num_fails += test_eq();
-  num_fails += test_cons();
-  num_fails += test_cond();
-  num_fails += test_set();
-  num_fails += test_lambda();
+  //num_fails += test_quote();
+  //num_fails += test_car_cdr();
+  //num_fails += test_atom();
+  //num_fails += test_eq();
+  //num_fails += test_cons();
+  //num_fails += test_cond();
+  //num_fails += test_set();
+  //num_fails += test_lambda();
   //num_fails += test_math();
   //num_fails += test_Y_combinator();
   //num_fails += test_recursion();
@@ -92,6 +90,7 @@ static int run_all_tests() {
 static bool test_single_parse(const_expression expr, const_expression expected) {
   obj* o = parse_expression(expr, NULL);
   expression result_exp = unparse(o);
+  dispose_recursive(o);
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("%s Parsing:\t%s\n", test_result ? PASS : FAIL, expr);

@@ -13,12 +13,8 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
 
 ## Dependencies
     1. `C99`
-    2. GNU Readline (not required)
-        - Ubuntu: `sudo apt-get install libedit-dev`
-        - Fedora: `su -c "yum install libedit-dev*"`
-        - MacOS: Should be installed already but if not `brew install editline`
-        - Cygwin: Install from Cygwin Setup
-        - Windows: http://gnuwin32.sourceforge.net/packages/readline.htm 
+    2. Readline
+        - Ubuntu: `sudo apt-get install libreadline-dev`
 
 ## Design choices
 - Object structure (`obj`)
@@ -60,6 +56,6 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - `env` primitive to print the environment
 - Error messages and stack trace
 - ~~Smart indentation in re-prompt'~~
-- ~~Use GNU Readline for interactive prompt~~
+- ~~Use `readline` for interactive prompt~~
 - Math library
 - [Derive lexical scoping from dynamic scoping](https://stackoverflow.com/questions/29347648/can-dynamic-scoping-implement-lexical-scoping)

@@ -146,7 +146,6 @@ static expression get_expression_from_prompt(bool* eof) {
     free(line);
     total_size += input_size;
   }
-
 }
 
 /**
