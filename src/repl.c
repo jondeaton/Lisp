@@ -70,7 +70,8 @@ expression repl_eval(const_expression expr) {
   obj* o = parse_expression(expr, NULL);
   obj* result_obj = eval(o, env);
   expression result = unparse(result_obj);
-  clear_allocated();
+  clear_allocated(); // frees the objects in result_obj that were allocated during eval
+  dispose_recursive(o);
   return result;
 }
 

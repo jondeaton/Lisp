@@ -65,7 +65,7 @@ int main() {
 static int run_all_tests() {
   int num_fails = 0;
   num_fails += test_parser();
-  //num_fails += test_quote();
+  num_fails += test_quote();
   //num_fails += test_car_cdr();
   //num_fails += test_atom();
   //num_fails += test_eq();
