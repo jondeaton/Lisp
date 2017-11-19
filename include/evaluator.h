@@ -4,8 +4,8 @@
  * Presents the interface to the
  */
 
-#ifndef _LISP_EVALUATOR_H
-#define _LISP_EVALUATOR_H
+#ifndef _EVALUATOR_H_INCLUDED
+#define _EVALUATOR_H_INCLUDED
 
 #include "list.h"
 #include "cvector.h"
@@ -72,4 +72,4 @@ void clear_allocated();
  */
 void dispose_allocated();
 
-#endif // _LISP_EVALUATOR_H
+#endif // _EVALUATOR_H_INCLUDED

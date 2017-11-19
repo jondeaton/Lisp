@@ -4,10 +4,8 @@
  * Presents the interface of stack trace operations
  */
 
-#include <stdio.h>
-
-#define KRED  "\x1B[31m"
-#define RESET "\033[0m"
+#ifndef _STACK_TRACE_H_INCLUDED
+#define _STACK_TRACE_H_INCLUDED
 
 /**
  * Function: log_error
@@ -17,6 +15,6 @@
  * @param context: The context in which the error occurred
  * @param message: The message to print
  */
-void log_error(const char* context, const char* message) {
-  fprintf(stderr, KRED "%s: %s" RESET, context, message);
-}
+void log_error(const char* context, const char* message);
+
+#endif // _STACK_TRACE_H_INCLUDED

@@ -4,8 +4,8 @@
  * Presents the interface to the lisp primitives. Th
  */
 
-#ifndef _LISP_H_INCLUDED
-#define _LISP_H_INCLUDED
+#ifndef _PRIMITIVES_H_INCLUDED
+#define _PRIMITIVES_H_INCLUDED
 
 #include "list.h"
 #include <stdbool.h>
@@ -135,4 +135,4 @@ obj* set(const obj* o, obj* env);
  */
 obj* defmacro(const obj* o, obj* env);
 
-#endif // _LISP_H_INCLUDED
+#endif // _PRIMITIVES_H_INCLUDED

@@ -14,8 +14,8 @@
 
 const char* t_contents = "t";
 
-const atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons", "cond", "defmacro" };
-const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car,  &cdr,  &cons,  &cons,  &defmacro  };
+atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons", "cond", "set", "defmacro", NULL };
+const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car,  &cdr,  &cons,  &cons,  &set, &defmacro,  NULL };
 
 // Static function declarations
 static bool is_t(const obj* o);
@@ -44,6 +44,7 @@ obj* empty() {
 }
 
 obj* quote(const obj* o, obj* env) {
+  (void) env;
   if (o == NULL) return NULL;
   return list_of(o)->car;
 }
@@ -149,6 +150,8 @@ obj* set(const obj* o, obj* env) {
 }
 
 obj* defmacro(const obj* o, obj* env) {
+  (void) o;
+  (void) env;
   // todo: implement this quintessential shit
   return NULL;
 }

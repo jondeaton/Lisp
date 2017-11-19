@@ -145,7 +145,7 @@ void* cvec_next(const CVector* cv, const void* prev) {
   if (prev < cv->elems) return NULL; // Check prev isn't before the first element
 
   // Check to see previous is the last element by pointer arithmetic
-  bool is_last_element = index_of(cv, prev) == cv->nelems - 1;
+  bool is_last_element = (int) index_of(cv, prev) == cv->nelems - 1;
   if (is_last_element) return NULL;
 
   return (char*) prev + cv->elemsz; // Advance pointer one element

@@ -72,10 +72,11 @@ static int run_all_tests() {
   num_fails += test_cons();
   num_fails += test_cond();
   num_fails += test_set();
-  //num_fails += test_lambda();
-  //num_fails += test_math();
-  //num_fails += test_Y_combinator();
-  //num_fails += test_recursion();
+  return num_fails;
+  num_fails += test_lambda();
+  num_fails += test_math();
+  num_fails += test_Y_combinator();
+  num_fails += test_recursion();
   return num_fails;
 }
 
@@ -303,35 +304,37 @@ static int test_set() {
   };
   num_fails += test_multi_eval(set_x, "x", "5") ? 0 : 1;
 
-//  const_expression set_y[] = {
-//    "(set 'y '10)",
-//    NULL,
-//  };
-//  num_fails += test_multi_eval(set_y, "y", "10") ? 0 : 1;
-//
-//  // Test that you can set something as the evaluation of another expression
-//  const_expression set_x_eval[] = {
-//    "(set 'x (eq (car '(a b c)) 'a))",
-//    NULL
-//  };
-//  num_fails += test_multi_eval(set_x_eval, "(cond (x '5) ('() '6))", "5") ? 0 : 1;
-//
-//  // Dynamic scoping test
-//  const_expression before[] = {
-//    "(set 'y '(a b c))",
-//    "(set 'f    (lambda (x) (cons x y)))",
-//    NULL,
-//  };
-//  num_fails += test_multi_eval(before, "(f '(1 2 3))", "((1 2 3) a b c)") ? 0 : 1;
-//
-//  // Dynamic scoping test
-//  const_expression before2[] = {
-//    "(set 'y '(a b c))",
-//    "(set 'y '(4 5 6))",
-//    "(set 'f    (lambda (x) (cons x y)))",
-//    NULL,
-//  };
-//  num_fails += test_multi_eval(before2, "(f '(1 2 3))", "((1 2 3) 4 5 6)") ? 0 : 1;
+  return num_fails;
+
+  const_expression set_y[] = {
+    "(set 'y '10)",
+    NULL,
+  };
+  num_fails += test_multi_eval(set_y, "y", "10") ? 0 : 1;
+
+  // Test that you can set something as the evaluation of another expression
+  const_expression set_x_eval[] = {
+    "(set 'x (eq (car '(a b c)) 'a))",
+    NULL
+  };
+  num_fails += test_multi_eval(set_x_eval, "(cond (x '5) ('() '6))", "5") ? 0 : 1;
+
+  // Dynamic scoping test
+  const_expression before[] = {
+    "(set 'y '(a b c))",
+    "(set 'f    (lambda (x) (cons x y)))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before, "(f '(1 2 3))", "((1 2 3) a b c)") ? 0 : 1;
+
+  // Dynamic scoping test
+  const_expression before2[] = {
+    "(set 'y '(a b c))",
+    "(set 'y '(4 5 6))",
+    "(set 'f    (lambda (x) (cons x y)))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before2, "(f '(1 2 3))", "((1 2 3) 4 5 6)") ? 0 : 1;
 
   printf("Test set: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;

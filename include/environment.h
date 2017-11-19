@@ -4,8 +4,8 @@
  * Exposes the default lisp environment interface
  */
 
-#ifndef _LISP_ENV_H
-#define _LISP_ENV_H
+#ifndef _ENVIRONMENT_H_INCLUDED
+#define _ENVIRONMENT_H_INCLUDED
 
 #include "primitives.h"
 
@@ -22,10 +22,10 @@ obj* init_env();
  * --------------------------
  * Make an environment from an array of primitive names and an array of corresponding primitive functions
  * @param primitive_names: Array of primitive names
- * @param primitives: Array of corresponding primitive functions
+ * @param primitive_list: Array of corresponding primitive functions
  * @return: An environment object made form pairing the names with the primitive functions
  */
-obj* make_environment(const atom_t primitive_names[], const primitive_t primitives[]);
+obj* make_environment(atom_t const primitive_names[], const primitive_t primitive_list[]);
 
 /**
  * Function: lookup
@@ -60,4 +60,4 @@ obj** lookup_entry(const obj* o, const obj* env);
  */
 obj* make_pair(const obj* name, const obj* value);
 
-#endif // _LISP_ENV_H
+#endif // _ENVIRONMENT_H_INCLUDED

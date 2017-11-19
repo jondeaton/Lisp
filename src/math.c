@@ -28,8 +28,8 @@ static int mod_ints(int x, int y);
 static float mod_floats(float x, float y);
 static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp);
 
-static const atom_t math_reserved_atoms[] = { "+", "-", "*", "/", "%" };
-static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod };
+atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", NULL };
+static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod, NULL };
 
 obj* get_math_library() {
   return make_environment(math_reserved_atoms, math_primitives);
@@ -125,13 +125,15 @@ static obj* new_float(float value) {
 static float get_float(const obj* o) {
   if (o->objtype == integer_obj) return (float) get_int(o);
   if (o->objtype == float_obj) return *(float*) ((char*) o + sizeof(obj));
-  return NULL;
+  log_error(__func__, "Object is not a number");
+  return 0;
 }
 
 static int get_int(const obj* o) {
   if (o->objtype == float_obj) return (int) get_float(o);
   if (o->objtype == integer_obj) return *(int*) ((char*) o + sizeof(obj));
-  return NULL;
+  log_error(__func__, "Object is not a number");
+  return 0;
 }
 
 static int add_ints(int x, int y) {

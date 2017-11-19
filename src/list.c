@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <list.h>
+#include <stack-trace.h>
 
 // Static function declarations
 static obj* copy_list(const obj* o);
@@ -18,10 +19,37 @@ static void* get_contents(const obj *o);
 
 obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
-  if (o == NULL) return NULL;
+  if (o == NULL) {
+    log_error(__func__, "Allocation failure.");
+    return NULL;
+  }
   o->objtype = list_obj;
   list_of(o)->car = NULL;
   list_of(o)->cdr = NULL;
+  return o;
+}
+
+obj* new_atom(atom_t name) {
+  if (name == NULL) return NULL;
+  size_t name_size = strlen(name);
+  obj* o = malloc(sizeof(obj) + name_size + 1);
+  if (o == NULL) {
+    log_error(__func__, "Allocation failure.");
+    return NULL;
+  }
+  o->objtype = atom_obj;
+  strcpy((char*) atom_of(o), name);
+  return o;
+}
+
+obj* new_primitive(primitive_t primitive) {
+  obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
+  if (o == NULL) {
+    log_error(__func__, "Allocation failure.");
+    return NULL;
+  }
+  o->objtype = primitive_obj;
+  memcpy(primitive_of(o), &primitive, sizeof(primitive));
   return o;
 }
 

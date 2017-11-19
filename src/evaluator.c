@@ -44,7 +44,7 @@ obj* eval(const obj* o, obj* env) {
     return apply(operator, list_of(o)->cdr, env);
   }
   else return NULL;
-};
+}
 
 obj* apply(const obj* operator, const obj* args, obj* env) {
   if (operator == NULL) return NULL;
@@ -67,7 +67,7 @@ obj* apply(const obj* operator, const obj* args, obj* env) {
 }
 
 void init_allocated() {
-  allocated = cvec_create(sizeof(obj*), 0, (void*) &obj_cleanup);
+  allocated = cvec_create(sizeof(obj*), 0, (CleanupElemFn) &obj_cleanup);
 }
 
 void add_allocated(const obj* o) {

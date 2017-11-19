@@ -13,7 +13,7 @@
 // The different types of lists
 enum type {atom_obj, list_obj, primitive_obj, closure_obj, integer_obj, float_obj};
 
-typedef char* atom_t;
+typedef const char* atom_t;
 
 typedef struct {
   enum type objtype;
@@ -33,6 +33,24 @@ typedef obj*(*primitive_t)(const obj*, obj*);
  * @return: A pointer to a new list object in dynamically allocated memory
  */
 obj* new_list();
+
+/**
+ * Function: new_atom
+ * ------------------
+ * Create a new atom object
+ * @param name: The name to store in the atom object
+ * @return: The new atom object wrapping the raw atom
+ */
+obj* new_atom(atom_t name);
+
+/**
+ * Function: new_primitive
+ * -----------------------
+ * Create a new primitive object
+ * @param primitive: The primitive to wrap in an object
+ * @return; The new primitive object wrapping the raw primitive instruction pointer
+ */
+obj* new_primitive(primitive_t primitive);
 
 /**
  * Function: copy

@@ -2,6 +2,17 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
 cmake_minimum_required(VERSION 2.6)
 project(Lisp)
 
+macro(use_c99)
+    if (CMAKE_VERSION VERSION_LESS "3.1")
+        if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            set (CMAKE_C_FLAGS "-std=gnu99 ${CMAKE_C_FLAGS}")
+        endif ()
+    else ()
+        set (CMAKE_C_STANDARD 99)
+    endif ()
+endmacro(use_c99)
+use_c99()
+
 # cmake -DCMAKE_BUILD_TYPE=Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Mode: Release")

@@ -9,12 +9,13 @@
 #include <string.h>
 #include <stdio.h>
 
+#define KMAG  "\x1B[35m"
+#define RESET "\033[0m"
+
 static obj* parse_atom(const_expression e, size_t *numParsedP);
 static obj* parse_list(const_expression e, size_t *numParsedP);
 static obj* get_quote_list();
 static obj* put_into_list(obj *o);
-static bool is_empty_list(const obj *o);
-static obj* to_empty_atom(obj *o);
 
 static expression unparse_list(const obj *o);
 static expression unparse_atom(const obj *o);
@@ -141,7 +142,7 @@ static expression unparse_atom(const obj *o) {
 static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
   expression e = malloc(2 + sizeof(void*) * 16 + 1);
-  sprintf(e, "%p", *primitive_of(o)); // just print the raw pointer
+  sprintf(e, KMAG "%p" RESET, (void*) *primitive_of(o)); // just print the raw pointer
   return e;
 }
 
@@ -193,7 +194,7 @@ static obj* parse_atom(const_expression e, size_t *numParsedP) {
   if (o == NULL) return NULL; // fuck me right?
 
   atom_t atm = (char*) o + sizeof(obj);
-  strncpy(atm, e, size);
+  strncpy((char*) atm, e, size);
   *numParsedP = size;
   return o;
 }
@@ -244,8 +245,8 @@ static obj* get_quote_list() {
 }
 
 /**
- * Function: putIntoList
- * ---------------------
+ * Function: put_into_list
+ * -----------------------
  * Makes a list object with car pointing to the object passed
  * @param o : The object that the list's car should point to
  * @return : A pointer to the list object containing only the argument object
@@ -257,22 +258,6 @@ static obj* put_into_list(obj *o) {
 }
 
 /**
- * Function: is_empty_list
- * -----------------------
- * Determines if a list object is an empty list. Note: this is for checking
- * if the object is a list object that is empty, which is NOT the same thing as
- * checking if the list object is the empty-list atom.
- * @param o: A list object to check
- * @return: True if the object is a list object that is empty, false otherwise
- */
-static bool is_empty_list(const obj *o) {
-  if (o->objtype != list_obj) return false;
-
-  list_t* l = list_of(o);
-  return l->car == NULL && l->cdr == NULL;
-}
-
-/**
  * Function: distance_to_next_element
  * ----------------------------------
  * Counts the number of characters of whitespace until a non-whitespace character is found
@@ -280,11 +265,11 @@ static bool is_empty_list(const obj *o) {
  * @return: The number of characters of whitespace in the beginning
  */
 static int distance_to_next_element(const_expression e) {
-  int i;
+  unsigned long i;
   for (i = 0; i < strlen(e); i++)
     if (!is_white_space(e[i])) break;
   if (i == strlen(e)) return -1;
-  return i;
+  return (int) i;
 }
 
 /**
@@ -295,11 +280,11 @@ static int distance_to_next_element(const_expression e) {
  * @return: The number of characters in that atom
  */
 static size_t atom_size(const_expression e) {
-  size_t i;
-  for(i = 0; i < strlen(e); i++) {
-    if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')') return i;
+  int i;
+  for(i = 0; i < (int) strlen(e); i++) {
+    if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')') return (size_t) i;
   }
-  return i;
+  return (size_t) i;
 }
 
 /**

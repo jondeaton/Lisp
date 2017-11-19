@@ -4,6 +4,9 @@
  * Presents the interface of the math library
  */
 
+#ifndef _LISP_MATH_H_INCLUDED
+#define _LISP_MATH_H_INCLUDED
+
 #include "list.h"
 
 /**
@@ -63,3 +66,5 @@ obj* divide(const obj* o, obj* env);
  * @return: A newly allocated number/float object containing the result of the modulus
  */
 obj* mod(const obj* o, obj* env);
+
+#endif // _LISP_MATH_H_INCLUDED
