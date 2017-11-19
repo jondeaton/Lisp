@@ -37,31 +37,31 @@ obj* get_math_library() {
 
 obj* plus(const obj* o, obj* env) {
   obj* answer = do_arithmetic(o, env, &add_ints, &add_floats);
-  if (answer == NULL) log_error(__func__, "Plus operation returned in NULL");
+  if (answer == NULL) log_error(__func__, "Addition operator returned in NULL");
   return answer;
 }
 
 obj* subtract(const obj* o, obj* env) {
   obj* answer = do_arithmetic(o, env, &sub_ints, &sub_floats);
-  if (answer == NULL) log_error(__func__, "Subtract operation returned in NULL");
+  if (answer == NULL) log_error(__func__, "Subtraction operator returned in NULL");
   return answer;
 }
 
 obj* multiply(const obj* o, obj* env) {
   obj* answer = do_arithmetic(o, env, &mul_ints, &mul_floats);
-  if (answer == NULL) log_error(__func__, "Multiply operation returned in NULL");
+  if (answer == NULL) log_error(__func__, "Multiplication operator returned in NULL");
   return answer;
 }
 
 obj* divide(const obj* o, obj* env) {
   obj* answer = do_arithmetic(o, env, &div_ints, &div_floats);
-  if (answer == NULL) log_error(__func__, "Divide operation returned in NULL");
+  if (answer == NULL) log_error(__func__, "Division operator returned in NULL");
   return answer;
 }
 
 obj* mod(const obj* o, obj* env) {
   obj* answer = do_arithmetic(o, env, &mod_ints, &mod_floats);
-  if (answer == NULL) log_error(__func__, "Mod operation returned in NULL");
+  if (answer == NULL) log_error(__func__, "Modulus operator returned in NULL");
   return answer;
 }
 

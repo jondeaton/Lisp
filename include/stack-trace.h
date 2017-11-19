@@ -10,7 +10,7 @@
 // Buffer to use to store error messages
 #define ERR_BUFF_SIZE 256
 
-// Use of malloc is prevalent- this directive makes for cleaner code
+// Use of malloc is prevalent - this directive help make cleaner code
 #define LOG_MALLOC_FAIL log_error(__func__, "Memory allocation failure")
 
 /**

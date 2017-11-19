@@ -1,7 +1,7 @@
 /*
  * File: environment.c
  * -------------------
- * Presents the implementation of the default lisp environment
+ * Presents the implementation of the lisp environment
  */
 
 #include "environment.h"
