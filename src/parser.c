@@ -196,7 +196,7 @@ bool is_valid(const_expression e) {
 static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   size_t size = atom_size(e);
 
-  char* contents = strncpy(malloc(size + 1), e, size);
+  char* contents = strncpy(calloc(size + 1, 1), e, size);
   char* end;
   int int_value = (int) strtol(contents, &end, 0);
   bool is_integer = contents != end;
