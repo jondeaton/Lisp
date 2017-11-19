@@ -12,7 +12,7 @@
 obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
   if (o == NULL) {
-    log_error(__func__, "Allocation failure.");
+    LOG_MALLOC_FAIL;
     return NULL;
   }
   o->objtype = list_obj;
@@ -26,7 +26,7 @@ obj* new_atom(atom_t name) {
   size_t name_size = strlen(name);
   obj* o = malloc(sizeof(obj) + name_size + 1);
   if (o == NULL) {
-    log_error(__func__, "Memory allocation failure.");
+    LOG_MALLOC_FAIL;
     return NULL;
   }
   o->objtype = atom_obj;
@@ -37,7 +37,7 @@ obj* new_atom(atom_t name) {
 obj* new_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
   if (o == NULL) {
-    log_error(__func__, "Allocation failure.");
+    LOG_MALLOC_FAIL;
     return NULL;
   }
   o->objtype = primitive_obj;
@@ -69,7 +69,7 @@ void* get_contents(const obj *o) {
 obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
   if (o == NULL) {
-    log_error(__func__, "Memory allocation failure");
+    LOG_MALLOC_FAIL;
     return NULL;
   }
   o->objtype = integer_obj;
@@ -81,7 +81,7 @@ obj* new_int(int value) {
 obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
   if (o == NULL) {
-    log_error(__func__, "Memory allocation failure");
+    LOG_MALLOC_FAIL;
     return NULL;
   }
   o->objtype = float_obj;

@@ -6,7 +6,12 @@
 
 #ifndef _STACK_TRACE_H_INCLUDED
 #define _STACK_TRACE_H_INCLUDED
+
+// Buffer to use to store error messages
 #define ERR_BUFF_SIZE 256
+
+// Use of malloc is prevalent- this directive makes for cleaner code
+#define LOG_MALLOC_FAIL log_error(__func__, "Memory allocation failure")
 
 /**
  * Function: log_error

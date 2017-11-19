@@ -4,6 +4,9 @@
  * Presents the interface of lisp object type definitions and creation of objects
  */
 
+#ifndef _LISP_OBJECTS_H_INCLUDED
+#define _LISP_OBJECTS_H_INCLUDED
+
 // The different types of lists
 enum type {atom_obj, list_obj, primitive_obj, closure_obj, integer_obj, float_obj};
 
@@ -128,3 +131,5 @@ void* get_contents(const obj *o);
  * @param o: Pointer to the lisp object to dispose of
  */
 void dispose(obj* o);
+
+#endif //_LISP_OBJECTS_H_INCLUDED
