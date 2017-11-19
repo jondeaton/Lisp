@@ -10,8 +10,12 @@
 #include <string.h>
 #include <sys/file.h>
 
+#define KBLU  "\x1B[34m"
+#define RESET "\033[0m"
+
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <stack-trace.h>
 
 #define BUFSIZE 512
 char buff[BUFSIZE];
@@ -29,7 +33,7 @@ static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
-obj* env;
+static obj* env;
 
 void repl_init() {
   env = init_env();
@@ -55,7 +59,7 @@ void repl_run() {
   while (!eof) {
     obj* o = read_expression(stdin, true, &eof);
     if (o == NULL) {
-      fprintf(stderr, "Invalid expression\n");
+      log_error("repl", "Invalid expression");
       continue;
     }
     obj* evaluation = eval(o, env);
@@ -138,7 +142,7 @@ static expression get_expression_from_prompt(bool* eof) {
     input_size = strlen(line);
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
-      fprintf(stderr, "Memory allocation failure.\n");
+      log_error(__func__, "Memory allocation failure");
       free(line);
       return NULL;
     }
@@ -165,7 +169,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
   size_t total_size = input_size;
   expression e = malloc(sizeof(char) * (input_size + 1));
   if (e == NULL) {
-    fprintf(stderr, "Memory allocation failure.\n");
+    log_error(__func__, "Memory allocation failure");
     return NULL;
   }
 
@@ -184,7 +188,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
 
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
-      fprintf(stderr, "Memory allocation failure.\n");
+      log_error(__func__, "Memory allocation failure");
       return NULL;
     }
 
@@ -202,14 +206,13 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
  */
 static void print_object(FILE *fd, const obj *o) {
   if (fd == NULL) {
-    fprintf(stderr, "Invalid file descriptor\n");
+    log_error(__func__, "Invalid file descriptor");
     return;
   }
 
   expression serialization = unparse(o);
-  if (!serialization) fprintf(fd, "null\n");
+  if (serialization == NULL) fprintf(fd, KBLU "null\n" RESET);
   else fprintf(fd, "%s\n", serialization);
-
   free(serialization);
 }
 

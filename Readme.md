@@ -1,20 +1,22 @@
 # Lisp
 Author: Jon Deaton
 
-This repository contains an interpreter for Common Lisp implemented in pure C.
+This repository contains an interpreter for Lisp implemented in pure C.
 
 ## Use
-Build with `cmake` like so
+Build with `cmake` like so: `cmake .; make`
 
-`cmake .; make`
+Run the REPL (read-eval-print loop) with the `lisp` executable for an interactive prompt. 
+If you want to have matching parentheses highlighting then you can `echo "set blink-matching-paren on" >> ~/.inputrc`.
+Alternatively run a Lisp script by adding it as an argument.
 
-Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or run a lisp script by adding it as an argument.
-
+   `./lisp my-program.lisp`
 
 ## Dependencies
-    1. `C99`
-    2. Readline
-        - Ubuntu: `sudo apt-get install libreadline-dev`
+1. `C99` compiler
+2. Readline
+    - Ubuntu: `sudo apt-get install libreadline-dev`
+    - MacOS: `brew install readline`
 
 ## Design choices
 - Object structure (`obj`)
@@ -35,12 +37,18 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
     - If it is, then the arguments will be evaluated into a new list, bound to the parameters, and prepended onto the current environment
     - The body of the lambda expression will then be evaluated in this augmented environment
 - Memory Management
-    - Uhh... yeah this still needs to be implemented. Just you wait, it's gonna be great.
+    - It is easy to track the lifetimes of objects **not** created during evaluation
+        - For instance, parsed objects are not modified during evaluation, and are *copied* into the environment. Therefore, after evaluation, the parsed object can be recursively deleted.
+    - Objects created during evaluation have a somewhat more complicated lifetime, and this are tracked as such:
+        - Objects allocated during evaluation (such as in `cons`, or creation of closures) are added to a CVector of allocated objects
+        - After each expression evaluation (excluding *recursive* calls to `eval`), the entire vector of allocated object pointers is disposed of.
+        - Objects with a lifetime longer than the single evaluation has been copied into the environment at the conclusion of `eval`.
 - Error reporting
-
+    - Basic stack traces are provided for inappropriate Lisp code.
 
 ## Testing
-A testing framework for the interpreter is also included in the `test-lisp` executable.
+If you would like to check out my handiwork, a testing framework for the interpreter is also included
+and can be run with the `test-lisp` executable.
 
 ## To do
 - ~~REPL prompt and re-prompt~~
@@ -53,7 +61,7 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - memory management
 - Closures
 - `defmacro`
-- `env` primitive to print the environment
+- ~~`env` primitive to print the environment~~
 - Error messages and stack trace
 - ~~Smart indentation in re-prompt'~~
 - ~~Use `readline` for interactive prompt~~

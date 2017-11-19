@@ -110,7 +110,7 @@ bool deep_compare(obj* x, obj* y) {
 obj* ith(const obj* o, int i) {
   if (o == NULL || i < 0 || o->objtype != list_obj) return NULL;
   if (i == 0) return list_of(o)->car;
-  return ith(o, i - 1);
+  return ith(list_of(o)->cdr, i - 1);
 }
 
 /**

@@ -126,6 +126,16 @@ obj* cond(const obj* o, obj* env);
 obj* set(const obj* o, obj* env);
 
 /**
+ * Primitive: env
+ * --------------
+ * Simply returns the environment
+ * @param o: Unused arguments
+ * @param env: The environment to evaluate
+ * @return: The environment object (unmodified)
+ */
+obj* env_prim(const obj* o, obj* env);
+
+/**
  * Primitive: defmacro
  * -------------------
  * Defines a macro

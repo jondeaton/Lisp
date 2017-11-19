@@ -9,6 +9,9 @@
 #include "environment.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stack-trace.h>
+#include <list.h>
+#include "stdio.h"
 
 #define LAMBDA_RESV "lambda"
 
@@ -28,14 +31,21 @@ obj* eval(const obj* o, obj* env) {
   if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
-  if (o->objtype == atom_obj) return lookup(o, env);
+  if (o->objtype == atom_obj) {
+    obj* value = lookup(o, env);
+    if (value) return value;
+    log_error(__func__, sprintf("Atom: %s not found in environment", (char*) atom_of(o)));
+    return NULL;
+  }
 
-  // Primitive just means that there's nothing left to apply
+  // Numbers evaluate to themselves
+  if (o->objtype == integer_obj || o->objtype == float_obj) return (obj*) o;
+
+  // Primitive means that there's nothing left to apply
   if (o->objtype == primitive_obj) return (obj*) o;
 
-  // List type means its a operator being applied to operands
-  // which means evaluate the operator (return a procedure or a primitive)
-  // to which we call apply on the arguments
+  // List type means its a operator being applied to operands which means evaluate
+  // the operator (return a procedure or a primitive) to which we call apply on the arguments
   if (o->objtype == list_obj) {
     if (is_lambda(o)) return (obj*) o;  // Lambda function's value is itself
     if (is_empty(o)) return (obj*) o;   // Empty list's value is itself
@@ -43,12 +53,16 @@ obj* eval(const obj* o, obj* env) {
     obj* operator = eval(list_of(o)->car, env);
     return apply(operator, list_of(o)->cdr, env);
   }
-  else return NULL;
+  log_error(__func__, "Object of unknown type");
+  return NULL;
 }
 
 obj* apply(const obj* operator, const obj* args, obj* env) {
   if (operator == NULL) return NULL;
-  if (operator->objtype == atom_obj) return NULL;
+  if (operator->objtype == atom_obj) {
+    log_error(__func__, sprintf("Cannot apply atom: \"%s\" as function", (char*) atom_of(operator)));
+    return NULL;
+  }
 
   if (operator->objtype == primitive_obj) {
     primitive_t prim = *primitive_of(operator);

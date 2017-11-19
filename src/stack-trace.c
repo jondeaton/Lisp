@@ -10,5 +10,5 @@
 
 
 void log_error(const char* context, const char* message) {
-  fprintf(stderr, KRED "%s: %s" RESET, context, message);
+  fprintf(stderr, KRED "\t[%s]: %s\n" RESET, context, message);
 }

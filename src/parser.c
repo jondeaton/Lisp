@@ -8,12 +8,13 @@
 #include "parser.h"
 #include <string.h>
 #include <stdio.h>
+#include <stack-trace.h>
 
 #define KMAG  "\x1B[35m"
 #define RESET "\033[0m"
 
-static obj* parse_atom(const_expression e, size_t *numParsedP);
-static obj* parse_list(const_expression e, size_t *numParsedP);
+static obj* parse_atom(const_expression e, size_t *num_parsed_p);
+static obj* parse_list(const_expression e, size_t *num_parsed_p);
 static obj* get_quote_list();
 static obj* put_into_list(obj *o);
 
@@ -181,41 +182,45 @@ bool is_valid(const_expression e) {
 }
 
 /**
- * Function: parseAtom
- * -------------------
+ * Function: parse_atom
+ * --------------------
  * Parses an expression that represents an atom
- * @param e : A pointer to an atom expression
- * @param numParsedP : Pointer to a location to be populated with the number of characters parsed
- * @return : A lisp object representing the parsed atom in dynamically allocated memory
+ * @param e: A pointer to an atom expression
+ * @param num_parsed_p: Pointer to a location to be populated with the number of characters parsed
+ * @return: A lisp object representing the parsed atom in dynamically allocated memory
  */
-static obj* parse_atom(const_expression e, size_t *numParsedP) {
+static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   size_t size = atom_size(e);
-  obj* o = calloc(1, sizeof(obj) + size + 1);
-  if (o == NULL) return NULL; // fuck me right?
+
+  obj* o = malloc(sizeof(obj) + size + 1);
+  if (o == NULL) {
+    log_error(__func__, "Memory allocation failure"); // fuck me right?
+    return NULL;
+  }
 
   atom_t atm = (char*) o + sizeof(obj);
   strncpy((char*) atm, e, size);
-  *numParsedP = size;
+  *num_parsed_p = size;
   return o;
 }
 
 /**
- * Function: parseList
- * -------------------
+ * Function: parse_list
+ * --------------------
  * Parses an expression that represents a list. This expression should not start
  * with an opening parentheses. This function will parse until there is a closing parentheses
  * that closes the implicit opening parentheses. Note: this is NOT necessarily the first closing
  * parentheses as there may be lists nested inside of this list.
  * @param e: An expression representing a list
- * @param numParsedP: A pointer to a place where the number of parsed characters may be written. Must be valid
+ * @param num_parsed_p: A pointer to a place where the number of parsed characters may be written. Must be valid
  * @return: Pointer to a lisp data structure object representing the lisp expression
  */
-static obj* parse_list(const_expression e, size_t *numParsedP) {
+static obj* parse_list(const_expression e, size_t *num_parsed_p) {
   int start = distance_to_next_element(e);
   expression exprStart = (char*) e + start;
 
   if (exprStart[0] == ')') {
-    *numParsedP = (size_t) start + 1;
+    *num_parsed_p = (size_t) start + 1;
     return NULL;
   } // Empty list or the end of a list
 
@@ -227,13 +232,13 @@ static obj* parse_list(const_expression e, size_t *numParsedP) {
   expression restOfList = (char*) exprStart + exprSize;
   list_of(o)->cdr = parse_list(restOfList, &restSize);
 
-  *numParsedP = start + exprSize + restSize;
+  *num_parsed_p = start + exprSize + restSize;
   return o;
 }
 
 /**
- * Function: getQuoteList
- * ----------------------
+ * Function: get_quote_list
+ * ------------------------
  * Creates a list where car points to a "quote" atom and cdr points to nothing
  * @return: Pointer to the list object
  */

@@ -4,6 +4,7 @@
  * Presents the implementation of the math library
  */
 
+#include <parser.h>
 #include "environment.h"
 #include "math.h"
 #include "evaluator.h"
@@ -28,7 +29,7 @@ static int mod_ints(int x, int y);
 static float mod_floats(float x, float y);
 static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp);
 
-atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", NULL };
+static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", NULL };
 static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod, NULL };
 
 obj* get_math_library() {
@@ -75,12 +76,15 @@ static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, fl
     log_error(__func__, "First argument not found");
     return NULL;
   }
+
   if (second_arg == NULL) {
     log_error(__func__, "Second argument not found");
     return NULL;
   }
-  if (ith(o, 3) != NULL) {
+
+  if (ith(o, 2) != NULL) {
     log_error(__func__, "Too many arguments");
+    log_error(__func__, unparse(ith(o, 2)));
     return NULL;
   }
 

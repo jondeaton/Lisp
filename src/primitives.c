@@ -5,17 +5,20 @@
  */
 
 #include "primitives.h"
-#include "evaluator.h"
-#include "environment.h"
-#include "list.h"
+#include <evaluator.h>
+#include <environment.h>
+#include <list.h>
+#include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-const char* t_contents = "t";
+static const char* t_contents = "t";
+static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
+                                             "cond", "set", "env", "defmacro", NULL };
 
-atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons", "cond", "set", "defmacro", NULL };
-const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car,  &cdr,  &cons,  &cons,  &set, &defmacro,  NULL };
+static const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car,  &cdr,  &cons,
+                                                   &cond,  &set, &env_prim, &defmacro,  NULL };
 
 // Static function declarations
 static bool is_t(const obj* o);
@@ -147,6 +150,15 @@ obj* set(const obj* o, obj* env) {
     list_of(env)->cdr = new_link;
   }
   return value;
+}
+
+obj* env_prim(const obj* o, obj* env) {
+  (void) o;
+  if (o != NULL) {
+    log_error(__func__, "Too many arguments to env");
+    return NULL;
+  }
+  return env;
 }
 
 obj* defmacro(const obj* o, obj* env) {

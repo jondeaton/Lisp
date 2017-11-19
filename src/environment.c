@@ -79,7 +79,7 @@ obj* lookup(const obj* o, const obj* env) {
  * @return: env1 except now the last element points to env2
  */
 static obj* append_environments(obj* env1, const obj* env2) {
-  if (list_of(env1)->cdr) list_of(env1)->cdr = (obj*) env2;
+  if (list_of(env1)->cdr == NULL) list_of(env1)->cdr = (obj*) env2;
   else append_environments(list_of(env1)->cdr, env2);
   return env1;
 }
