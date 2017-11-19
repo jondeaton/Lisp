@@ -13,8 +13,8 @@
 typedef int (*intArithmeticFuncPtr)(int, int);
 typedef float (*floatArithmeticFuncPtr)(float, float);
 
-static obj* new_int(int value);
-static obj* new_float(float value);
+static obj* allocate_integer(int value);
+static obj* allocate_float(float value);
 static int get_int(const obj* o);
 static float get_float(const obj* o);
 static int add_ints(int x, int y);
@@ -66,6 +66,28 @@ obj* mod(const obj* o, obj* env) {
   return answer;
 }
 
+obj* new_int(int value) {
+  obj* o = malloc(sizeof(obj) + sizeof(int));
+  if (o == NULL) {
+    log_error(__func__, "Memory allocation failure");
+    return NULL;
+  }
+  int* contents = (int*) (char*) o + sizeof(obj);
+  *contents = value;
+  return o;
+}
+
+obj* new_float(float value) {
+  obj* o = malloc(sizeof(obj) + sizeof(float));
+  if (o == NULL) {
+    log_error(__func__, "Memory allocation failure");
+    return NULL;
+  }
+  float* contents = (float*) (char*) o + sizeof(obj);
+  *contents = value;
+  return o;
+}
+
 // todo: Add documentation
 
 static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp) {
@@ -84,7 +106,6 @@ static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, fl
 
   if (ith(o, 2) != NULL) {
     log_error(__func__, "Too many arguments");
-    log_error(__func__, unparse(ith(o, 2)));
     return NULL;
   }
 
@@ -92,39 +113,36 @@ static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, fl
   obj* second = eval(second_arg, env);
 
   if (first == NULL) {
-    log_error(__func__, "Received NULL on evaluation of first argument");
+    log_error(__func__, "First argument evaluated to NULL");
     return NULL;
   }
 
   if (second == NULL) {
-    log_error(__func__, "Received NULL on evaluation of second argument");
+    log_error(__func__, "Second argument evaluated to NULL");
     return NULL;
   }
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = floatOp(get_float(first), get_float(second));
-    return new_float(value);
+    return allocate_float(value);
   } else {
     int value = intOp(get_int(first), get_int(second));
-    return new_int(value);
+    return allocate_integer(value);
   }
 }
 
-static obj* new_int(int value) {
-  obj* o = malloc(sizeof(obj) + sizeof(int));
-  int* contents = (int*) (char*) o + sizeof(obj);
-  *contents = value;
+static obj* allocate_integer(int value) {
+  obj* o = new_int(value);
   add_allocated(o);
   return o;
 }
 
-static obj* new_float(float value) {
-  obj* o = malloc(sizeof(obj) + sizeof(int));
-  float* contents = (float*) (char*) o + sizeof(obj);
-  *contents = value;
+static obj* allocate_float(float value) {
+  obj* o = new_float(value);
   add_allocated(o);
   return o;
 }
+
 
 static float get_float(const obj* o) {
   if (o->objtype == integer_obj) return (float) get_int(o);

@@ -18,6 +18,26 @@
 obj* get_math_library();
 
 /**
+ * Function: new_int
+ * -----------------
+ * Creates a new integer object wrapping a raw integer value.
+ * Note: This object will not be automatically added to the "allocated" list
+ * @param value: The integer value to wrap in an object
+ * @return: The object wrapping a copy of the integer value in dynamically allocated memory
+ */
+obj* new_int(int value);
+
+/**
+ * Function: new_float
+ * -------------------
+ * Creates a new float object wrapping a raw integer value.
+ * Note: This object will not be automatically added to the "allocated" list
+ * @param value: The float value to wrap in an object
+ * @return: The object wrapping a copy of the floating point value
+ */
+obj* new_float(float value);
+
+/**
  * Primitive: plus
  * ---------------
  * Primitive function for adding two numbers

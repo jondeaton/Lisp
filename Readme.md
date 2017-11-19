@@ -37,6 +37,7 @@ Alternatively run a Lisp script by adding it as an argument.
     - If it is, then the arguments will be evaluated into a new list, bound to the parameters, and prepended onto the current environment
     - The body of the lambda expression will then be evaluated in this augmented environment
 - Memory Management
+    - Garbage collection in this Lisp interpreter is much easier to implement than it would be to write a generic garbage collector in say C.
     - It is easy to track the lifetimes of objects **not** created during evaluation
         - For instance, parsed objects are not modified during evaluation, and are *copied* into the environment. Therefore, after evaluation, the parsed object can be recursively deleted.
     - Objects created during evaluation have a somewhat more complicated lifetime, and this are tracked as such:

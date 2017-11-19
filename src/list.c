@@ -34,7 +34,7 @@ obj* new_atom(atom_t name) {
   size_t name_size = strlen(name);
   obj* o = malloc(sizeof(obj) + name_size + 1);
   if (o == NULL) {
-    log_error(__func__, "Allocation failure.");
+    log_error(__func__, "Memory allocation failure.");
     return NULL;
   }
   o->objtype = atom_obj;

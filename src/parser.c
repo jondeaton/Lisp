@@ -4,11 +4,13 @@
  * Presents the implementation of the lisp parser
  */
 
-#include "list.h"
 #include "parser.h"
+#include <list.h>
+#include <stack-trace.h>
 #include <string.h>
 #include <stdio.h>
-#include <stack-trace.h>
+#include <stdlib.h>
+#include <math.h>
 
 #define KMAG  "\x1B[35m"
 #define RESET "\033[0m"
@@ -165,11 +167,11 @@ bool is_balanced(const_expression e) {
 }
 
 /**
- * Function: isValid
- * -----------------
+ * Function: is_valid
+ * ------------------
  * Determines if an expression has extra closing parentheses
- * @param e : A lisp expression
- * @return : True is there are no extra closing parentheses, false otherwise
+ * @param e: A lisp expression
+ * @return: True is there are no extra closing parentheses, false otherwise
  */
 bool is_valid(const_expression e) {
   int net = 0;
@@ -184,7 +186,9 @@ bool is_valid(const_expression e) {
 /**
  * Function: parse_atom
  * --------------------
- * Parses an expression that represents an atom
+ * Parses an expression that represents an atom or number.
+ * NOTE: If the expression can be turned into an integer or floating point object then it will be
+ * and then the returned object will be of the integer_obj or float_obj instead of atom_obj.
  * @param e: A pointer to an atom expression
  * @param num_parsed_p: Pointer to a location to be populated with the number of characters parsed
  * @return: A lisp object representing the parsed atom in dynamically allocated memory
@@ -192,15 +196,20 @@ bool is_valid(const_expression e) {
 static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   size_t size = atom_size(e);
 
-  obj* o = malloc(sizeof(obj) + size + 1);
-  if (o == NULL) {
-    log_error(__func__, "Memory allocation failure"); // fuck me right?
-    return NULL;
-  }
+  char* contents = strncpy(malloc(size + 1), e, size);
+  char* end;
+  int int_value = (int) strtol(contents, &end, 0);
+  bool is_integer = contents != end;
 
-  atom_t atm = (char*) o + sizeof(obj);
-  strncpy((char*) atm, e, size);
+  float float_value = strtof(contents, &end);
+  bool is_float = contents != end;
+
+  obj* o;
+  if (is_integer) o = new_int(int_value);
+  else if (is_float) o = new_float(float_value);
+  else o = new_atom(contents);
   *num_parsed_p = size;
+  free(contents);
   return o;
 }
 
@@ -253,8 +262,8 @@ static obj* get_quote_list() {
  * Function: put_into_list
  * -----------------------
  * Makes a list object with car pointing to the object passed
- * @param o : The object that the list's car should point to
- * @return : A pointer to the list object containing only the argument object
+ * @param o: The object that the list's car should point to
+ * @return: A pointer to the list object containing only the argument object
  */
 static obj* put_into_list(obj *o) {
   obj* list = new_list();
@@ -296,8 +305,8 @@ static size_t atom_size(const_expression e) {
  * Function: is_white_space
  * ------------------------
  * Checks if a single character is a whitespace character
- * @param character : The character to check
- * @return : True if that character is whitespace, false otherwise
+ * @param character: The character to check
+ * @return: True if that character is whitespace, false otherwise
  */
 static const char* kWhitespace = " \t\n\r";
 static bool is_white_space(char character) {
