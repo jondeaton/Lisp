@@ -24,15 +24,16 @@ endif()
 
 include_directories(include src test)
 set(COMMON_SRC
+        include/lisp-objects.h      src/lisp-objects.c
+        include/evaluator.h         src/list.c
         include/primitives.h        src/primitives.c
         include/repl.h              src/repl.c
-        include/environment.h       src/environment.c
         include/parser.h            src/parser.c
-        include/run-lisp.h          src/run-lisp.c
         include/list.h              src/evaluator.c
-        include/evaluator.h         src/list.c
+        include/environment.h       src/environment.c
         include/cvector.h           src/cvector.c
         include/math.h              src/math.c
+        include/run-lisp.h          src/run-lisp.c
         include/stack-trace.h       src/stack-trace.c)
 
 set(LISP_SRC ${COMMON_SRC} src/main.c)

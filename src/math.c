@@ -65,44 +65,6 @@ obj* mod(const obj* o, obj* env) {
   return answer;
 }
 
-obj* new_int(int value) {
-  obj* o = malloc(sizeof(obj) + sizeof(int));
-  if (o == NULL) {
-    log_error(__func__, "Memory allocation failure");
-    return NULL;
-  }
-  o->objtype = integer_obj;
-  int* contents = (int*) get_contents(o);
-  *contents = value;
-  return o;
-}
-
-obj* new_float(float value) {
-  obj* o = malloc(sizeof(obj) + sizeof(float));
-  if (o == NULL) {
-    log_error(__func__, "Memory allocation failure");
-    return NULL;
-  }
-  o->objtype = float_obj;
-  float* contents = (float*) get_contents(o);
-  *contents = value;
-  return o;
-}
-
-float get_float(const obj* o) {
-  if (o->objtype == integer_obj) return (float) get_int(o);
-  if (o->objtype == float_obj) return *(float*) ((char*) o + sizeof(obj));
-  log_error(__func__, "Object is not a number");
-  return 0;
-}
-
-int get_int(const obj* o) {
-  if (o->objtype == float_obj) return (int) get_float(o);
-  if (o->objtype == integer_obj) return *(int*) ((char*) o + sizeof(obj));
-  log_error(__func__, "Object is not a number");
-  return 0;
-}
-
 // todo: Add documentation
 
 static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp) {

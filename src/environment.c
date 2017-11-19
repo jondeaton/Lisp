@@ -35,10 +35,10 @@ obj* make_environment(atom_t const primitive_names[], const primitive_t primitiv
 
 obj* make_pair(const obj* name, const obj* value) {
   obj* first_item = new_list();
-  list_of(first_item)->car = copy(name);
+  list_of(first_item)->car = copy_recursive(name);
 
   obj* second_item = new_list();
-  list_of(second_item)->car = copy(value);
+  list_of(second_item)->car = copy_recursive(value);
 
   list_of(first_item)->cdr = second_item;
 

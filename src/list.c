@@ -16,44 +16,8 @@ static obj* copy_list(const obj* o);
 static obj* copy_atom(const obj* o);
 static obj* copy_primitive(const obj* o);
 
-obj* new_list() {
-  obj* o = malloc(sizeof(obj) + sizeof(list_t));
-  if (o == NULL) {
-    log_error(__func__, "Allocation failure.");
-    return NULL;
-  }
-  o->objtype = list_obj;
-  list_of(o)->car = NULL;
-  list_of(o)->cdr = NULL;
-  return o;
-}
-
-obj* new_atom(atom_t name) {
-  if (name == NULL) return NULL;
-  size_t name_size = strlen(name);
-  obj* o = malloc(sizeof(obj) + name_size + 1);
-  if (o == NULL) {
-    log_error(__func__, "Memory allocation failure.");
-    return NULL;
-  }
-  o->objtype = atom_obj;
-  strcpy((char*) atom_of(o), name);
-  return o;
-}
-
-obj* new_primitive(primitive_t primitive) {
-  obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
-  if (o == NULL) {
-    log_error(__func__, "Allocation failure.");
-    return NULL;
-  }
-  o->objtype = primitive_obj;
-  memcpy(primitive_of(o), &primitive, sizeof(primitive));
-  return o;
-}
-
 // Copy an object recursively
-obj* copy(const obj* o) {
+obj* copy_recursive(const obj *o) {
   if (o == NULL) return NULL;
 
   // Different kind of copying for each object type
@@ -61,10 +25,6 @@ obj* copy(const obj* o) {
   if (o->objtype == primitive_obj) return copy_primitive(o);
   if (o->objtype == list_obj) return copy_list(o);
   return NULL;
-}
-
-void dispose(obj* o) {
-  free(o);
 }
 
 void dispose_recursive(obj *o) {
@@ -75,18 +35,6 @@ void dispose_recursive(obj *o) {
     dispose_recursive(l->cdr);
   }
   free(o);
-}
-
-list_t* list_of(const obj *o) {
-  return (list_t*) get_contents(o);
-}
-
-atom_t atom_of(const obj *o) {
-  return (atom_t) get_contents(o);
-}
-
-primitive_t* primitive_of(const obj *o) {
-  return (primitive_t*) get_contents(o);
 }
 
 bool is_empty(const obj* o) {
@@ -143,7 +91,7 @@ static obj* copy_list(const obj* o) {
   if (o == NULL) return NULL;
 
   obj* list_copy = new_list();
-  list_of(list_copy)->car = copy(list_of(o)->car);
+  list_of(list_copy)->car = copy_recursive(list_of(o)->car);
   list_of(list_copy)->cdr = copy_list(list_of(o)->cdr);
 
   return list_copy;
@@ -169,9 +117,4 @@ static obj* copy_primitive(const obj* o) {
   // Copy the function pointer over
   memcpy(new_prim, old_prim, sizeof(primitive_t));
   return new_primitive_obj;
-}
-
-void* get_contents(const obj *o) {
-  if (o == NULL) return NULL;
-  return (void*) ((char*) o + sizeof(obj));
 }
