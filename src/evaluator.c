@@ -34,7 +34,9 @@ obj* eval(const obj* o, obj* env) {
   if (o->objtype == atom_obj) {
     obj* value = lookup(o, env);
     if (value) return value;
-    log_error(__func__, sprintf("Atom: %s not found in environment", (char*) atom_of(o)));
+    char err_msg[ERR_BUFF_SIZE];
+    sprintf(err_msg, "Atom: %s not found in environment", (char*) atom_of(o));
+    log_error(__func__, err_msg);
     return NULL;
   }
 
@@ -60,7 +62,9 @@ obj* eval(const obj* o, obj* env) {
 obj* apply(const obj* operator, const obj* args, obj* env) {
   if (operator == NULL) return NULL;
   if (operator->objtype == atom_obj) {
-    log_error(__func__, sprintf("Cannot apply atom: \"%s\" as function", (char*) atom_of(operator)));
+    char err_msg[ERR_BUFF_SIZE];
+    sprintf(err_msg, "Cannot apply atom: \"%s\" as function", (char*) atom_of(operator));
+    log_error(__func__, err_msg);
     return NULL;
   }
 

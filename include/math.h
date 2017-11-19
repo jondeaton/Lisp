@@ -38,6 +38,24 @@ obj* new_int(int value);
 obj* new_float(float value);
 
 /**
+ * Function: get_int
+ * -----------------
+ * Get the integer value from an object wrapping a number
+ * @param o: The object that is wrapping the integer or the float
+ * @return: A copy of the value stored in the object as an integer
+ */
+int get_int(const obj* o);
+
+/**
+ * Function: get_float
+ * -------------------
+ * Get the floating point value from an object wrapping a number
+ * @param o: The object wrapping the integer or floating point value
+ * @return: A copy of the value stored in the object as a floating point
+ */
+float get_float(const obj* o);
+
+/**
  * Primitive: plus
  * ---------------
  * Primitive function for adding two numbers

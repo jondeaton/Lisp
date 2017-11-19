@@ -175,6 +175,12 @@ static int test_parser() {
   num_fails += test_single_parse("(a)", "(a)") ? 0 : 1;
   num_fails += test_single_parse("(a b c)", "(a b c)") ? 0 : 1;
   num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
+  num_fails += test_single_parse("123", "123") ? 0 : 1;
+  num_fails += test_single_parse("(42)", "42") ? 0 : 1;
+  num_fails += test_single_parse("(1 2 3 2701)", "(1 2 3 2701)") ? 0 : 1;
+  num_fails += test_single_parse("3.14", "3.14") ? 0 : 1;
+  num_fails += test_single_parse("(6.28)", "6.26") ? 0 : 1;
+  num_fails += test_single_parse("(6.28 1.234 5 6)", "(6.28 1.234 5 6)") ? 0 : 1;
   num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
   num_fails += test_single_parse("(quote (a b c d e f hello 123456789098))", "(quote (a b c d e f hello 123456789098))") ? 0 : 1;
   num_fails += test_single_parse("((((((()))))))", "((((((()))))))") ? 0 : 1;

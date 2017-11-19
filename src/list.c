@@ -15,7 +15,6 @@
 static obj* copy_list(const obj* o);
 static obj* copy_atom(const obj* o);
 static obj* copy_primitive(const obj* o);
-static void* get_contents(const obj *o);
 
 obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
@@ -172,13 +171,7 @@ static obj* copy_primitive(const obj* o) {
   return new_primitive_obj;
 }
 
-/**
- * Function: get_contents
- * ----------------------
- * Utility function for getting the contents of the object that exists just to the right of
- * the object type enum.
- */
-static void* get_contents(const obj *o) {
+void* get_contents(const obj *o) {
   if (o == NULL) return NULL;
   return (void*) ((char*) o + sizeof(obj));
 }

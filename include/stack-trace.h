@@ -6,6 +6,7 @@
 
 #ifndef _STACK_TRACE_H_INCLUDED
 #define _STACK_TRACE_H_INCLUDED
+#define ERR_BUFF_SIZE 256
 
 /**
  * Function: log_error

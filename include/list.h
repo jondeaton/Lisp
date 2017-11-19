@@ -133,4 +133,14 @@ bool deep_compare(obj* x, obj* y);
  */
 obj* ith(const obj* o, int i);
 
+/**
+ * Function: get_contents
+ * ----------------------
+ * Utility function for getting the contents of the object that exists just to the right of
+ * the object type enum.
+ * @param o: Object to get the contents of
+ * @return: Pointer to the memory containing the contents of the object
+ */
+void* get_contents(const obj *o);
+
 #endif // _LIST_H_INCLUDED

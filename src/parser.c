@@ -14,6 +14,7 @@
 
 #define KMAG  "\x1B[35m"
 #define RESET "\033[0m"
+#define BUFFSIZE 128
 
 static obj* parse_atom(const_expression e, size_t *num_parsed_p);
 static obj* parse_list(const_expression e, size_t *num_parsed_p);
@@ -66,7 +67,9 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
 expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
-  if (o->objtype == atom_obj) return unparse_atom(o);
+  if (o->objtype == atom_obj
+      || o->objtype == integer_obj
+      || o->objtype == float_obj) return unparse_atom(o);
   if (o->objtype == primitive_obj) return unparse_primitive(o);
 
   if (o->objtype == list_obj) {
@@ -74,6 +77,10 @@ expression unparse(const obj* o) {
     if (list_expr == NULL) return strdup("()");
 
     expression e = malloc(1 + strlen(list_expr) + 2); // open, close, null
+    if (e == NULL) {
+      log_error(__func__, "Memory allocation failure");
+      return NULL;
+    }
     e[0] = '(';
     strcpy((char*) e + 1, list_expr);
     strcpy((char*) e + 1 + strlen(list_expr), ")");
@@ -124,15 +131,38 @@ static expression unparse_list(const obj *o) {
 /**
  * Function: unparse_atom
  * ----------------------
- * Unparses an atom into dynamically allocated
+ * Serializes an atom into a lisp expression in dynamically allocated memory.
+ * This function will handle objects of type atom_obj as well as integer_obj and float_obj
  * @param o: Pointer to an atom object
  * @return: Pointer to dynamically allocated memory with the an expression representing the atom
  */
 static expression unparse_atom(const obj *o) {
   if (o == NULL) return NULL;
-  atom_t atm = atom_of(o);
-  expression e = malloc(strlen(atm) + 1);
-  return strcpy(e, atm);
+
+  if (o->objtype == atom_obj) {
+    atom_t atm = atom_of(o);
+    expression e = malloc(strlen(atm) + 1);
+    if (e == NULL) {
+      log_error(__func__, "Memory allocation failure");
+      return NULL;
+    }
+    return strcpy(e, atm);
+  }
+
+  if (o->objtype == integer_obj) {
+    expression e = calloc(BUFFSIZE, 1);
+    sprintf(e, "%d", get_int(o));
+    return e;
+  }
+
+  if (o->objtype == float_obj) {
+    expression e = calloc(BUFFSIZE, 1);
+    sprintf(e, "%g", get_float(o));
+    return e;
+  }
+
+  log_error(__func__, "Attempted to parse object that is not an atom");
+  return NULL;
 }
 
 /**
@@ -205,8 +235,10 @@ static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   bool is_float = contents != end;
 
   obj* o;
-  if (is_integer) o = new_int(int_value);
-  else if (is_float) o = new_float(float_value);
+  if (is_integer)
+    o = new_int(int_value);
+  else if (is_float)
+    o = new_float(float_value);
   else o = new_atom(contents);
   *num_parsed_p = size;
   free(contents);

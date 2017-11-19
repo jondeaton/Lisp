@@ -5,6 +5,7 @@
  */
 
 #include <parser.h>
+#include <list.h>
 #include "environment.h"
 #include "math.h"
 #include "evaluator.h"
@@ -15,8 +16,6 @@ typedef float (*floatArithmeticFuncPtr)(float, float);
 
 static obj* allocate_integer(int value);
 static obj* allocate_float(float value);
-static int get_int(const obj* o);
-static float get_float(const obj* o);
 static int add_ints(int x, int y);
 static float add_floats(float x, float y);
 static int sub_ints(int x, int y);
@@ -72,7 +71,8 @@ obj* new_int(int value) {
     log_error(__func__, "Memory allocation failure");
     return NULL;
   }
-  int* contents = (int*) (char*) o + sizeof(obj);
+  o->objtype = integer_obj;
+  int* contents = (int*) get_contents(o);
   *contents = value;
   return o;
 }
@@ -83,9 +83,24 @@ obj* new_float(float value) {
     log_error(__func__, "Memory allocation failure");
     return NULL;
   }
-  float* contents = (float*) (char*) o + sizeof(obj);
+  o->objtype = float_obj;
+  float* contents = (float*) get_contents(o);
   *contents = value;
   return o;
+}
+
+float get_float(const obj* o) {
+  if (o->objtype == integer_obj) return (float) get_int(o);
+  if (o->objtype == float_obj) return *(float*) ((char*) o + sizeof(obj));
+  log_error(__func__, "Object is not a number");
+  return 0;
+}
+
+int get_int(const obj* o) {
+  if (o->objtype == float_obj) return (int) get_float(o);
+  if (o->objtype == integer_obj) return *(int*) ((char*) o + sizeof(obj));
+  log_error(__func__, "Object is not a number");
+  return 0;
 }
 
 // todo: Add documentation
@@ -141,21 +156,6 @@ static obj* allocate_float(float value) {
   obj* o = new_float(value);
   add_allocated(o);
   return o;
-}
-
-
-static float get_float(const obj* o) {
-  if (o->objtype == integer_obj) return (float) get_int(o);
-  if (o->objtype == float_obj) return *(float*) ((char*) o + sizeof(obj));
-  log_error(__func__, "Object is not a number");
-  return 0;
-}
-
-static int get_int(const obj* o) {
-  if (o->objtype == float_obj) return (int) get_float(o);
-  if (o->objtype == integer_obj) return *(int*) ((char*) o + sizeof(obj));
-  log_error(__func__, "Object is not a number");
-  return 0;
 }
 
 static int add_ints(int x, int y) {
