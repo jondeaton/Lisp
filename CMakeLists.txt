@@ -19,7 +19,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_C_FLAGS  "-Ofast")
 else()
     message(STATUS "Mode: Debug")
-    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
+    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic -ansi")
 endif()
 
 include_directories(include src test)

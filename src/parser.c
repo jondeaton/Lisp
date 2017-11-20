@@ -5,12 +5,10 @@
  */
 
 #include "parser.h"
-#include <list.h>
 #include <stack-trace.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+
 
 #define KMAG  "\x1B[35m"
 #define RESET "\033[0m"
@@ -174,8 +172,10 @@ static expression unparse_atom(const obj *o) {
  */
 static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
-  expression e = malloc(2 + sizeof(void*) * 16 + 1);
-  sprintf(e, KMAG "%p" RESET, (void*) *primitive_of(o)); // just print the raw pointer
+  expression e = malloc(strlen(KMAG) + 2 + sizeof(void*) * 8 / 4 + strlen(RESET) + 1);
+  void* p = NULL;
+  memcpy(&p, (void**) primitive_of(o), sizeof(primitive_t));
+  sprintf(e, KMAG "%p" RESET, p);
   return e;
 }
 
