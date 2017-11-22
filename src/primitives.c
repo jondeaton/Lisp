@@ -4,7 +4,7 @@
  * Presents the implementation of the lisp primitives
  */
 
-#include "primitives.h"
+#include <primitives.h>
 #include <evaluator.h>
 #include <environment.h>
 #include <list.h>
@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
+
 
 static const char* t_contents = "t";
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
@@ -22,6 +24,9 @@ static const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car, 
 
 // Static function declarations
 static bool is_t(const obj* o);
+static int num_arguments(const obj* args);
+static bool check_num_args(const char* func_name, const obj* args, int expected);
+static obj* eval_ith(const obj* o, obj* env, int i);
 
 obj* get_primitive_library() {
   return make_environment(primitive_reserved_names, primitive_functions);
@@ -48,18 +53,19 @@ obj* empty() {
 
 obj* quote(const obj* o, obj* env) {
   (void) env;
-  if (o == NULL) return NULL;
+  if (!check_num_args(__func__, o, 1)) return NULL;
   return list_of(o)->car;
 }
 
 obj* atom(const obj* o, obj* env) {
-  if (o == NULL) return NULL;
+  if (!check_num_args(__func__, o, 1)) return NULL;
   obj* result = eval(list_of(o)->car, env);
-  return is_empty(result) || result->objtype == atom_obj ? t() : empty();
+  if (is_list(result)) return is_empty(result) ? t() : empty();
+  return is_atom(result) || is_number(result) ? t() : empty();
 }
 
 obj* eq(const obj* o, obj* env) {
-  if (o == NULL) return NULL;
+  if (!check_num_args(__func__, o, 2)) return NULL;
 
   obj* first_arg = list_of(o)->car;
   obj* second_arg = list_of(list_of(o)->cdr)->car;
@@ -68,28 +74,27 @@ obj* eq(const obj* o, obj* env) {
   obj* y = eval(second_arg, env);
 
   if (x->objtype != y->objtype) return empty();
-  if (x->objtype == list_obj)
+  if (is_list(x))
     return is_empty(x) && is_empty(y) ? t() : empty();
 
   return strcmp(atom_of(x), atom_of(y)) == 0 ? t() : empty();
 }
 
 obj* car(const obj* o, obj* env) {
-  if (o == NULL) return NULL;
-  assert(o->objtype == list_obj);
+  if (!check_num_args(__func__, o, 1)) return NULL;
   obj* result = eval(list_of(o)->car, env);
   return list_of(result)->car;
 }
 
 obj* cdr(const obj* o, obj* env) {
-  if (o == NULL) return NULL;
+  if (!check_num_args(__func__, o, 1)) return NULL;
   assert(o->objtype == list_obj);
   obj* result = eval(list_of(o)->car, env);
   return list_of(result)->cdr;
 }
 
 obj* cons(const obj* o, obj* env) {
-  if (o == NULL) return NULL;
+  if (!check_num_args(__func__, o, 2)) return NULL;
 
   obj* x = list_of(o)->car;
   obj* y = list_of(list_of(o)->cdr)->car;
@@ -119,27 +124,22 @@ obj* cond(const obj* o, obj* env) {
 }
 
 obj* set(const obj* o, obj* env) {
-  if (o == NULL) return NULL;
+  if (!check_num_args(__func__, o, 2)) return NULL;
 
-  obj* first_arg = list_of(o)->car;
-  obj* second_arg = list_of(list_of(o)->cdr)->car;
+  obj* var_name = eval_ith(o, env, 0);
+  obj* value = eval_ith(o, env, 1);
 
-  obj* var = eval(first_arg, env);
-  obj* value = eval(second_arg, env);
-
-  obj** prev_value_p = lookup_entry(var, env);
-  if (prev_value_p != NULL) {
-    // This is the part of the language that implements dynamic scoping
+  obj** prev_value_p = lookup_entry(var_name, env);
+  if (prev_value_p != NULL) { // Dynamic Scoping
     dispose_recursive(*prev_value_p);
     *prev_value_p = copy_recursive(value);
 
   } else {
-
     obj* pair_second = new_list();
     list_of(pair_second)->car = value;
 
     obj* pair_first = new_list();
-    list_of(pair_first)->car = var;
+    list_of(pair_first)->car = var_name;
     list_of(pair_first)->cdr = pair_second;
 
     obj* new_link = new_list();
@@ -153,11 +153,7 @@ obj* set(const obj* o, obj* env) {
 }
 
 obj* env_prim(const obj* o, obj* env) {
-  (void) o;
-  if (o != NULL) {
-    log_error(__func__, "Too many arguments to env");
-    return NULL;
-  }
+  if (!check_num_args(__func__, o, 0)) return NULL;
   return env;
 }
 
@@ -177,6 +173,52 @@ obj* defmacro(const obj* o, obj* env) {
  */
 static bool is_t(const obj* o) {
   if (o == NULL) return false;
-  if (o->objtype != atom_obj) return false;
+  if (!is_atom(o)) return false;
   return strcmp(atom_of(o), t_contents) == 0;
+}
+
+/**
+ * Function: num_arguments
+ * -----------------------
+ * Gets the number of arguments
+ * @param args: Arguments to a primitive
+ * @return: The number of elements in the arguments list
+ */
+static int num_arguments(const obj* args) {
+  return list_length(args);
+}
+
+/**
+ * Function: check_num_args
+ * ------------------------
+ * Checks if the number of arguments is equal to the number that are expected, logging
+ * an informative error if this is not the case, and returning false in that case. If there
+ * are the expected number of arguments, then nothing is printed and the function returns true
+ * @param func_name: The name of the primitive that is checking it's arguments
+ * @param args: The arguments provided to the primitive
+ * @param expected: The number of arguments expected to be present in the list
+ * @return: True if the number of arguments is equal to the number expected, false otherwise
+ */
+static bool check_num_args(const char* func_name, const obj* args, int expected) {
+  int nargs = num_arguments(args);
+  if(nargs != expected) {
+    char BUFF[ERR_BUFF_SIZE];
+    sprintf(BUFF, "Expected %d arguments, got %d", expected, nargs);
+    log_error(func_name, BUFF);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Function: eval_ith
+ * ------------------
+ * Gets the evaluation of the argument at the nth index of the argument list
+ * @param o: The list to get the i'th evaluation of
+ * @param env: The environment to do the evaluation in
+ * @param i: The index (starting at 0) of the element to evaluate in o
+ * @return: The evaluation of the i'th element of o in the given environment
+ */
+static obj* eval_ith(const obj* o, obj* env, int i) {
+  return eval(ith(o, i), env);
 }

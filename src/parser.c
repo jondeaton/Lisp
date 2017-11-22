@@ -20,6 +20,7 @@ static obj* get_quote_list();
 static obj* put_into_list(obj *o);
 
 static expression unparse_list(const obj *o);
+static expression unparse_closure(const obj* o);
 static expression unparse_atom(const obj *o);
 static expression unparse_primitive(const obj *o);
 
@@ -65,23 +66,23 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
 expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
-  if (o->objtype == atom_obj
-      || o->objtype == integer_obj
-      || o->objtype == float_obj) return unparse_atom(o);
-  if (o->objtype == primitive_obj) return unparse_primitive(o);
+  if (is_atom(o) || is_number(o)) return unparse_atom(o);
+  if (is_primitive(o)) return unparse_primitive(o);
 
-  if (o->objtype == list_obj) {
+  if (is_closure(o)) return unparse_closure(o);
+
+  if (is_list(o)) {
     expression list_expr = unparse_list(o);
     if (list_expr == NULL) return strdup("()");
 
     expression e = malloc(1 + strlen(list_expr) + 2); // open, close, null
     if (e == NULL) {
-      log_error(__func__, "Memory allocation failure");
+      LOG_MALLOC_FAIL;
       return NULL;
     }
     e[0] = '(';
-    strcpy((char*) e + 1, list_expr);
-    strcpy((char*) e + 1 + strlen(list_expr), ")");
+    strcpy((char *) e + 1, list_expr);
+    strcpy((char *) e + 1 + strlen(list_expr), ")");
     free(list_expr);
     return e;
   }
@@ -91,9 +92,8 @@ expression unparse(const obj* o) {
 /**
  * Function: unparse_list
  * ----------------------
- * Turn a list into an expression that represents that list. Note: the produced lisp
- * expression will be in dynamically allocated space and will NOT contain opening and closing
- * parentheses.
+ * Turn a list into an expression that represents that list. Note: the produced lisp expression
+ * will be in dynamically allocated space and will NOT contain opening and closing parentheses.
  * @param o: A lisp object that is a list to be unparsed
  * @return: A lisp expression that represents the passed lisp object
  */
@@ -127,6 +127,20 @@ static expression unparse_list(const obj *o) {
 }
 
 /**
+ * Function: unparse_closure
+ * -------------------------
+ * Serializes a closure object into a string
+ * @param o: The closure object to serialize
+ * @return: The serialization of the closure in a string
+ */
+static expression unparse_closure(const obj* o) {
+  if (!is_closure(o)) return NULL;
+  // todo: implement this
+  // Should we just print something like <Closure: body> ?
+  return NULL;
+}
+
+/**
  * Function: unparse_atom
  * ----------------------
  * Serializes an atom into a lisp expression in dynamically allocated memory.
@@ -137,23 +151,23 @@ static expression unparse_list(const obj *o) {
 static expression unparse_atom(const obj *o) {
   if (o == NULL) return NULL;
 
-  if (o->objtype == atom_obj) {
+  if (is_atom(o)) {
     atom_t atm = atom_of(o);
     expression e = malloc(strlen(atm) + 1);
     if (e == NULL) {
-      log_error(__func__, "Memory allocation failure");
+      LOG_MALLOC_FAIL;
       return NULL;
     }
     return strcpy(e, atm);
   }
 
-  if (o->objtype == integer_obj) {
+  if (is_int(o)) {
     expression e = calloc(BUFFSIZE, 1);
     sprintf(e, "%d", get_int(o));
     return e;
   }
 
-  if (o->objtype == float_obj) {
+  if (is_float(o)) {
     expression e = calloc(BUFFSIZE, 1);
     sprintf(e, "%g", get_float(o));
     return e;
@@ -173,6 +187,10 @@ static expression unparse_atom(const obj *o) {
 static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
   expression e = malloc(strlen(KMAG) + 2 + sizeof(void*) * 8 / 4 + strlen(RESET) + 1);
+  if (e == NULL) {
+    LOG_MALLOC_FAIL;
+    return NULL;
+  }
   void* p = NULL;
   memcpy(&p, (void**) primitive_of(o), sizeof(primitive_t));
   sprintf(e, KMAG "%p" RESET, p);
@@ -235,10 +253,10 @@ static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   bool is_float = contents != end;
 
   obj* o;
-  if (is_integer)
-    o = new_int(int_value);
-  else if (is_float)
+  if (is_float)
     o = new_float(float_value);
+  else if (is_integer)
+    o = new_int(int_value);
   else o = new_atom(contents);
   *num_parsed_p = size;
   free(contents);

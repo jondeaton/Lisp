@@ -4,7 +4,7 @@
  * Presents the implementation of lisp object creation
  */
 
-#include "lisp-objects.h"
+#include <lisp-objects.h>
 #include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,16 +90,44 @@ obj* new_float(float value) {
   return o;
 }
 
+bool is_atom(const obj* o) {
+  return o->objtype == atom_obj;
+}
+
+bool is_primitive(const obj* o) {
+  return o->objtype == primitive_obj;
+}
+
+bool is_list(const obj* o) {
+  return o->objtype == list_obj;
+}
+
+bool is_closure(const obj* o) {
+  return o->objtype == closure_obj;
+}
+
+bool is_int(const obj* o) {
+  return o->objtype == integer_obj;
+}
+
+bool is_float(const obj* o) {
+  return o->objtype == float_obj;
+}
+
+bool is_number(const obj* o) {
+  return is_float(o) || is_int(o);
+}
+
 float get_float(const obj* o) {
-  if (o->objtype == integer_obj) return (float) get_int(o);
-  if (o->objtype == float_obj) return *(float*) ((char*) o + sizeof(obj));
+  if (is_int(o)) return (float) get_int(o);
+  if (is_float(o)) return *(float*) ((char*) o + sizeof(obj));
   log_error(__func__, "Object is not a number");
   return 0;
 }
 
 int get_int(const obj* o) {
-  if (o->objtype == float_obj) return (int) get_float(o);
-  if (o->objtype == integer_obj) return *(int*) ((char*) o + sizeof(obj));
+  if (is_float(o)) return (int) get_float(o);
+  if (is_int(o)) return *(int*) ((char*) o + sizeof(obj));
   log_error(__func__, "Object is not a number");
   return 0;
 }

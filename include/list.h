@@ -57,4 +57,13 @@ bool deep_compare(obj* x, obj* y);
  */
 obj* ith(const obj* o, int i);
 
+/**
+ * Function: list_length
+ * ---------------------
+ * Finds the length of a list object
+ * @param o: The list to get the length of
+ * @return: The number of elements in a list
+ */
+int list_length(const obj* o);
+
 #endif // _LIST_H_INCLUDED

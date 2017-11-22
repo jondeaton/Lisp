@@ -45,15 +45,14 @@ obj* make_pair(const obj* name, const obj* value) {
   return first_item;
 }
 
-
 obj** lookup_entry(const obj* o, const obj* env) {
   if (o == NULL || env == NULL) return NULL;
 
   // Error: The environment should be a list
-  if (env->objtype != list_obj) return NULL;
+  if (!is_list(env)) return NULL;
 
   // Error: Can't lookup something that isn't an atom
-  if (o->objtype != atom_obj) return NULL;
+  if (!is_atom(o)) return NULL;
 
   // Get the list
   obj* pair = list_of(env)->car;

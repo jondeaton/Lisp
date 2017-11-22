@@ -7,6 +7,8 @@
 #ifndef _LISP_OBJECTS_H_INCLUDED
 #define _LISP_OBJECTS_H_INCLUDED
 
+#include <stdbool.h>
+
 // The different types of lists
 enum type {atom_obj, list_obj, primitive_obj, closure_obj, integer_obj, float_obj};
 
@@ -95,6 +97,70 @@ obj* new_int(int value);
  * @return: The object wrapping a copy of the floating point value
  */
 obj* new_float(float value);
+
+
+/**
+ * Function: is_atom
+ * -----------------
+ * Determines if an object is of the atom type
+ * @param o: The object to check if it is an atom
+ * @return: True if the object type is atom, false otherwise
+ */
+bool is_atom(const obj* o);
+
+/**
+ * Function: is_primitive
+ * ----------------------
+ * Determines if an object is of the primitive type
+ * @param o: The object to check whether it is primitive
+ * @return: True if the object type is a primitive, false otherwise
+ */
+bool is_primitive(const obj* o);
+
+/**
+ * Function: is_list
+ * -----------------
+ * Determines if an object is of the list type
+ * @param o: The object to check whether it is list
+ * @return: True if the object type is a list, false otherwise
+ */
+bool is_list(const obj* o);
+
+/**
+ * Function: is_closure
+ * ----------------------
+ * Determines if an object is of the closure type
+ * @param o: The object to check whether it is closure
+ * @return: True if the object type is a closure, false otherwise
+ */
+bool is_closure(const obj* o);
+
+/**
+ * Function: is_int
+ * ----------------
+ * Determines if an object is of the integer type
+ * @param o: The object to check whether it is an integer
+ * @return: True if the object type is an integer, false otherwise
+ */
+bool is_int(const obj* o);
+
+/**
+ * Function: is_float
+ * ----------------------
+ * Determines if an object is of the float type
+ * @param o: The object to check whether it is a float
+ * @return: True if the object type is a float, false otherwise
+ */
+bool is_float(const obj* o);
+
+/**
+ * Function: is_number
+ * -------------------
+ * Determines if an object is a number type
+ * @param o: The object to check whether it is a number
+ * @return: True if the object type is a int or float, false otherwise
+ */
+bool is_number(const obj* o);
 
 /**
  * Function: get_int

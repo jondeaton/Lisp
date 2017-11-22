@@ -10,6 +10,7 @@
 #include <string.h>
 #include <list.h>
 #include <stack-trace.h>
+#include <lisp-objects.h>
 
 // Static function declarations
 static obj* copy_list(const obj* o);
@@ -21,15 +22,15 @@ obj* copy_recursive(const obj *o) {
   if (o == NULL) return NULL;
 
   // Different kind of copying for each object type
-  if (o->objtype == atom_obj) return copy_atom(o);
-  if (o->objtype == primitive_obj) return copy_primitive(o);
-  if (o->objtype == list_obj) return copy_list(o);
+  if (is_atom(o)) return copy_atom(o);
+  if (is_primitive(o)) return copy_primitive(o);
+  if (is_list(o)) return copy_list(o);
   return NULL;
 }
 
 void dispose_recursive(obj *o) {
   if (o == NULL) return;
-  if (o->objtype == list_obj) { // Recursive disposal of lists
+  if (is_list(o)) { // Recursive disposal of lists
     list_t *l = list_of(o);
     dispose_recursive(l->car);
     dispose_recursive(l->cdr);
@@ -39,25 +40,31 @@ void dispose_recursive(obj *o) {
 
 bool is_empty(const obj* o) {
   if (o == NULL) return false;
-  if (o->objtype != list_obj) return false;
+  if (!is_list(o)) return false;
   return list_of(o)->car == NULL && list_of(o)->cdr == NULL;
 }
 
 bool deep_compare(obj* x, obj* y) {
   if (x->objtype != y->objtype) return false;
-  if (x->objtype == atom_obj) return strcmp(atom_of(x), atom_of(y)) == 0;
-  if (x->objtype == primitive_obj) return primitive_of(x) == primitive_of(y);
+  if (is_atom(x)) return strcmp(atom_of(x), atom_of(y)) == 0;
+  if (is_primitive(x)) return primitive_of(x) == primitive_of(y);
 
   // List: cars must match and cdrs must match
-  if (x->objtype == list_obj)
+  if (is_list(x))
     return deep_compare(list_of(x)->car, list_of(y)->car) && deep_compare(list_of(x)->cdr, list_of(y)->cdr);
   else return x == y;
 }
 
 obj* ith(const obj* o, int i) {
-  if (o == NULL || i < 0 || o->objtype != list_obj) return NULL;
+  if (o == NULL || i < 0 || !is_list(o)) return NULL;
   if (i == 0) return list_of(o)->car;
   return ith(list_of(o)->cdr, i - 1);
+}
+
+int list_length(const obj* o) {
+  if (o == NULL) return 0;
+  if (!is_list(o)) return 0;
+  return 1 + list_length(list_of(o)->cdr);
 }
 
 /**
