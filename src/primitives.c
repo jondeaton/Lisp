@@ -24,7 +24,7 @@ static const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car, 
 
 // Static function declarations
 static bool is_t(const obj* o);
-static obj* ith_arg_value(const obj *args, obj *env, int i);
+static obj* ith_arg_value(const obj *args, obj** envp, int i);
 
 obj* get_primitive_library() {
   return make_environment(primitive_reserved_names, primitive_functions);
@@ -32,44 +32,39 @@ obj* get_primitive_library() {
 
 // Allocate new truth atom
 obj* t() {
-  obj* o = malloc(sizeof(obj) + strlen(t_contents) + 1);
-  strcpy((char*) o + sizeof(obj), t_contents);
-  o->objtype = atom_obj;
-  add_allocated(o);
-  return o;
+  obj* t = new_atom(t_contents);
+  add_allocated(t);
+  return t;
 }
 
 // Allocate new empty list
 obj* empty() {
-  obj* o = new_list();
-  o->objtype = list_obj;
-  list_of(o)->car = NULL;
-  list_of(o)->cdr = NULL;
-  add_allocated(o);
-  return o;
+  obj* list = new_list_set(NULL, NULL);
+  add_allocated(list);
+  return list;
 }
 
-obj* quote(const obj* o, obj* env) {
-  (void) env;
-  if (!check_num_args(__func__, o, 1)) return NULL;
-  return list_of(o)->car;
+obj* quote(const obj* args, obj** envp) {
+  (void) envp;
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  return list_of(args)->car;
 }
 
-obj* atom(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 1)) return NULL;
-  obj* result = eval(list_of(o)->car, env);
+obj* atom(const obj* args, obj** envp) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj* result = eval(list_of(args)->car, envp);
   if (is_list(result)) return is_empty(result) ? t() : empty();
   return is_atom(result) || is_number(result) ? t() : empty();
 }
 
-obj* eq(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 2)) return NULL;
+obj* eq(const obj* args, obj** envp) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first_arg = list_of(o)->car;
-  obj* second_arg = list_of(list_of(o)->cdr)->car;
+  obj* first_arg = list_of(args)->car;
+  obj* second_arg = list_of(list_of(args)->cdr)->car;
 
-  obj* x = eval(first_arg, env);
-  obj* y = eval(second_arg, env);
+  obj* x = eval(first_arg, envp);
+  obj* y = eval(second_arg, envp);
 
   if (x->objtype != y->objtype) return empty();
   if (is_list(x))
@@ -78,86 +73,79 @@ obj* eq(const obj* o, obj* env) {
   return strcmp(atom_of(x), atom_of(y)) == 0 ? t() : empty();
 }
 
-obj* car(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 1)) return NULL;
-  obj* result = eval(list_of(o)->car, env);
+obj* car(const obj* args, obj** envp) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  if (!check_nargs(__func__, args, 1)) return NULL;
+  obj* result = eval(list_of(args)->car, envp);
   return list_of(result)->car;
 }
 
-obj* cdr(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 1)) return NULL;
-  assert(o->objtype == list_obj);
-  obj* result = eval(list_of(o)->car, env);
+obj* cdr(const obj* args, obj** envp) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  assert(args->objtype == list_obj);
+  obj* result = eval(list_of(args)->car, envp);
   return list_of(result)->cdr;
 }
 
-obj* cons(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 2)) return NULL;
+obj* cons(const obj* args, obj** envp) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
 
-  obj* x = list_of(o)->car;
-  obj* y = list_of(list_of(o)->cdr)->car;
+  obj* x = list_of(args)->car;
+  obj* y = list_of(list_of(args)->cdr)->car;
 
   obj* new_obj = new_list();
   add_allocated(new_obj); // Record allocation
-  list_of(new_obj)->car = eval(x, env);
-  list_of(new_obj)->cdr = eval(y, env);
+  list_of(new_obj)->car = eval(x, envp);
+  list_of(new_obj)->cdr = eval(y, envp);
 
   return new_obj;
 }
 
-obj* cond(const obj* o, obj* env) {
+obj* cond(const obj* o, obj** envp) {
   if (o == NULL) return NULL;
 
   obj* pair = list_of(o)->car;
   list_t* pl = list_of(pair);
 
-  obj* predicate = eval(pl->car, env);
+  obj* predicate = eval(pl->car, envp);
   if (is_t(predicate)) {
     obj* e = list_of(pl->cdr)->car;
-    return eval(e, env);
+    return eval(e, envp);
   } else {
     if (pl->cdr == NULL) return empty();
-    return cond(list_of(o)->cdr, env);
+    return cond(list_of(o)->cdr, envp);
   }
 }
 
-obj* set(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 2)) return NULL;
+obj* set(const obj* args, obj** envp) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* var_name = ith_arg_value(o, env, 0);
-  obj* value = ith_arg_value(o, env, 1);
+  obj* var_name = ith_arg_value(args, envp, 0);
+  obj* value = ith_arg_value(args, envp, 1);
 
-  obj** prev_value_p = lookup_entry(var_name, env);
-  if (prev_value_p != NULL) { // Dynamic Scoping
+  obj** prev_value_p = lookup_entry(var_name, *envp);
+  if (prev_value_p) { // Dynamic Scoping
     dispose_recursive(*prev_value_p);
     *prev_value_p = copy_recursive(value);
 
   } else {
-    obj* pair_second = new_list();
-    list_of(pair_second)->car = value;
-
-    obj* pair_first = new_list();
-    list_of(pair_first)->car = var_name;
-    list_of(pair_first)->cdr = pair_second;
-
-    obj* new_link = copy_list(env);
-
-    list_of(env)->car = pair_first;
-    list_of(env)->cdr = new_link;
+    obj* pair_second = new_list_set(value, NULL);
+    obj* pair_first = new_list_set(var_name, pair_second);
+    obj* new_link = new_list_set(pair_first, *envp);
+    *envp = new_link;
   }
   return value;
 }
 
-obj* env_prim(const obj* o, obj* env) {
-  if (!check_num_args(__func__, o, 0)) return NULL;
-  return env;
+obj* env_prim(const obj* args, obj** envp) {
+  if (!check_nargs(__func__, args, 0)) return NULL;
+  return *envp;
 }
 
-obj* defmacro(const obj* o, obj* env) {
-  (void) o;
-  (void) env;
-  log_error(__func__, "Macro definition not yet supported");
-  return NULL;
+obj* defmacro(const obj* args, obj** envp) {
+  (void) args;
+  (void) envp;
+  return LOG_ERROR("Macro definition not yet supported");
 }
 
 /**
@@ -178,10 +166,10 @@ static bool is_t(const obj* o) {
  * -----------------------
  * Gets the evaluation of the argument at the nth index of the argument list
  * @param args: The list to get the i'th evaluation of
- * @param env: The environment to do the evaluation in
+ * @param envp: The environment to do the evaluation in
  * @param i: The index (starting at 0) of the element to evaluate in o
  * @return: The evaluation of the i'th element of o in the given environment
  */
-static obj* ith_arg_value(const obj *args, obj *env, int i) {
-  return eval(ith(args, i), env);
+static obj* ith_arg_value(const obj *args, obj** envp, int i) {
+  return eval(ith(args, i), envp);
 }

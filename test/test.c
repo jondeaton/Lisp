@@ -256,6 +256,9 @@ static int test_eq() {
   num_fails += test_single_eval("(eq 'a 'b)", "()") ? 0 : 1;
   num_fails += test_single_eval("(eq '() '())", "t") ? 0 : 1;
   num_fails += test_single_eval("(eq (car '(a b c)) 'a)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(eq 3 3.0)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(eq (cons 'a 'b) (cons 'a 'c))", "()") ? 0 : 1;
+  num_fails += test_single_eval("(eq (cons 'a 'b) (cons 'a 'b))", "()") ? 0 : 1;
   printf("Test eq: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

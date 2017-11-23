@@ -57,14 +57,17 @@ and can be run with the `test-lisp` executable.
 - ~~`eval` and `apply`~~
 - ~~Implement testing framework~~
 - ~~Seven primitives~~
-- ~~set primitive with dynamic scoping~~
+- ~~set primitive~~
 - ~~basic `lambda` functionality~~
-- memory management
-- Closures
-- `defmacro`
-- ~~`env` primitive to print the environment~~
-- Error messages and stack trace
+- ~~Error messages and stack trace~~
 - ~~Smart indentation in re-prompt'~~
 - ~~Use `readline` for interactive prompt~~
-- Math library
-- [Derive lexical scoping from dynamic scoping](https://stackoverflow.com/questions/29347648/can-dynamic-scoping-implement-lexical-scoping)
+- ~~Math library~~
+- ~~`env` primitive to print the environment~~
+- memory management
+- closures
+- Tests specified in test files
+- `defmacro`
+- Strings
+- Dot notation
+

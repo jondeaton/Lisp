@@ -26,7 +26,7 @@ static int div_ints(int x, int y);
 static float div_floats(float x, float y);
 static int mod_ints(int x, int y);
 static float mod_floats(float x, float y);
-static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp);
+static obj* apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp);
 
 static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", NULL };
 static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod, NULL };
@@ -35,69 +35,46 @@ obj* get_math_library() {
   return make_environment(math_reserved_atoms, math_primitives);
 }
 
-obj* plus(const obj* o, obj* env) {
-  obj* answer = do_arithmetic(o, env, &add_ints, &add_floats);
-  if (answer == NULL) log_error(__func__, "Addition operator returned in NULL");
+obj* plus(const obj *args, obj **envp) {
+  obj* answer = apply_arithmetic(args, envp, &add_ints, &add_floats);
+  if (answer == NULL) LOG_ERROR("Addition operator returned in NULL");
   return answer;
 }
 
-obj* subtract(const obj* o, obj* env) {
-  obj* answer = do_arithmetic(o, env, &sub_ints, &sub_floats);
-  if (answer == NULL) log_error(__func__, "Subtraction operator returned in NULL");
+obj* subtract(const obj *o, obj **env) {
+  obj* answer = apply_arithmetic(o, env, &sub_ints, &sub_floats);
+  if (answer == NULL) LOG_ERROR("Subtraction operator returned in NULL");
   return answer;
 }
 
-obj* multiply(const obj* o, obj* env) {
-  obj* answer = do_arithmetic(o, env, &mul_ints, &mul_floats);
-  if (answer == NULL) log_error(__func__, "Multiplication operator returned in NULL");
+obj* multiply(const obj *o, obj **env) {
+  obj* answer = apply_arithmetic(o, env, &mul_ints, &mul_floats);
+  if (answer == NULL) LOG_ERROR("Multiplication operator returned in NULL");
   return answer;
 }
 
-obj* divide(const obj* o, obj* env) {
-  obj* answer = do_arithmetic(o, env, &div_ints, &div_floats);
-  if (answer == NULL) log_error(__func__, "Division operator returned in NULL");
+obj* divide(const obj *o, obj **env) {
+  obj* answer = apply_arithmetic(o, env, &div_ints, &div_floats);
+  if (answer == NULL) LOG_ERROR("Division operator returned in NULL");
   return answer;
 }
 
-obj* mod(const obj* o, obj* env) {
-  obj* answer = do_arithmetic(o, env, &mod_ints, &mod_floats);
-  if (answer == NULL) log_error(__func__, "Modulus operator returned in NULL");
+obj* mod(const obj *o, obj **env) {
+  obj* answer = apply_arithmetic(o, env, &mod_ints, &mod_floats);
+  if (answer == NULL) LOG_ERROR("Modulus operator returned in NULL");
   return answer;
 }
 
 // todo: Add documentation
 
-static obj* do_arithmetic(const obj* o, obj* env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp) {
-  obj* first_arg = ith(o, 0);
-  obj* second_arg = ith(o, 1);
+static obj* apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
 
-  if (first_arg == NULL) {
-    log_error(__func__, "First argument not found");
-    return NULL;
-  }
+  obj* first = eval(ith(args, 0), env);
+  obj* second = eval(ith(args, 1), env);
 
-  if (second_arg == NULL) {
-    log_error(__func__, "Second argument not found");
-    return NULL;
-  }
-
-  if (ith(o, 2) != NULL) {
-    log_error(__func__, "Too many arguments");
-    return NULL;
-  }
-
-  obj* first = eval(first_arg, env);
-  obj* second = eval(second_arg, env);
-
-  if (first == NULL) {
-    log_error(__func__, "First argument evaluated to NULL");
-    return NULL;
-  }
-
-  if (second == NULL) {
-    log_error(__func__, "Second argument evaluated to NULL");
-    return NULL;
-  }
+  if (first == NULL) return LOG_ERROR("First argument evaluated to NULL");
+  if (second == NULL) return LOG_ERROR("Second argument evaluated to NULL");
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = floatOp(get_float(first), get_float(second));

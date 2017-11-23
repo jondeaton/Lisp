@@ -23,7 +23,7 @@ typedef struct {
   obj* cdr;
 } list_t;
 
-typedef obj*(*primitive_t)(const obj*, obj*);
+typedef obj*(*primitive_t)(const obj*, obj**);
 
 /**
  * Function: new_list

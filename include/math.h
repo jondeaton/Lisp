@@ -21,11 +21,11 @@ obj* get_math_library();
  * Primitive: plus
  * ---------------
  * Primitive function for adding two numbers
- * @param o: The unevaluated arguments to add
- * @param env: The environment to evaluate the addition
+ * @param args: The unevaluated arguments to add
+ * @param envp: The environment to evaluate the addition
  * @return: A newly allocated number/float object containing the result of the addition
  */
-obj* plus(const obj* o, obj* env);
+obj* plus(const obj *args, obj **envp);
 
 /**
  * Primitive: subtract
@@ -35,7 +35,7 @@ obj* plus(const obj* o, obj* env);
  * @param env: The environment to evaluate the subtraction
  * @return: A newly allocated number/float object containing the result of the subtraction
  */
-obj* subtract(const obj* o, obj* env);
+obj* subtract(const obj *o, obj **env);
 
 /**
  * Primitive: multiply
@@ -45,7 +45,7 @@ obj* subtract(const obj* o, obj* env);
  * @param env: The environment to evaluate the multiplication
  * @return: A newly allocated number/float object containing the result of the multiplication
  */
-obj* multiply(const obj* o, obj* env);
+obj* multiply(const obj *o, obj **env);
 
 /**
  * Primitive: divide
@@ -55,7 +55,7 @@ obj* multiply(const obj* o, obj* env);
  * @param env: The environment to evaluate the division
  * @return: A newly allocated number/float object containing the result of the division
  */
-obj* divide(const obj* o, obj* env);
+obj* divide(const obj *o, obj **env);
 
 /**
  * Primitive: mod
@@ -65,6 +65,6 @@ obj* divide(const obj* o, obj* env);
  * @param env: The environment to evaluate the modulus
  * @return: A newly allocated number/float object containing the result of the modulus
  */
-obj* mod(const obj* o, obj* env);
+obj* mod(const obj *o, obj **env);
 
 #endif // _LISP_MATH_H_INCLUDED

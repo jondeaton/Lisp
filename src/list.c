@@ -16,6 +16,13 @@
 static obj* copy_list_recursive(const obj *o);
 static obj* copy_primitive(const obj* o);
 
+obj* new_list_set(obj* car, obj* cdr) {
+  obj* list = new_list();
+  list_of(list)->car = car;
+  list_of(list)->cdr = cdr;
+  return list;
+}
+
 // Copy an object recursively
 obj* copy_recursive(const obj *o) {
   if (o == NULL) return NULL;

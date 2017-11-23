@@ -10,11 +10,12 @@
 #define KRED  "\x1B[31m"
 #define RESET "\033[0m"
 
-void log_error(const char* context, const char* message) {
+void* log_error(const char* context, const char* message) {
   fprintf(stderr, KRED "\t[%s]: %s\n" RESET, context, message);
+  return NULL; // Returns null for cleaner code
 }
 
-bool check_num_args(const char* context, const obj* args, int expected) {
+bool check_nargs(const char *context, const obj *args, int expected) {
   int nargs = list_length(args);
   if (nargs == expected) return true;
   char err_msg[ERR_BUFF_SIZE];
@@ -23,7 +24,7 @@ bool check_num_args(const char* context, const obj* args, int expected) {
   return false;
 }
 
-bool check_num_args_gt(const char* context, const obj* args, int minimum) {
+bool check_nargs_min(const char *context, const obj *args, int minimum) {
   int nargs = list_length(args);
   if (nargs >= minimum) return true;
   char err_msg[ERR_BUFF_SIZE];

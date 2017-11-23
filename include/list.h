@@ -12,6 +12,16 @@
 #include <stdbool.h>
 
 /**
+ * Function: new_list_set
+ * ----------------------
+ * Creates a new list and sets the value of car and cdr
+ * @param car: The value to set in the car of the new list
+ * @param cdr: The value to set in the cdr of the new list
+ * @return: The new list with the specified values set
+ */
+obj* new_list_set(obj* car, obj* cdr);
+
+/**
  * Function: copy_recursive
  * ------------------------
  * Copies an object, returning a new one, leaving the old one untouched

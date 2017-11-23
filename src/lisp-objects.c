@@ -11,10 +11,7 @@
 
 obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
-  if (o == NULL) {
-    LOG_MALLOC_FAIL;
-    return NULL;
-  }
+  if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = list_obj;
   list_of(o)->car = NULL;
   list_of(o)->cdr = NULL;
@@ -25,10 +22,7 @@ obj* new_atom(atom_t name) {
   if (name == NULL) return NULL;
   size_t name_size = strlen(name);
   obj* o = malloc(sizeof(obj) + name_size + 1);
-  if (o == NULL) {
-    LOG_MALLOC_FAIL;
-    return NULL;
-  }
+  if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = atom_obj;
   strcpy((char*) atom_of(o), name);
   return o;
@@ -36,10 +30,7 @@ obj* new_atom(atom_t name) {
 
 obj* new_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
-  if (o == NULL) {
-    LOG_MALLOC_FAIL;
-    return NULL;
-  }
+  if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = primitive_obj;
   memcpy(primitive_of(o), &primitive, sizeof(primitive));
   return o;
@@ -70,6 +61,7 @@ bool compare(const obj* a, const obj* b) {
     return strcmp(atom_of(a), atom_of(b)) == 0;
 //  if (a->objtype == closure_obj)
 //    return memcmp(closure_of(a), closure_of(b), sizeof(closure_t));
+  return false;
 }
 
 void dispose(obj* o) {
@@ -95,10 +87,7 @@ void* get_contents(const obj *o) {
 
 obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
-  if (o == NULL) {
-    LOG_MALLOC_FAIL;
-    return NULL;
-  }
+  if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = integer_obj;
   int* contents = (int*) get_contents(o);
   *contents = value;
@@ -107,10 +96,7 @@ obj* new_int(int value) {
 
 obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
-  if (o == NULL) {
-    LOG_MALLOC_FAIL;
-    return NULL;
-  }
+  if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = float_obj;
   float* contents = (float*) get_contents(o);
   *contents = value;
@@ -148,13 +134,13 @@ bool is_number(const obj* o) {
 float get_float(const obj* o) {
   if (is_int(o)) return (float) get_int(o);
   if (is_float(o)) return *(float*) ((char*) o + sizeof(obj));
-  log_error(__func__, "Object is not a number");
+  LOG_ERROR("Object is not a number");
   return 0;
 }
 
 int get_int(const obj* o) {
   if (is_float(o)) return (int) get_float(o);
   if (is_int(o)) return *(int*) ((char*) o + sizeof(obj));
-  log_error(__func__, "Object is not a number");
+  LOG_ERROR("Object is not a number");
   return 0;
 }

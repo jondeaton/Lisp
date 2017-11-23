@@ -4,19 +4,17 @@
  * Presents the implementation of the Read-Eval-Print Loop for Lisp
  */
 
-#include "repl.h"
-#include "environment.h"
-#include "evaluator.h"
+#include <repl.h>
+#include <environment.h>
+#include <evaluator.h>
+#include <stack-trace.h>
 #include <string.h>
 #include <sys/file.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #define KBLU  "\x1B[34m"
 #define RESET "\033[0m"
-
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <stack-trace.h>
-
 #define BUFSIZE 512
 char buff[BUFSIZE];
 #define PROMPT "> "
@@ -48,7 +46,7 @@ void repl_run_program(const char* program_file) {
   while (!eof) {
     obj* o = read_expression(fd, false, &eof);
     if (o == NULL) break; // Error -> end
-    obj* evaluation = eval(o, env);
+    obj* evaluation = eval(o, &env);
     print_object(stdout, evaluation);
     clear_allocated();
   }
@@ -60,10 +58,10 @@ void repl_run() {
     obj* o = read_expression(stdin, true, &eof);
     if (eof) break;
     if (o == NULL) {
-      log_error("repl", "Invalid expression");
+      LOG_ERROR("Invalid expression");
       continue;
     }
-    obj* evaluation = eval(o, env);
+    obj* evaluation = eval(o, &env);
     print_object(stdout, evaluation);
     clear_allocated();
   }
@@ -73,7 +71,7 @@ expression repl_eval(const_expression expr) {
   if (expr == NULL) return NULL;
 
   obj* o = parse_expression(expr, NULL);
-  obj* result_obj = eval(o, env);
+  obj* result_obj = eval(o, &env);
   expression result = unparse(result_obj);
   clear_allocated(); // frees the objects in result_obj that were allocated during eval
   dispose_recursive(o);
@@ -143,9 +141,8 @@ static expression get_expression_from_prompt(bool* eof) {
     input_size = strlen(line);
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
-      LOG_MALLOC_FAIL;
       free(line);
-      return NULL;
+      return LOG_MALLOC_FAIL();;
     }
 
     strcpy(e + total_size, line);
@@ -170,7 +167,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
   size_t total_size = input_size;
   expression e = malloc(sizeof(char) * (input_size + 1));
   if (e == NULL) {
-    LOG_MALLOC_FAIL;
+    LOG_MALLOC_FAIL();
     return NULL;
   }
 
@@ -189,7 +186,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
 
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
-      LOG_MALLOC_FAIL;
+      LOG_MALLOC_FAIL();
       return NULL;
     }
 
@@ -207,7 +204,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
  */
 static void print_object(FILE *fd, const obj *o) {
   if (fd == NULL) {
-    log_error(__func__, "Invalid file descriptor");
+    LOG_ERROR("Invalid file descriptor");
     return;
   }
 

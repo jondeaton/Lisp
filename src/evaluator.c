@@ -22,70 +22,69 @@ CVector* allocated;
 static obj* put_into_list(obj *o);
 static obj* bind(obj* params, obj* args, obj* env);
 static obj* associate(obj* names, obj* values);
-static obj* push_frame(obj *frame, obj *env);
-static obj* eval_list(const obj* list, obj *env);
+static obj* push_frame(obj* frame, obj* env);
+static obj* eval_list(const obj* list, obj** envp);
 static bool is_lambda(const obj* o);
-static void obj_cleanup(obj** o_ref);
+static void obj_cleanup(obj** op);
 
-obj* eval(const obj* o, obj* env) {
+obj* eval(const obj* o, obj** envp) {
   if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
   if (o->objtype == atom_obj) {
-    obj* value = lookup(o, env);
+    obj* value = lookup(o, *envp);
     if (value) return value;
     char err_msg[ERR_BUFF_SIZE];
     sprintf(err_msg, "Atom: %s not found in environment", (char*) atom_of(o));
-    log_error(__func__, err_msg);
-    return NULL;
+    return LOG_ERROR(err_msg);
   }
 
   // Numbers evaluate to themselves
-  if (o->objtype == integer_obj || o->objtype == float_obj) return (obj*) o;
+  if (is_number(o)) return (obj*) o;
 
   // Primitive means that there's nothing left to apply
-  if (o->objtype == primitive_obj) return (obj*) o;
+  if (is_primitive(o)) return (obj*) o;
 
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
-  if (o->objtype == list_obj) {
+  if (is_list(o)) {
     if (is_lambda(o)) return (obj*) o;  // Lambda function's value is itself
     if (is_empty(o)) return (obj*) o;   // Empty list's value is itself
 
-    obj* operator = eval(list_of(o)->car, env);
-    return apply(operator, list_of(o)->cdr, env);
+    obj* operator = eval(list_of(o)->car, envp);
+    return apply(operator, list_of(o)->cdr, envp);
   }
-  log_error(__func__, "Object of unknown type");
-  return NULL;
+  return LOG_ERROR("Object of unknown type");
 }
 
-obj* apply(const obj* operator, const obj* args, obj* env) {
+obj* apply(const obj* operator, const obj* args, obj** envp) {
   if (operator == NULL) return NULL;
-  if (operator->objtype == atom_obj) {
+  if (is_atom(operator)) {
     char err_msg[ERR_BUFF_SIZE];
     sprintf(err_msg, "Cannot apply atom: \"%s\" as function", (char*) atom_of(operator));
-    log_error(__func__, err_msg);
-    return NULL;
+    return LOG_ERROR(err_msg);
   }
 
-  if (operator->objtype == primitive_obj) {
+  if (is_primitive(operator)) {
     primitive_t prim = *primitive_of(operator);
-    return prim(args, env);
+    return prim(args, envp);
 
   } else {
-    obj* arg_values = eval_list(args, env);
-
+    obj* arg_values = eval_list(args, envp);
     if (!is_lambda(operator)) return NULL; // <-- not a lambda function
 
     obj* params = list_of(list_of(operator)->cdr)->car;
-    obj* new_env = bind(params, arg_values, env);
+    obj* new_env = bind(params, arg_values, *envp);
     obj* exp = list_of(list_of(list_of(operator)->cdr)->cdr)->car;
-    return eval(exp, new_env);
+    return eval(exp, &new_env);
   }
 }
 
 void init_allocated() {
-  allocated = cvec_create(sizeof(obj*), 0, (CleanupElemFn) &obj_cleanup);
+  size_t elemsz = sizeof(obj*);
+  size_t capacity_hint = 0; // no hint
+  CleanupElemFn cleanup_fn = (CleanupElemFn) &obj_cleanup;
+  allocated = cvec_create(elemsz, capacity_hint, cleanup_fn);
 }
 
 void add_allocated(const obj* o) {
@@ -119,14 +118,13 @@ static obj* bind(obj* params, obj* args, obj* env) {
  * -------------------
  * Evaluate a list, creating a new list with the evaluated arguments
  * @param list: A lisp object that is a list to evaluate each element of
- * @param env: Environment to evaluate the elements of the list
+ * @param envp: Environment to evaluate the elements of the list
  * @return: A new list with the evaluated values of the passed list
  */
-static obj* eval_list(const obj *list, obj *env) {
-  if (list == NULL) return NULL;
-  if (list->objtype != list_obj) return NULL;
-  obj* o = put_into_list(eval(list_of(list)->car, env));
-  list_of(o)->cdr = eval_list(list_of(list)->cdr, env);
+static obj* eval_list(const obj* list, obj** envp) {
+  if (list == NULL || !is_list(list)) return NULL;
+  obj* o = put_into_list(eval(list_of(list)->car, envp));
+  list_of(o)->cdr = eval_list(list_of(list)->cdr, envp);
   return o;
 }
 
@@ -140,15 +138,11 @@ static obj* eval_list(const obj *list, obj *env) {
  */
 static obj* associate(obj* names, obj* values) {
   if (names == NULL || values == NULL) return NULL;
-  if (names->objtype != list_obj || values->objtype != list_obj) return NULL;
+  if (!is_list(names) || !is_list(values)) return NULL;
 
   obj* pair = make_pair(list_of(names)->car, list_of(values)->car);
-
-  obj* pairs = new_list();
-  list_of(pairs)->car = pair;
-
-  list_of(pairs)->cdr = associate(list_of(names)->cdr, list_of(values)->cdr);
-  return pairs;
+  obj* cdr = associate(list_of(names)->cdr, list_of(values)->cdr);
+  return new_list_set(pair, cdr);
 }
 
 /**
@@ -162,7 +156,7 @@ static obj* associate(obj* names, obj* values) {
 static obj* push_frame(obj* frame, obj* env) {
   if (frame == NULL) return env;
   if (env == NULL) return frame;
-  if (frame->objtype != list_obj || env->objtype != list_obj) return NULL;
+  if (!is_list(frame) || !is_list(env)) return NULL;
 
   if (list_of(frame)->cdr == NULL) list_of(frame)->cdr = env;
   else push_frame(list_of(frame)->cdr, env);
@@ -178,9 +172,7 @@ static obj* push_frame(obj* frame, obj* env) {
  * @return: A pointer to the list object containing only the argument object
  */
 static obj* put_into_list(obj *o) {
-  obj* wrapper = new_list();
-  list_of(wrapper)->car = o;
-  return wrapper;
+  return new_list_set(o, NULL);
 }
 
 /**
@@ -205,8 +197,8 @@ static bool is_lambda(const obj* o) {
  * Cleanup an object given a pointer to a reference to the object. This
  * function was declared to use as the cleanup function for the CVector of
  * object references.
- * @param o_ref: Pointer to a pointer to the object to dispose of
+ * @param op: Pointer to a pointer to the object to dispose of
  */
-static void obj_cleanup(obj** o_ref) {
-  dispose(*o_ref);
+static void obj_cleanup(obj** op) {
+  dispose(*op);
 }
