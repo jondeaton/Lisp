@@ -13,8 +13,7 @@
 #include <lisp-objects.h>
 
 // Static function declarations
-static obj* copy_list(const obj* o);
-static obj* copy_atom(const obj* o);
+static obj* copy_list_recursive(const obj *o);
 static obj* copy_primitive(const obj* o);
 
 // Copy an object recursively
@@ -24,7 +23,7 @@ obj* copy_recursive(const obj *o) {
   // Different kind of copying for each object type
   if (is_atom(o)) return copy_atom(o);
   if (is_primitive(o)) return copy_primitive(o);
-  if (is_list(o)) return copy_list(o);
+  if (is_list(o)) return copy_list_recursive(o);
   return NULL;
 }
 
@@ -35,7 +34,7 @@ void dispose_recursive(obj *o) {
     dispose_recursive(l->car);
     dispose_recursive(l->cdr);
   }
-  free(o);
+  dispose(o);
 }
 
 bool is_empty(const obj* o) {
@@ -68,39 +67,18 @@ int list_length(const obj* o) {
 }
 
 /**
- * Function: copy_atom
- * -------------------
- * Copy an object that is an atom by dynamically allocating space for an identical object, and then
- * copying the contents of the atom over into the new object.
- * @param o: The object (of type atom) to copy
- * @return: A pointer to a copy of the object in dynamically allocated space
- */
-static obj* copy_atom(const obj* o) {
-  if (o == NULL) return NULL;
-
-  atom_t atom_source = atom_of(o); // The atom contents to be copied
-  size_t atom_size = strlen(atom_source); // Get the size of the atom to be copied
-
-  obj* obj_copy = malloc(sizeof(obj) + atom_size + 1);   // Allocate space for copy
-  obj_copy->objtype = atom_obj; // The copy is also an atom
-  strcpy(get_contents(obj_copy), atom_source); // Copy the atom contents itself
-  return obj_copy;
-}
-
-/**
  * Function: copy_list
  * -------------------
  * Make a deep copy of a list object. All elements that the list points to will be copied as well
  * @param o: An object that is a list to copy
  * @return: A pointer to a new list object
  */
-static obj* copy_list(const obj* o) {
+static obj* copy_list_recursive(const obj *o) {
   if (o == NULL) return NULL;
 
   obj* list_copy = new_list();
   list_of(list_copy)->car = copy_recursive(list_of(o)->car);
-  list_of(list_copy)->cdr = copy_list(list_of(o)->cdr);
-
+  list_of(list_copy)->cdr = copy_list_recursive(list_of(o)->cdr);
   return list_copy;
 }
 

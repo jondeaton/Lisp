@@ -45,6 +45,33 @@ obj* new_primitive(primitive_t primitive) {
   return o;
 }
 
+obj* copy_atom(const obj* o) {
+  if (!is_atom(o)) return NULL;
+  return new_atom(atom_of(o));
+}
+
+obj* copy_list(const obj *o) {
+  obj* list_copy = new_list();
+  memcpy(list_of(list_copy), list_of(o), sizeof(list_obj));
+  return list_copy;
+}
+
+bool compare(const obj* a, const obj* b) {
+  if (a == NULL) return b == NULL;
+  if (a->objtype != b->objtype) return false;
+  if (a->objtype == integer_obj) return get_int(a) == get_int(b);
+  if (a->objtype == float_obj) return get_float(a) == get_float(b);
+
+  if (a->objtype == primitive_obj)
+    return *primitive_of(a) == *primitive_of(b);
+  if (a->objtype == list_obj)
+    return memcmp(list_of(a), list_of(b), sizeof(list_t)) == 0;
+  if (a->objtype == atom_obj)
+    return strcmp(atom_of(a), atom_of(b)) == 0;
+//  if (a->objtype == closure_obj)
+//    return memcmp(closure_of(a), closure_of(b), sizeof(closure_t));
+}
+
 void dispose(obj* o) {
   free(o);
 }

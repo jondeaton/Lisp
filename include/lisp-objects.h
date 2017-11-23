@@ -98,6 +98,34 @@ obj* new_int(int value);
  */
 obj* new_float(float value);
 
+/**
+ * Function: copy_atom
+ * -------------------
+ * Copy an object that is an atom by dynamically allocating space for an identical object, and then
+ * copying the contents of the atom over into the new object.
+ * @param o: The object (of type atom) to copy
+ * @return: A pointer to a copy of the object in dynamically allocated space
+ */
+obj* copy_atom(const obj* o);
+
+/**
+ * Function: copy_list
+ * -------------------
+ * Copy a list object NOT recursively
+ * @param o: The list object to copy
+ * @return: A copy of the list in dynamically allocated memory
+ */
+obj* copy_list(const obj *o);
+
+/**
+ * Function: compare
+ * -----------------
+ * Compares two lisp objects in a non-recursive way
+ * @param a: The first lisp object
+ * @param b: The second lisp object
+ * @return: True if both objects are the same, false otherwise
+ */
+bool compare(const obj* a, const obj* b);
 
 /**
  * Function: is_atom
@@ -146,7 +174,7 @@ bool is_int(const obj* o);
 
 /**
  * Function: is_float
- * ----------------------
+ * ------------------
  * Determines if an object is of the float type
  * @param o: The object to check whether it is a float
  * @return: True if the object type is a float, false otherwise

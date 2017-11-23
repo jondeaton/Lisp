@@ -236,7 +236,9 @@ bool is_valid(const_expression e) {
  * --------------------
  * Parses an expression that represents an atom or number.
  * NOTE: If the expression can be turned into an integer or floating point object then it will be
- * and then the returned object will be of the integer_obj or float_obj instead of atom_obj.
+ * and then the returned object will be of the integer_obj or float_obj instead of atom_obj. Also note
+ * that integer object is preferred over float object (i.e. "3" will be parsed into an integer even
+ * though it could also be parsed as a float)
  * @param e: A pointer to an atom expression
  * @param num_parsed_p: Pointer to a location to be populated with the number of characters parsed
  * @return: A lisp object representing the parsed atom in dynamically allocated memory
@@ -253,10 +255,8 @@ static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   bool is_float = contents != end;
 
   obj* o;
-  if (is_float)
-    o = new_float(float_value);
-  else if (is_integer)
-    o = new_int(int_value);
+  if (is_float) o = new_float(float_value);
+  else if (is_integer) o = new_int(int_value);
   else o = new_atom(contents);
   *num_parsed_p = size;
   free(contents);

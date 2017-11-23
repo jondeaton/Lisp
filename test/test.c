@@ -145,16 +145,15 @@ static bool test_multi_eval(const_expression before[], const_expression expr, co
   for (int i = 0; before[i]; i++) free(repl_eval(before[i]));
   expression result_exp = repl_eval(expr);
   repl_dispose();
+
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("%s Multi eval:\t%s\n", test_result ? PASS : FAIL, expr);
-
   if (!test_result) {
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
   free(result_exp);
-
   return test_result;
 }
 
@@ -305,7 +304,7 @@ static int test_set() {
 
   // Testing that you can set something
   const_expression set_x[] = {
-    "(set 'x '5)",
+    "(set 'x 5)",
     NULL,
   };
   num_fails += test_multi_eval(set_x, "x", "5") ? 0 : 1;
@@ -313,7 +312,8 @@ static int test_set() {
   return num_fails;
 
   const_expression set_y[] = {
-    "(set 'y '10)",
+    "(set 'y 5)"
+    "(set 'y 10)",
     NULL,
   };
   num_fails += test_multi_eval(set_y, "y", "10") ? 0 : 1;

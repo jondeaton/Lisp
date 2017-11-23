@@ -9,6 +9,7 @@
 #include <parser.h>
 #include <string.h>
 #include <math.h>
+#include <lisp-objects.h>
 
 // Static function declarations
 static obj* append_environments(obj* env1, const obj* env2);
@@ -48,16 +49,13 @@ obj* make_pair(const obj* name, const obj* value) {
 obj** lookup_entry(const obj* o, const obj* env) {
   if (o == NULL || env == NULL) return NULL;
 
-  // Error: The environment should be a list
-  if (!is_list(env)) return NULL;
+  if (!is_list(env))  return NULL;  // Environment should be a list
+  if (!is_atom(o)) return NULL;     // Can't lookup non-atoms
 
-  // Error: Can't lookup something that isn't an atom
-  if (!is_atom(o)) return NULL;
-
-  // Get the list
   obj* pair = list_of(env)->car;
 
-  if (strcmp(atom_of(o), atom_of(list_of(pair)->car)) == 0)
+
+  if (compare(o, list_of(pair)->car))
     return &list_of(list_of(pair)->cdr)->car;
 
   else return lookup_entry(o, list_of(env)->cdr);

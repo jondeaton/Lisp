@@ -24,9 +24,7 @@ static const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car, 
 
 // Static function declarations
 static bool is_t(const obj* o);
-static int num_arguments(const obj* args);
-static bool check_num_args(const char* func_name, const obj* args, int expected);
-static obj* eval_ith(const obj* o, obj* env, int i);
+static obj* ith_arg_value(const obj *args, obj *env, int i);
 
 obj* get_primitive_library() {
   return make_environment(primitive_reserved_names, primitive_functions);
@@ -126,8 +124,8 @@ obj* cond(const obj* o, obj* env) {
 obj* set(const obj* o, obj* env) {
   if (!check_num_args(__func__, o, 2)) return NULL;
 
-  obj* var_name = eval_ith(o, env, 0);
-  obj* value = eval_ith(o, env, 1);
+  obj* var_name = ith_arg_value(o, env, 0);
+  obj* value = ith_arg_value(o, env, 1);
 
   obj** prev_value_p = lookup_entry(var_name, env);
   if (prev_value_p != NULL) { // Dynamic Scoping
@@ -142,9 +140,7 @@ obj* set(const obj* o, obj* env) {
     list_of(pair_first)->car = var_name;
     list_of(pair_first)->cdr = pair_second;
 
-    obj* new_link = new_list();
-    list_of(new_link)->car = list_of(env)->car;
-    list_of(new_link)->cdr = list_of(env)->cdr;
+    obj* new_link = copy_list(env);
 
     list_of(env)->car = pair_first;
     list_of(env)->cdr = new_link;
@@ -160,7 +156,7 @@ obj* env_prim(const obj* o, obj* env) {
 obj* defmacro(const obj* o, obj* env) {
   (void) o;
   (void) env;
-  // todo: implement this quintessential shit
+  log_error(__func__, "Macro definition not yet supported");
   return NULL;
 }
 
@@ -178,47 +174,14 @@ static bool is_t(const obj* o) {
 }
 
 /**
- * Function: num_arguments
+ * Function: ith_arg_value
  * -----------------------
- * Gets the number of arguments
- * @param args: Arguments to a primitive
- * @return: The number of elements in the arguments list
- */
-static int num_arguments(const obj* args) {
-  return list_length(args);
-}
-
-/**
- * Function: check_num_args
- * ------------------------
- * Checks if the number of arguments is equal to the number that are expected, logging
- * an informative error if this is not the case, and returning false in that case. If there
- * are the expected number of arguments, then nothing is printed and the function returns true
- * @param func_name: The name of the primitive that is checking it's arguments
- * @param args: The arguments provided to the primitive
- * @param expected: The number of arguments expected to be present in the list
- * @return: True if the number of arguments is equal to the number expected, false otherwise
- */
-static bool check_num_args(const char* func_name, const obj* args, int expected) {
-  int nargs = num_arguments(args);
-  if(nargs != expected) {
-    char BUFF[ERR_BUFF_SIZE];
-    sprintf(BUFF, "Expected %d arguments, got %d", expected, nargs);
-    log_error(func_name, BUFF);
-    return false;
-  }
-  return true;
-}
-
-/**
- * Function: eval_ith
- * ------------------
  * Gets the evaluation of the argument at the nth index of the argument list
- * @param o: The list to get the i'th evaluation of
+ * @param args: The list to get the i'th evaluation of
  * @param env: The environment to do the evaluation in
  * @param i: The index (starting at 0) of the element to evaluate in o
  * @return: The evaluation of the i'th element of o in the given environment
  */
-static obj* eval_ith(const obj* o, obj* env, int i) {
-  return eval(ith(o, i), env);
+static obj* ith_arg_value(const obj *args, obj *env, int i) {
+  return eval(ith(args, i), env);
 }

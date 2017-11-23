@@ -58,6 +58,7 @@ void repl_run() {
   bool eof = false;
   while (!eof) {
     obj* o = read_expression(stdin, true, &eof);
+    if (eof) break;
     if (o == NULL) {
       log_error("repl", "Invalid expression");
       continue;
@@ -142,7 +143,7 @@ static expression get_expression_from_prompt(bool* eof) {
     input_size = strlen(line);
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
-      log_error(__func__, "Memory allocation failure");
+      LOG_MALLOC_FAIL;
       free(line);
       return NULL;
     }
@@ -169,7 +170,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
   size_t total_size = input_size;
   expression e = malloc(sizeof(char) * (input_size + 1));
   if (e == NULL) {
-    log_error(__func__, "Memory allocation failure");
+    LOG_MALLOC_FAIL;
     return NULL;
   }
 
@@ -188,7 +189,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
 
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
     if (e == NULL) {
-      log_error(__func__, "Memory allocation failure");
+      LOG_MALLOC_FAIL;
       return NULL;
     }
 
@@ -211,8 +212,7 @@ static void print_object(FILE *fd, const obj *o) {
   }
 
   expression serialization = unparse(o);
-  if (serialization == NULL) fprintf(fd, KBLU "null\n" RESET);
-  else fprintf(fd, "%s\n", serialization);
+  if (serialization) fprintf(fd, "%s\n", serialization);
   free(serialization);
 }
 
