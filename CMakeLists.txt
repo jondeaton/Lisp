@@ -27,9 +27,11 @@ set(COMMON_SRC
         include/lisp-objects.h      src/lisp-objects.c
         include/evaluator.h         src/list.c
         include/primitives.h        src/primitives.c
+        include/closures.h          src/closures.c
         include/repl.h              src/repl.c
         include/parser.h            src/parser.c
         include/list.h              src/evaluator.c
+        include/allocated-list.h    src/allocated-list.c
         include/environment.h       src/environment.c
         include/cvector.h           src/cvector.c
         include/math.h              src/math.c

@@ -5,18 +5,14 @@
  */
 
 #include "evaluator.h"
-#include "list.h"
-#include "environment.h"
+#include <list.h>
+#include <environment.h>
+#include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stack-trace.h>
-#include <list.h>
-#include "stdio.h"
 
 #define LAMBDA_RESV "lambda"
 
-// Vector of allocated objects needing to be free'd
-CVector* allocated;
 
 // Static function declarations
 static obj* put_into_list(obj *o);
@@ -57,9 +53,7 @@ obj* eval(const obj* o, obj** envp) {
 
 obj* apply(const obj* operator, const obj* args, obj** envp) {
   if (operator == NULL) return NULL;
-  if (is_atom(operator)) {
-    return LOG_ERROR("Cannot apply atom: \"%s\" as function", atom_of(operator));
-  }
+  if (is_atom(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", atom_of(operator));
 
   if (is_primitive(operator)) {
     primitive_t prim = *primitive_of(operator);
@@ -74,25 +68,6 @@ obj* apply(const obj* operator, const obj* args, obj** envp) {
     obj* exp = list_of(list_of(list_of(operator)->cdr)->cdr)->car;
     return eval(exp, &new_env);
   }
-}
-
-void init_allocated() {
-  size_t elemsz = sizeof(obj*);
-  size_t capacity_hint = 0; // no hint
-  CleanupElemFn cleanup_fn = (CleanupElemFn) &obj_cleanup;
-  allocated = cvec_create(elemsz, capacity_hint, cleanup_fn);
-}
-
-void add_allocated(const obj* o) {
-  cvec_append(allocated, &o);
-}
-
-void clear_allocated() {
-  cvec_clear(allocated);
-}
-
-void dispose_allocated() {
-  cvec_dispose(allocated);
 }
 
 /**
