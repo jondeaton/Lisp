@@ -9,6 +9,8 @@
 #include <environment.h>
 #include <stack-trace.h>
 #include <string.h>
+#include <lisp-objects.h>
+#include <closure.h>
 
 #define LAMBDA_RESV "lambda"
 
@@ -27,44 +29,43 @@ obj* eval(const obj* o, obj** envp) {
   if (o->objtype == atom_obj) {
     obj* value = lookup(o, *envp);
     if (value) return value;
-    return LOG_ERROR("Atom: %s not found in environment", atom_of(o));
+    return LOG_ERROR("Variable: \"%s\" not found in environment", atom_of(o));
   }
 
-  // Numbers evaluate to themselves
-  if (is_number(o)) return (obj*) o;
-
-  // Primitive means that there's nothing left to apply
-  if (is_primitive(o)) return (obj*) o;
+  // Numbers, primitives and closures evaluate to themselves
+  if (is_number(o) || is_primitive(o) || is_closure(o)) return (obj*) o;
 
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
   if (is_list(o)) {
-    if (is_lambda(o)) return (obj*) o;  // Lambda function's value is itself
-    if (is_empty(o)) return (obj*) o;   // Empty list's value is itself
+    if (is_lambda(o)) return make_closure(o, *envp);  // Lambda function's value is itself
+    if (is_empty(o)) return (obj*) o;                 // Empty list evals to itself
 
     obj* operator = eval(list_of(o)->car, envp);
-    return apply(operator, list_of(o)->cdr, envp);
+    obj* args = list_of(o)->cdr;
+    return apply(operator, args, envp);
   }
   return LOG_ERROR("Object of unknown type");
 }
 
 obj* apply(const obj* operator, const obj* args, obj** envp) {
   if (operator == NULL) return NULL;
-  if (is_atom(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", atom_of(operator));
 
   if (is_primitive(operator)) {
-    primitive_t prim = *primitive_of(operator);
-    return prim(args, envp);
-
-  } else {
-    obj* arg_values = eval_list(args, envp);
-    if (!is_lambda(operator)) return NULL; // <-- not a lambda function
-
-    obj* params = list_of(list_of(operator)->cdr)->car;
-    obj* new_env = bind(params, arg_values, *envp);
-    obj* exp = list_of(list_of(list_of(operator)->cdr)->cdr)->car;
-    return eval(exp, &new_env);
+    primitive_t f = *primitive_of(operator);
+    return f(args, envp);
   }
+
+  if (is_closure(operator)) {
+    obj* arg_values = eval_list(args, envp);
+
+    closure_t* closure = closure_of(operator);
+    obj* new_env = bind(closure->parameters, arg_values, *envp);
+    return eval(closure->procedure, &new_env);
+  }
+
+  if (is_atom(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", atom_of(operator));
+  return LOG_ERROR("Application of non-procedure");
 }
 
 /**

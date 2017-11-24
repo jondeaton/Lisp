@@ -4,12 +4,13 @@
  * Presents the implementation of the math library
  */
 
+#include <math.h>
+#include <garbage-collector.h>
 #include <parser.h>
 #include <list.h>
 #include "environment.h"
-#include "math.h"
-#include "evaluator.h"
-#include "stack-trace.h"
+#include <evaluator.h>
+#include <stack-trace.h>
 
 typedef int (*intArithmeticFuncPtr)(int, int);
 typedef float (*floatArithmeticFuncPtr)(float, float);

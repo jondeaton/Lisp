@@ -24,9 +24,10 @@ typedef struct {
 } list_t;
 
 typedef struct {
+  obj* parameters;
   obj* procedure;
-  obj* env;
-} closure;
+  obj* captured;
+} closure_t;
 
 typedef obj*(*primitive_t)(const obj*, obj**);
 
@@ -98,7 +99,7 @@ primitive_t* primitive_of(const obj *o);
  * @param o: The object (should be a closure object, but this won't be checked)
  * @return: Pointer to the closure struct stored in the object
  */
-closure* closure_of(const obj* o);
+closure_t* closure_of(const obj* o);
 
 /**
  * Function: new_int

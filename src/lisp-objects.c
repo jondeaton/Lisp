@@ -29,7 +29,7 @@ obj* new_list() {
 }
 
 obj* new_closure() {
-  obj* o = malloc(sizeof(obj) + sizeof(closure));
+  obj* o = malloc(sizeof(obj) + sizeof(closure_t));
   if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = closure_obj;
   closure_of(o);
@@ -57,17 +57,17 @@ obj* copy_list(const obj *o) {
 bool compare(const obj* a, const obj* b) {
   if (a == NULL || b == NULL) return a == b;
   if (a->objtype != b->objtype) return false;
-  if (a->objtype == integer_obj) return get_int(a) == get_int(b);
-  if (a->objtype == float_obj) return get_float(a) == get_float(b);
+  if (is_int(a)) return get_int(a) == get_int(b);
+  if (is_float(a)) return get_float(a) == get_float(b);
 
-  if (a->objtype == primitive_obj)
+  if (is_primitive(a))
     return *primitive_of(a) == *primitive_of(b);
-  if (a->objtype == list_obj)
+  if (is_list(a))
     return memcmp(list_of(a), list_of(b), sizeof(list_t)) == 0;
-  if (a->objtype == atom_obj)
+  if (is_atom(a))
     return strcmp(atom_of(a), atom_of(b)) == 0;
-//  if (a->objtype == closure_obj)
-//    return memcmp(closure_of(a), closure_of(b), sizeof(closure_t));
+  if (is_closure(a))
+    return memcmp(closure_of(a), closure_of(b), sizeof(closure_t)) == 0;
   return false;
 }
 
@@ -87,8 +87,8 @@ primitive_t* primitive_of(const obj *o) {
   return (primitive_t*) get_contents(o);
 }
 
-closure* closure_of(const obj* o) {
-  return (closure*) get_contents(o);
+closure_t* closure_of(const obj* o) {
+  return (closure_t*) get_contents(o);
 }
 
 void* get_contents(const obj *o) {

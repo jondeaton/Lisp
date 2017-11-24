@@ -8,6 +8,7 @@
 #define _PARSER_H_INCLUDED
 
 #include "primitives.h"
+#include <stdlib.h>
 
 typedef char* expression;
 typedef const char* const_expression;

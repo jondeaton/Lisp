@@ -9,6 +9,7 @@
 #include <evaluator.h>
 #include <stack-trace.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/file.h>
 #include <readline/readline.h>
 #include <readline/history.h>

@@ -24,7 +24,7 @@ obj* eval(const obj* o, obj** envp);
  * Function: apply
  * ---------------
  * Applies a lisp function to an argument list
- * @param operator: A lisp function object (will be asserted)
+ * @param operator: A lisp function object
  * @param args: List of arguments
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the application of the function to the arguments

@@ -4,11 +4,12 @@
  * Presents the implementation of the lisp file runner
  */
 
-#include "run-lisp.h"
-#include "repl.h"
+#include <run-lisp.h>
+#include <repl.h>
 #include <sys/file.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
 
 static bool check_read_permissions(const char* path);
 

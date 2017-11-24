@@ -55,7 +55,7 @@ bool is_empty(const obj* o);
  * @param y: The second object to compare
  * @return: True if the two objects are identical, false otherwise
  */
-bool compare_recursive(obj *x, obj *y);
+bool compare_recursive(const obj *x, const obj *y);
 
 /**
  * Function: ith
@@ -75,5 +75,16 @@ obj* ith(const obj* o, int i);
  * @return: The number of elements in a list
  */
 int list_length(const obj* o);
+
+/**
+ * Function: list_contains
+ * -----------------------
+ * Determines if a list contains a specified query at the top level. Although this function compares
+ * the query recursively to each element of the list, the search will not recurse down to lower levels of the tree
+ * @param list: The list to search for the query
+ * @param query: The query to search for
+ * @return: True if the query matches some element of the list
+ */
+bool list_contains(const obj* list, const obj* query);
 
 #endif // _LIST_H_INCLUDED

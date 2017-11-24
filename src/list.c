@@ -50,7 +50,7 @@ bool is_empty(const obj* o) {
   return list_of(o)->car == NULL && list_of(o)->cdr == NULL;
 }
 
-bool compare_recursive(obj *x, obj *y) {
+bool compare_recursive(const obj *x, const obj *y) {
   if (x->objtype != y->objtype) return false;
   if (is_atom(x)) return strcmp(atom_of(x), atom_of(y)) == 0;
   if (is_primitive(x)) return primitive_of(x) == primitive_of(y);
@@ -71,6 +71,12 @@ int list_length(const obj* o) {
   if (o == NULL) return 0;
   if (!is_list(o)) return 0;
   return 1 + list_length(list_of(o)->cdr);
+}
+
+bool list_contains(const obj* list, const obj* query) {
+  if (query == NULL || list == NULL) return false;
+  bool found_here = compare_recursive(list_of(list)->car, query);
+  return found_here || list_contains(list_of(list)->cdr, query);
 }
 
 /**

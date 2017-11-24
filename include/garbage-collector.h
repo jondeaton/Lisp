@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef LISP_ALLOCATED_LIST_H
-#define LISP_ALLOCATED_LIST_H
+#ifndef _LISP_GARBAGE_COLLECTOR_H_INCLUDED
+#define _LISP_GARBAGE_COLLECTOR_H_INCLUDED
 
 #include "lisp-objects.h"
 
@@ -57,4 +57,4 @@ void clear_allocated();
 void dispose_allocated();
 
 
-#endif //LISP_ALLOCATED_LIST_H
+#endif //_LISP_GARBAGE_COLLECTOR_H_INCLUDED
