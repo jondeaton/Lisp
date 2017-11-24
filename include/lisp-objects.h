@@ -23,15 +23,12 @@ typedef struct {
   obj* cdr;
 } list_t;
 
-typedef obj*(*primitive_t)(const obj*, obj**);
+typedef struct {
+  obj* procedure;
+  obj* env;
+} closure;
 
-/**
- * Function: new_list
- * ------------------
- * Returns a list object in dynamically allocated memory
- * @return: A pointer to a new list object in dynamically allocated memory
- */
-obj* new_list();
+typedef obj*(*primitive_t)(const obj*, obj**);
 
 /**
  * Function: new_atom
@@ -43,6 +40,14 @@ obj* new_list();
 obj* new_atom(atom_t name);
 
 /**
+ * Function: new_list
+ * ------------------
+ * Returns a list object in dynamically allocated memory
+ * @return: A pointer to a new list object in dynamically allocated memory
+ */
+obj* new_list();
+
+/**
  * Function: new_primitive
  * -----------------------
  * Create a new primitive object
@@ -50,6 +55,14 @@ obj* new_atom(atom_t name);
  * @return; The new primitive object wrapping the raw primitive instruction pointer
  */
 obj* new_primitive(primitive_t primitive);
+
+/**
+ * Function: new_closure
+ * ---------------------
+ * Creates a new closure object
+ * @return: A newly created closure object
+ */
+obj* new_closure();
 
 /**
  * Function: get_list
@@ -77,6 +90,15 @@ atom_t atom_of(const obj *o);
  * @return: Function pointer to primitive function
  */
 primitive_t* primitive_of(const obj *o);
+
+/**
+ * Function: closure_of
+ * --------------------
+ * Get the closure object stored in the given object
+ * @param o: The object (should be a closure object, but this won't be checked)
+ * @return: Pointer to the closure struct stored in the object
+ */
+closure* closure_of(const obj* o);
 
 /**
  * Function: new_int

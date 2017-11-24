@@ -7,12 +7,9 @@
 #include <primitives.h>
 #include <evaluator.h>
 #include <environment.h>
-#include <list.h>
+#include <garbage-collector.h>
 #include <stack-trace.h>
-#include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include <stdio.h>
 
 static const char* t_contents = "t";
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
@@ -75,7 +72,7 @@ obj* car(const obj* args, obj** envp) {
 
 obj* cdr(const obj* args, obj** envp) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  assert(args->objtype == list_obj);
+
   obj* result = eval(list_of(args)->car, envp);
   return list_of(result)->cdr;
 }

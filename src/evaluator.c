@@ -4,15 +4,13 @@
  * Presents the implementation of the lisp evaluator
  */
 
-#include "evaluator.h"
 #include <list.h>
+#include <evaluator.h>
 #include <environment.h>
 #include <stack-trace.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define LAMBDA_RESV "lambda"
-
 
 // Static function declarations
 static obj* put_into_list(obj *o);
@@ -21,7 +19,6 @@ static obj* associate(obj* names, obj* values);
 static obj* push_frame(obj* frame, obj* env);
 static obj* eval_list(const obj* list, obj** envp);
 static bool is_lambda(const obj* o);
-static void obj_cleanup(obj** op);
 
 obj* eval(const obj* o, obj** envp) {
   if (o == NULL) return NULL;
@@ -160,16 +157,4 @@ static bool is_lambda(const obj* o) {
   if (lambda_atom == NULL) return false;
   if (lambda_atom->objtype != atom_obj) return false;
   return strcmp(atom_of(lambda_atom), LAMBDA_RESV) == 0;
-}
-
-/**
- * Function: obj_cleanup
- * ---------------------
- * Cleanup an object given a pointer to a reference to the object. This
- * function was declared to use as the cleanup function for the CVector of
- * object references.
- * @param op: Pointer to a pointer to the object to dispose of
- */
-static void obj_cleanup(obj** op) {
-  dispose(*op);
 }

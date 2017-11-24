@@ -5,7 +5,7 @@
 #ifndef _CLOSURE_H_INCLUDED
 #define _CLOSURE_H_INCLUDED
 
-#include <lisp-objects.h>
+#include "lisp-objects.h"
 
 /**
  * Function: make_closure

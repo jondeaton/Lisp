@@ -8,7 +8,7 @@
 #ifndef _LIST_H_INCLUDED
 #define _LIST_H_INCLUDED
 
-#include <lisp-objects.h>
+#include "lisp-objects.h"
 #include <stdbool.h>
 
 /**

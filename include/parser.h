@@ -4,8 +4,8 @@
  * Presents the lisp parser interface
  */
 
-#ifndef _PARSER_H_INDLUDED
-#define _PARSER_H_INDLUDED
+#ifndef _PARSER_H_INCLUDED
+#define _PARSER_H_INCLUDED
 
 #include "primitives.h"
 
@@ -51,4 +51,4 @@ bool is_balanced(const_expression e);
  */
 bool is_valid(const_expression e);
 
-#endif // _PARSER_H_INDLUDED
+#endif // _PARSER_H_INCLUDED

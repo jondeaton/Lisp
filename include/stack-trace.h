@@ -7,7 +7,7 @@
 #ifndef _STACK_TRACE_H_INCLUDED
 #define _STACK_TRACE_H_INCLUDED
 
-#include <lisp-objects.h>
+#include "lisp-objects.h"
 #include <stdbool.h>
 
 /*

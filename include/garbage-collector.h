@@ -7,6 +7,8 @@
 #ifndef LISP_ALLOCATED_LIST_H
 #define LISP_ALLOCATED_LIST_H
 
+#include "lisp-objects.h"
+
 /**
  * Function: init_allocated
  * ------------------------
@@ -27,6 +29,14 @@ void init_allocated();
  * @param o: A pointer to a lisp object that needs to be free'd
  */
 void add_allocated(const obj* o);
+
+/**
+ * Function: add_allocated_recursive
+ * ---------------------------------
+ * Add an object to the allocated list recursively
+ * @param o: The object to add recursively
+ */
+void add_allocated_recursive(const obj* o);
 
 /**
  * Function: clear_allocated

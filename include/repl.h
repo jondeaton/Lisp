@@ -7,9 +7,7 @@
 #ifndef _REPL_H_INCLUDED
 #define _REPL_H_INCLUDED
 
-#include "primitives.h"
 #include "parser.h"
-#include <stdio.h>
 
 /**
  * Function: repl_init

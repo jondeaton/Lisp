@@ -9,6 +9,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+obj* new_atom(atom_t name) {
+  if (name == NULL) return NULL;
+  size_t name_size = strlen(name);
+  obj* o = malloc(sizeof(obj) + name_size + 1);
+  if (o == NULL) return LOG_MALLOC_FAIL();
+  o->objtype = atom_obj;
+  strcpy((char*) atom_of(o), name);
+  return o;
+}
+
 obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
   if (o == NULL) return LOG_MALLOC_FAIL();
@@ -18,14 +28,11 @@ obj* new_list() {
   return o;
 }
 
-obj* new_atom(atom_t name) {
-  if (name == NULL) return NULL;
-  size_t name_size = strlen(name);
-  obj* o = malloc(sizeof(obj) + name_size + 1);
+obj* new_closure() {
+  obj* o = malloc(sizeof(obj) + sizeof(closure));
   if (o == NULL) return LOG_MALLOC_FAIL();
-  o->objtype = atom_obj;
-  strcpy((char*) atom_of(o), name);
-  return o;
+  o->objtype = closure_obj;
+  closure_of(o);
 }
 
 obj* new_primitive(primitive_t primitive) {
@@ -78,6 +85,10 @@ atom_t atom_of(const obj *o) {
 
 primitive_t* primitive_of(const obj *o) {
   return (primitive_t*) get_contents(o);
+}
+
+closure* closure_of(const obj* o) {
+  return (closure*) get_contents(o);
 }
 
 void* get_contents(const obj *o) {

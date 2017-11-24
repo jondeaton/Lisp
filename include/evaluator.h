@@ -7,9 +7,7 @@
 #ifndef _EVALUATOR_H_INCLUDED
 #define _EVALUATOR_H_INCLUDED
 
-#include "list.h"
-#include "cvector.h"
-#include <stdlib.h>
+#include "lisp-objects.h"
 
 /**
  * Function: eval

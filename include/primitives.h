@@ -8,8 +8,6 @@
 #define _PRIMITIVES_H_INCLUDED
 
 #include "list.h"
-#include <stdbool.h>
-#include <stdlib.h>
 
 /**
  * Function: get_primitive_env
