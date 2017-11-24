@@ -119,8 +119,8 @@ obj* set(const obj* args, obj** envp) {
     *prev_value_p = copy_recursive(value);
 
   } else {
-    obj* pair_second = new_list_set(value, NULL);
-    obj* pair_first = new_list_set(var_name, pair_second);
+    obj* pair_second = new_list_set(copy_recursive(value), NULL);
+    obj* pair_first = new_list_set(copy_recursive(var_name), pair_second);
     obj* new_link = new_list_set(pair_first, *envp);
     *envp = new_link;
   }

@@ -18,6 +18,26 @@
 obj* make_closure(const obj *lambda, obj *env);
 
 /**
+ * Function: new_closure_set
+ * -------------------------
+ * Create a new closure with initialization of fields. The passed objects will not be copied.
+ * @param params: Parameters to the closure
+ * @param procedure: Procedure of the closure
+ * @param captured: Captured argument list of the closure
+ * @return: A new closure object with the specified parameters, procedure, and captured vars list.
+ */
+obj *new_closure_set(obj *params, obj *procedure, obj *captured);
+
+/**
+ * Function: copy_closure_recursive
+ * --------------------------------
+ * Make a deep copy of a closure
+ * @param closure: The closure to make a copy of
+ * @return: A completely newly allocated closure identical to the passed one
+ */
+obj* copy_closure_recursive(const obj* closure);
+
+/**
  * Function: get_parameters
  * ------------------------
  * Get the parameter list of a lambda expression

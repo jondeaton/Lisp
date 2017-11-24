@@ -13,7 +13,6 @@
 
 // Static function declarations
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
-static obj *new_closure_set(obj *params, obj *procedure, obj *captured);
 
 obj* make_closure(const obj *lambda, obj *env) {
 
@@ -26,6 +25,22 @@ obj* make_closure(const obj *lambda, obj *env) {
   obj* closure = new_closure_set(params, procedure, captured);
   add_allocated_recursive(closure);
   return closure;
+}
+
+obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
+  obj* o = new_closure();
+  closure_of(o)->parameters = params;
+  closure_of(o)->procedure = procedure;
+  closure_of(o)->captured = captured;
+  return o;
+}
+
+obj* copy_closure_recursive(const obj* closure) {
+  closure_t* c = closure_of(closure);
+  obj* params = copy_recursive(c->parameters);
+  obj* proc = copy_recursive(c->procedure);
+  obj* capt = copy_recursive(c->captured);
+  return new_closure_set(params, proc, capt);
 }
 
 obj* get_lambda_parameters(const obj *lambda) {
@@ -62,21 +77,4 @@ static void get_captured_vars(obj **capturedp, const obj *params, const obj *pro
     *capturedp = new_list_set(copy_recursive(matching_pair), *capturedp); // Prepend to capture list
   }
 
-}
-
-/**
- * Function: new_closure_set
- * -------------------------
- * Create a new closure with initialization of fields. The passed objects will not be copied.
- * @param params: Parameters to the closure
- * @param procedure: Procedure of the closure
- * @param captured: Captured argument list of the closure
- * @return: A new closure object with the specified parameters, procedure, and captured vars list.
- */
-static obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
-  obj* o = new_closure();
-  closure_of(o)->parameters = params;
-  closure_of(o)->procedure = procedure;
-  closure_of(o)->captured = captured;
-  return o;
 }

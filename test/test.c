@@ -117,7 +117,7 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
   expression result_exp = repl_eval(expr);
   repl_dispose();
 
-  bool test_result = strcmp(result_exp, expected) == 0;
+  bool test_result = result_exp && strcmp(result_exp, expected) == 0;
 
   printf("%s Evaluation:\t%s\n", test_result ? PASS : FAIL, expr);
 
@@ -146,7 +146,7 @@ static bool test_multi_eval(const_expression before[], const_expression expr, co
   expression result_exp = repl_eval(expr);
   repl_dispose();
 
-  bool test_result = strcmp(result_exp, expected) == 0;
+  bool test_result = result_exp && strcmp(result_exp, expected) == 0;
 
   printf("%s Multi eval:\t%s\n", test_result ? PASS : FAIL, expr);
   if (!test_result) {

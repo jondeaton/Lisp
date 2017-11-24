@@ -11,6 +11,7 @@
 #include <list.h>
 #include <stack-trace.h>
 #include <lisp-objects.h>
+#include <closure.h>
 
 // Static function declarations
 static obj* copy_list_recursive(const obj *o);
@@ -31,15 +32,23 @@ obj* copy_recursive(const obj *o) {
   if (is_atom(o)) return copy_atom(o);
   if (is_primitive(o)) return copy_primitive(o);
   if (is_list(o)) return copy_list_recursive(o);
+  if (is_int(o)) return new_int(get_int(o));
+  if (is_float(o)) return new_float(get_float(o));
+  if (is_closure(o)) copy_closure_recursive(o);
   return NULL;
 }
 
 void dispose_recursive(obj *o) {
   if (o == NULL) return;
-  if (is_list(o)) { // Recursive disposal of lists
+  if (is_list(o)) { // Recursive disposal of lists and closures
     list_t *l = list_of(o);
     dispose_recursive(l->car);
     dispose_recursive(l->cdr);
+  } else if (is_closure(o)) {
+    closure_t* closure = closure_of(o);
+    dispose_recursive(closure->parameters);
+    dispose_recursive(closure->procedure);
+    dispose_recursive(closure->captured);
   }
   dispose(o);
 }

@@ -29,7 +29,8 @@ int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl
 /**
  * Function: check_read_permissions
  * --------------------------------
- * Checks if a file may be read
+ * Checks if a file may be read, printing errors to standard error if
+ * the file may not be read or does not exist.
  * @return: True if the file can be read, false otherwise
  */
 static bool check_read_permissions(const char* path) {

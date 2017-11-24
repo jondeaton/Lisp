@@ -7,6 +7,7 @@
 #include <repl.h>
 #include <environment.h>
 #include <evaluator.h>
+#include <garbage-collector.h>
 #include <stack-trace.h>
 #include <string.h>
 #include <stdio.h>
