@@ -65,18 +65,17 @@ int main() {
 static int run_all_tests() {
   int num_fails = 0;
   num_fails += test_parser();
-  num_fails += test_quote();
-  num_fails += test_car_cdr();
-  num_fails += test_atom();
-  num_fails += test_eq();
-  num_fails += test_cons();
-  num_fails += test_cond();
-  num_fails += test_set();
-  return num_fails;
-  num_fails += test_lambda();
-  num_fails += test_math();
-  num_fails += test_Y_combinator();
-  num_fails += test_recursion();
+//  num_fails += test_quote();
+//  num_fails += test_car_cdr();
+//  num_fails += test_atom();
+//  num_fails += test_eq();
+//  num_fails += test_cons();
+//  num_fails += test_cond();
+//  num_fails += test_set();
+//  num_fails += test_lambda();
+//  num_fails += test_math();
+//  num_fails += test_Y_combinator();
+//  num_fails += test_recursion();
   return num_fails;
 }
 
@@ -314,8 +313,6 @@ static int test_set() {
     NULL,
   };
   num_fails += test_multi_eval(set_x, "x", "5") ? 0 : 1;
-
-  return num_fails;
 
   const_expression set_y[] = {
     "(set 'y 5)"
