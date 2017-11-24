@@ -48,7 +48,7 @@ obj* copy_list(const obj *o) {
 }
 
 bool compare(const obj* a, const obj* b) {
-  if (a == NULL) return b == NULL;
+  if (a == NULL || b == NULL) return a == b;
   if (a->objtype != b->objtype) return false;
   if (a->objtype == integer_obj) return get_int(a) == get_int(b);
   if (a->objtype == float_obj) return get_float(a) == get_float(b);

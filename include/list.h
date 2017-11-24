@@ -48,14 +48,14 @@ void dispose_recursive(obj *o);
 bool is_empty(const obj* o);
 
 /**
- * Function: deep_compare
- * ----------------------
+ * Function: compare_recursive
+ * ---------------------------
  * Deep comparison of two lisp objects
  * @param x: The first object to compare
  * @param y: The second object to compare
  * @return: True if the two objects are identical, false otherwise
  */
-bool deep_compare(obj* x, obj* y);
+bool compare_recursive(obj *x, obj *y);
 
 /**
  * Function: ith

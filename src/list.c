@@ -50,14 +50,14 @@ bool is_empty(const obj* o) {
   return list_of(o)->car == NULL && list_of(o)->cdr == NULL;
 }
 
-bool deep_compare(obj* x, obj* y) {
+bool compare_recursive(obj *x, obj *y) {
   if (x->objtype != y->objtype) return false;
   if (is_atom(x)) return strcmp(atom_of(x), atom_of(y)) == 0;
   if (is_primitive(x)) return primitive_of(x) == primitive_of(y);
 
   // List: cars must match and cdrs must match
   if (is_list(x))
-    return deep_compare(list_of(x)->car, list_of(y)->car) && deep_compare(list_of(x)->cdr, list_of(y)->cdr);
+    return compare_recursive(list_of(x)->car, list_of(y)->car) && compare_recursive(list_of(x)->cdr, list_of(y)->cdr);
   else return x == y;
 }
 

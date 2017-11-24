@@ -34,9 +34,7 @@ obj* eval(const obj* o, obj** envp) {
   if (o->objtype == atom_obj) {
     obj* value = lookup(o, *envp);
     if (value) return value;
-    char err_msg[ERR_BUFF_SIZE];
-    sprintf(err_msg, "Atom: %s not found in environment", (char*) atom_of(o));
-    return LOG_ERROR(err_msg);
+    return LOG_ERROR("Atom: %s not found in environment", atom_of(o));
   }
 
   // Numbers evaluate to themselves
@@ -60,9 +58,7 @@ obj* eval(const obj* o, obj** envp) {
 obj* apply(const obj* operator, const obj* args, obj** envp) {
   if (operator == NULL) return NULL;
   if (is_atom(operator)) {
-    char err_msg[ERR_BUFF_SIZE];
-    sprintf(err_msg, "Cannot apply atom: \"%s\" as function", (char*) atom_of(operator));
-    return LOG_ERROR(err_msg);
+    return LOG_ERROR("Cannot apply atom: \"%s\" as function", atom_of(operator));
   }
 
   if (is_primitive(operator)) {

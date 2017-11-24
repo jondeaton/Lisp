@@ -14,7 +14,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-
 static const char* t_contents = "t";
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "defmacro", NULL };
@@ -60,17 +59,11 @@ obj* atom(const obj* args, obj** envp) {
 obj* eq(const obj* args, obj** envp) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first_arg = list_of(args)->car;
-  obj* second_arg = list_of(list_of(args)->cdr)->car;
+  obj* first = ith_arg_value(args, envp, 0);
+  obj* second = ith_arg_value(args, envp, 1);
 
-  obj* x = eval(first_arg, envp);
-  obj* y = eval(second_arg, envp);
-
-  if (x->objtype != y->objtype) return empty();
-  if (is_list(x))
-    return is_empty(x) && is_empty(y) ? t() : empty();
-
-  return strcmp(atom_of(x), atom_of(y)) == 0 ? t() : empty();
+  bool same = compare(first, second);
+  return same ? t() : empty();
 }
 
 obj* car(const obj* args, obj** envp) {
@@ -88,7 +81,7 @@ obj* cdr(const obj* args, obj** envp) {
 }
 
 obj* cons(const obj* args, obj** envp) {
-  if (!CHECK_NARGS(args, 1)) return NULL;
+  if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* x = list_of(args)->car;
   obj* y = list_of(list_of(args)->cdr)->car;

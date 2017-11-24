@@ -6,29 +6,32 @@
 #include <stack-trace.h>
 #include <stdio.h>
 #include <list.h>
+#include <stdarg.h>
 
 #define KRED  "\x1B[31m"
 #define RESET "\033[0m"
 
-void* log_error(const char* context, const char* message) {
-  fprintf(stderr, KRED "\t[%s]: %s\n" RESET, context, message);
-  return NULL; // Returns null for cleaner code
+char err_buff[256];
+
+void* log_error(const char* context, const char* message_format, ...) {
+  va_list ap;
+  va_start(ap, message_format);
+  vsprintf(err_buff, message_format, ap); // substitute var args into message
+  fprintf(stderr, KRED "\t[%s]: %s\n" RESET, context, err_buff); // substitute message into error log
+  va_end(ap);
+  return NULL; // Return NULL for cleaner NULL-returning error handling
 }
 
 bool check_nargs(const char *context, const obj *args, int expected) {
   int nargs = list_length(args);
   if (nargs == expected) return true;
-  char err_msg[ERR_BUFF_SIZE];
-  sprintf(err_msg, "Expected %d arguments, got %d", expected, nargs);
-  log_error(context, err_msg);
+  log_error(context, "Expected %d arguments, got %d", expected, nargs);
   return false;
 }
 
 bool check_nargs_min(const char *context, const obj *args, int minimum) {
   int nargs = list_length(args);
   if (nargs >= minimum) return true;
-  char err_msg[ERR_BUFF_SIZE];
-  sprintf(err_msg, "Expected %d or more arguments, got %d", minimum, nargs);
-  log_error(context, err_msg);
+  log_error(context, "Expected %d or more arguments, got %d", minimum, nargs);
   return false;
 }

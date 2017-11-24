@@ -10,12 +10,15 @@
 #include <lisp-objects.h>
 #include <stdbool.h>
 
-// Buffer to use to store error messages
-#define ERR_BUFF_SIZE 256
+/*
+ * Variadic macro for easy printf-style error logging:
+ *    LOG_ERROR("aw snap!");
+ *    LOG_ERROR("Error code: %d", 42);
+ */
+#define LOG_ERROR(...) log_error(__func__, __VA_ARGS__)
 
 // Use of malloc is prevalent - this directive helps make cleaner code
-#define LOG_MALLOC_FAIL() log_error(__func__, "Memory allocation failure")
-#define LOG_ERROR(error) log_error(__func__, error);
+#define LOG_MALLOC_FAIL() LOG_ERROR("Memory allocation failure")
 #define CHECK_NARGS(args, expected) check_nargs(__func__, args, expected)
 #define CHECK_NARGS_MIN(args, minimum) check_nargs_min(__func__, args, minimum)
 
@@ -23,12 +26,29 @@
  * Function: log_error
  * -------------------
  * Prints an error message to standard error in red. Meant to be used for stack tracing
- * Suggested usage: log_error(__func__, "something bad happened!")
+ *
+ * Suggested usage:
+ *
+ *      log_error(__func__, "something bad happened! Error code: %d", 42);
+ *
+ * which would yield the following to be printed to standard error:
+ *
+ *      [invoking_function_name]: "something bad happened! Error code: 42"
+ *
+ * Alternatively, the macros defined above can be used for automatic substitution of __func__ like so:
+ *
+ *      LOG_ERROR("Expecting %d, saw %d", expected_num, observed_num);
+ *
+ * which could produce the same style error above.
  * @param context: The context in which the error occurred
- * @param message: The message to print
+ * @param message_format: The format to format the message with
+ * @param ... (additional arguments): A sequence of additional arguments, each containing a value to be used to
+ * replace a format specifier in the message_format string. There should be at least as many of these
+ * arguments as the number of values specified in the format specifiers. Additional arguments are ignored
+ * by the function.
  * @return: NULL pointer
  */
-void* log_error(const char* context, const char* message);
+void* log_error(const char* context, const char* message_format, ...);
 
 /**
  * Function: check_nargs

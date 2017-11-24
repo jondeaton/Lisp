@@ -18,6 +18,7 @@ static obj* parse_atom(const_expression e, size_t *num_parsed_p);
 static obj* parse_list(const_expression e, size_t *num_parsed_p);
 static obj* get_quote_list();
 static obj* put_into_list(obj *o);
+static bool contains_dot(const_expression e, size_t length);
 
 static expression unparse_list(const obj *o);
 static expression unparse_closure(const obj* o);
@@ -235,6 +236,8 @@ bool is_valid(const_expression e) {
 static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   size_t size = atom_size(e);
 
+  bool has_decimal = contains_dot(e, size);
+
   char* contents = strncpy(calloc(size + 1, 1), e, size);
   char* end;
   int int_value = (int) strtol(contents, &end, 0);
@@ -244,8 +247,8 @@ static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   bool is_float = contents != end;
 
   obj* o;
-  if (is_float) o = new_float(float_value);
-  else if (is_integer) o = new_int(int_value);
+  if (is_integer && !has_decimal) o = new_int(int_value);
+  else if (is_float) o = new_float(float_value);
   else o = new_atom(contents);
   *num_parsed_p = size;
   free(contents);
@@ -350,4 +353,19 @@ static size_t atom_size(const_expression e) {
 static const char* kWhitespace = " \t\n\r";
 static bool is_white_space(char character) {
   return strchr(kWhitespace, character) != NULL;
+}
+
+/**
+ * Function: contains_dot
+ * ----------------------
+ * Determines if an expression contains a decimal point/floating point
+ * @param e: The expression to check for a decimal point in
+ * @param length: The number of characters to check if there is a dot
+ * @return: True if there is a decimal point in the expression, false otherwise.
+ */
+static bool contains_dot(const_expression e, size_t length) {
+  for (size_t i = 0; i < length; i++) {
+    if (e[i] == '.') return true;
+  }
+  return false;
 }
