@@ -38,8 +38,8 @@ static int test_eq();
 static int test_cons();
 static int test_cond();
 static int test_set();
-static int test_lambda();
 static int test_math();
+static int test_lambda();
 static int test_Y_combinator();
 static int test_recursion();
 
@@ -72,8 +72,8 @@ static int run_all_tests() {
   num_fails += test_cons();
   num_fails += test_cond();
   num_fails += test_set();
+  num_fails += test_math();
   num_fails += test_lambda();
-//  num_fails += test_math();
 //  num_fails += test_Y_combinator();
 //  num_fails += test_recursion();
   return num_fails;
@@ -141,6 +141,7 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
 static bool test_multi_eval(const_expression before[], const_expression expr, const_expression expected) {
 
   repl_init();
+
   for (int i = 0; before[i]; i++) free(repl_eval(before[i]));
   expression result_exp = repl_eval(expr);
   repl_dispose();
@@ -333,6 +334,29 @@ static int test_set() {
 }
 
 /**
+ * Function: test_math
+ * -------------------
+ * Tests if arithmetic works correctly
+ * @return: The number of tests that failed
+ */
+static int test_math() {
+  printf(KMAG "\nTesting math...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("(= 1 1)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(= 1 0)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(+ 1 1)", "2") ? 0 : 1;
+  num_fails += test_single_eval("(+ 20 -25)", "-5") ? 0 : 1;
+  num_fails += test_single_eval("(- 13 7)", "6") ? 0 : 1;
+  num_fails += test_single_eval("(- 10 100)", "-90") ? 0 : 1;
+  num_fails += test_single_eval("(* 1337 0)", "0") ? 0 : 1;
+  num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
+  num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
+  num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
+  printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
  * Function: test_lambda
  * ---------------------
  * Tests the functionality of the lambda function language feature
@@ -342,16 +366,13 @@ static int test_lambda() {
   printf(KMAG "\nTesting lambda...\n" RESET);
   int num_fails = 0;
   num_fails += test_single_eval("((lambda (x) (car x)) '(a b c))", "a") ? 0 : 1;
-
-  return num_fails;
-
   num_fails += test_single_eval("((lambda (x) (cdr x)) '(a b c))", "(b c)") ? 0 : 1;
   num_fails += test_single_eval("((lambda (x y) (cons x (cdr y))) 'a '(z b c))", "(a b c)") ? 0 : 1;
   num_fails += test_single_eval("((lambda (x) (cons 'z x)) '(a b c))", "(z a b c)") ? 0 : 1;
 
   const_expression before0[] = {
     "(set 'y '(a b c))",
-    "(set 'f    (lambda (x) (cons x y)))",
+    "(set 'f  (lambda (x) (cons x y)))",
     NULL,
   };
   num_fails += test_multi_eval(before0, "(f '(1 2 3))", "((1 2 3) a b c)") ? 0 : 1;
@@ -373,36 +394,21 @@ static int test_lambda() {
   num_fails += test_multi_eval(before2,"(g '(((a b) c) d) )", "(z a b)") ? 0 : 1;
 
   const_expression before3[] = {
+    "(set 'make-adder (lambda (x) (lambda (y) (+ x y))))",
+    "(set 'add-5 (make-adder 5)",
+    NULL,
+  };
+
+  num_fails += test_multi_eval(before3, "(add-5 7)", "12") ? 0 : 1;
+
+  const_expression before4[] = {
     "(set 'make-prepender (lambda (x) (lambda (y) (cons x y))))",
     "(set 'prepend-z (make-prepender 'z))",
     NULL,
   };
-  num_fails += test_multi_eval(before3, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1;
+  num_fails += test_multi_eval(before4, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1;
 
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
-  return num_fails;
-}
-
-/**
- * Function: test_math
- * -------------------
- * Tests if arithmetic works correctly
- * @return: The number of tests that failed
- */
-static int test_math() {
-  printf(KMAG "\nTesting math...\n" RESET);
-  int num_fails = 0;
-  num_fails += test_single_eval("(= 1 1)", "t") ? 0 : 1;
-  num_fails += test_single_eval("(= 1 0)", "()") ? 0 : 1;
-  num_fails += test_single_eval("(+ 1 1)", "2") ? 0 : 1;
-  num_fails += test_single_eval("(+ 20 -25)", "-5") ? 0 : 1;
-  num_fails += test_single_eval("(- 13 7)", "6") ? 0 : 1;
-  num_fails += test_single_eval("(- 10 100)", "-90") ? 0 : 1;
-  num_fails += test_single_eval("(* 1337 0)", "0") ? 0 : 1;
-  num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
-  num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
-  num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
-  printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
 

@@ -68,6 +68,25 @@ bool compare_recursive(const obj *x, const obj *y);
 obj* ith(const obj* o, int i);
 
 /**
+ * Function: join_lists
+ * ---------------------
+ * Prepends one list to another at their top levels
+ * @param list1: The list to prepend to list2
+ * @param list2: The list to append to list1
+ * @return: The first list, now with it's end pointing to the start of list2
+ */
+obj* join_lists(obj *list1, obj *list2);
+
+/**
+ * Function: split_lists
+ * ---------------------
+ * Splits a list into two lists at a specified location
+ * @param to_split: The list to split
+ * @param second_list: Pointer to the start of the second list, where the list should be split.
+ */
+void split_lists(obj *to_split, obj *second_list);
+
+/**
  * Function: list_length
  * ---------------------
  * Finds the length of a list object

@@ -65,9 +65,8 @@ obj* eq(const obj* args, obj** envp) {
 
 obj* car(const obj* args, obj** envp) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  if (!check_nargs(__func__, args, 1)) return NULL;
-  obj* result = eval(list_of(args)->car, envp);
-  return list_of(result)->car;
+  obj* arg_value = eval(list_of(args)->car, envp);
+  return list_of(arg_value)->car;
 }
 
 obj* cdr(const obj* args, obj** envp) {

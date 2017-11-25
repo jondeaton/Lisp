@@ -4,21 +4,20 @@
  * Presents the implementation of the lisp environment
  */
 
-#include "environment.h"
+#include <environment.h>
+#include <lisp-objects.h>
 #include <list.h>
+#include <math.h>
 #include <parser.h>
 #include <string.h>
-#include <math.h>
-#include <lisp-objects.h>
 
 // Static function declarations
 static bool pair_matches_key(const obj *pair, const obj *key);
-static obj* append_environments(obj* env1, const obj* env2);
 
 obj* init_env() {
   obj* prim_env = get_primitive_library();
   obj* math_env = get_math_library();
-  obj* env = append_environments(math_env, prim_env);
+  obj* env = join_lists(math_env, prim_env);
   return env;
 }
 
@@ -74,18 +73,4 @@ obj* lookup_pair(const obj* key, const obj* env) {
 static bool pair_matches_key(const obj *pair, const obj *key) {
   obj* pair_key = ith(pair, 0);
   return compare(pair_key, key);
-}
-
-/**
- * Function: append_environments
- * -----------------------------
- * Prepends one environment to another
- * @param env1: The environment to prepend to env2
- * @param env2: The environment to append to env1
- * @return: env1 except now the last element points to env2
- */
-static obj* append_environments(obj* env1, const obj* env2) {
-  if (list_of(env1)->cdr == NULL) list_of(env1)->cdr = (obj*) env2;
-  else append_environments(list_of(env1)->cdr, env2);
-  return env1;
 }

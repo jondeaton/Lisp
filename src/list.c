@@ -34,7 +34,7 @@ obj* copy_recursive(const obj *o) {
   if (is_list(o)) return copy_list_recursive(o);
   if (is_int(o)) return new_int(get_int(o));
   if (is_float(o)) return new_float(get_float(o));
-  if (is_closure(o)) copy_closure_recursive(o);
+  if (is_closure(o)) return copy_closure_recursive(o);
   return NULL;
 }
 
@@ -76,6 +76,18 @@ obj* ith(const obj* o, int i) {
   return ith(list_of(o)->cdr, i - 1);
 }
 
+obj* join_lists(obj *list1, obj *list2) {
+  if (list_of(list1)->cdr == NULL) list_of(list1)->cdr = list2;
+  else join_lists(list_of(list1)->cdr, list2);
+  return list1;
+}
+
+void split_lists(obj *to_split, obj *second_list) {
+  if (to_split == NULL || second_list == NULL) return;
+  if (list_of(to_split)->cdr == second_list) list_of(to_split)->cdr = NULL;
+  else split_lists(list_of(to_split)->cdr, second_list);
+}
+
 int list_length(const obj* o) {
   if (o == NULL) return 0;
   if (!is_list(o)) return 0;
@@ -97,11 +109,9 @@ bool list_contains(const obj* list, const obj* query) {
  */
 static obj* copy_list_recursive(const obj *o) {
   if (o == NULL) return NULL;
-
-  obj* list_copy = new_list();
-  list_of(list_copy)->car = copy_recursive(list_of(o)->car);
-  list_of(list_copy)->cdr = copy_list_recursive(list_of(o)->cdr);
-  return list_copy;
+  obj* car = copy_recursive(list_of(o)->car);
+  obj* cdr = copy_recursive(list_of(o)->cdr);
+  return new_list_set(car, cdr);
 }
 
 /**
@@ -113,15 +123,5 @@ static obj* copy_list_recursive(const obj *o) {
  */
 static obj* copy_primitive(const obj* o) {
   if (o == NULL) return NULL;
-
-  obj* new_primitive_obj = malloc(sizeof(obj) + sizeof(primitive_t));
-  new_primitive_obj->objtype = primitive_obj; // New object should also be a primitive
-
-  // Get pointer to the function pointers
-  primitive_t* new_prim = primitive_of(new_primitive_obj);
-  primitive_t* old_prim = primitive_of(o);
-
-  // Copy the function pointer over
-  memcpy(new_prim, old_prim, sizeof(primitive_t));
-  return new_primitive_obj;
+  return new_primitive(*primitive_of(o));
 }

@@ -11,15 +11,14 @@
 #include <string.h>
 #include <lisp-objects.h>
 #include <closure.h>
+#include <garbage-collector.h>
 
 #define LAMBDA_RESV "lambda"
 
 // Static function declarations
-static obj* put_into_list(obj *o);
-static obj* bind(obj* params, obj* args, obj* env);
-static obj* associate(obj* names, obj* values);
-static obj* push_frame(obj* frame, obj* env);
-static obj* eval_list(const obj* list, obj** envp);
+static obj* bind_args_and_captured(const obj *operator, const obj *args, obj **envp);
+static obj* bind(obj *params, const obj *args, obj **envp);
+static obj *associate(obj *names, const obj *args, obj **envp);
 static bool is_lambda(const obj* o);
 
 obj* eval(const obj* o, obj** envp) {
@@ -39,7 +38,7 @@ obj* eval(const obj* o, obj** envp) {
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
   if (is_list(o)) {
     if (is_lambda(o)) return make_closure(o, *envp);  // Lambda function's value is itself
-    if (is_empty(o)) return (obj*) o;                 // Empty list evals to itself
+    if (is_empty(o)) return (obj*) o;                 // Empty list evaluates to itself
 
     obj* operator = eval(list_of(o)->car, envp);
     obj* args = list_of(o)->cdr;
@@ -57,44 +56,43 @@ obj* apply(const obj* operator, const obj* args, obj** envp) {
   }
 
   if (is_closure(operator)) {
-    obj* arg_values = eval_list(args, envp);
+    // The result of a closure application is the evaluation of the body of the closure in an environment
+    // containing the captured variables from the closure, along with the values of the arguments
+    // bound to the parameters of the closure.
 
-    closure_t* closure = closure_of(operator);
-    obj* new_env = bind(closure->parameters, arg_values, *envp);
-    return eval(closure->procedure, &new_env);
+    obj* new_env = bind_args_and_captured(operator, args, envp); // Append bound args, and captured vars
+    obj* old_env = *envp; // gotta keep one around in case points is modified in eval
+    obj* result =  eval(closure_of(operator)->procedure, &new_env); // Evaluate body in prepended
+
+    split_lists(new_env, old_env);
+    add_allocated_recursive(new_env); // All of the newly allocated things
+
+    return result;
   }
 
   if (is_atom(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", atom_of(operator));
-  return LOG_ERROR("Application of non-procedure");
+  return LOG_ERROR("Non-procedure cannot be applied");
+}
+
+static obj* bind_args_and_captured(const obj *operator, const obj *args, obj **envp) {
+  closure_t* closure = closure_of(operator);
+  obj* new_env = bind(closure->parameters, args, envp); // Bind the parameters to the arguments
+  obj* capture_copy = copy_recursive(closure->captured);
+  return join_lists(capture_copy, new_env); // Prepend the captured list to the environment
 }
 
 /**
  * Function: bind
  * --------------
- * binds a list of arguments to parameters and pushes them onto an environment
+ * binds a list of arguments to parameters and prepends them onto an environment
  * @param params: List of parameters
  * @param args: List of arguments to bind to the parameters
- * @param env: Environment to prepend the bound arguments to
+ * @param envp: Environment to prepend the bound arguments to
  * @return: Environment now with bound arguments appended
  */
-static obj* bind(obj* params, obj* args, obj* env) {
-  obj* frame = associate(params, args);
-  return push_frame(frame, env);
-}
-
-/**
- * Function: eval_list
- * -------------------
- * Evaluate a list, creating a new list with the evaluated arguments
- * @param list: A lisp object that is a list to evaluate each element of
- * @param envp: Environment to evaluate the elements of the list
- * @return: A new list with the evaluated values of the passed list
- */
-static obj* eval_list(const obj* list, obj** envp) {
-  if (list == NULL || !is_list(list)) return NULL;
-  obj* o = put_into_list(eval(list_of(list)->car, envp));
-  list_of(o)->cdr = eval_list(list_of(list)->cdr, envp);
-  return o;
+static obj* bind(obj *params, const obj *args, obj **envp) {
+  obj* frame = associate(params, args, envp);
+  return join_lists(frame, *envp);
 }
 
 /**
@@ -102,46 +100,17 @@ static obj* eval_list(const obj* list, obj** envp) {
  * -------------------
  * Takes a list of variable names and pairs them up with values in a list of pairs
  * @param names: List of names to associate with values
- * @param values: List of values each associated with the name in the name list
+ * @param args: List of values each associated with the name in the name list
  * @return: A list containing pairs of name-value pairs
  */
-static obj* associate(obj* names, obj* values) {
-  if (names == NULL || values == NULL) return NULL;
-  if (!is_list(names) || !is_list(values)) return NULL;
+static obj *associate(obj *names, const obj *args, obj **envp) {
+  if (names == NULL || args == NULL) return NULL;
+  if (!is_list(names) || !is_list(args)) return NULL;
 
-  obj* pair = make_pair(list_of(names)->car, list_of(values)->car, true);
-  obj* cdr = associate(list_of(names)->cdr, list_of(values)->cdr);
+  obj* value = eval(list_of(args)->car, envp);
+  obj* pair = make_pair(list_of(names)->car,value, true);
+  obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp);
   return new_list_set(pair, cdr);
-}
-
-/**
- * Function: push_frame
- * --------------------
- * Pushes a list of pairs of associated keys and values onto a list of such pairs
- * @param frame: List of name-value pairs
- * @param env: List of name-value pairs to append the frame to
- * @return: The new augmented list of pairs, with the frame on the front
- */
-static obj* push_frame(obj* frame, obj* env) {
-  if (frame == NULL) return env;
-  if (env == NULL) return frame;
-  if (!is_list(frame) || !is_list(env)) return NULL;
-
-  if (list_of(frame)->cdr == NULL) list_of(frame)->cdr = env;
-  else push_frame(list_of(frame)->cdr, env);
-
-  return frame;
-}
-
-/**
- * Function: put_into_list
- * -----------------------
- * Makes a list object with car pointing to the object passed
- * @param o: The object that the list's car should point to
- * @return: A pointer to the list object containing only the argument object
- */
-static obj* put_into_list(obj *o) {
-  return new_list_set(o, NULL);
 }
 
 /**

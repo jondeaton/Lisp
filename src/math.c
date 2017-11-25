@@ -11,6 +11,7 @@
 #include "environment.h"
 #include <evaluator.h>
 #include <stack-trace.h>
+#include <lisp-objects.h>
 
 typedef int (*intArithmeticFuncPtr)(int, int);
 typedef float (*floatArithmeticFuncPtr)(float, float);
@@ -27,10 +28,11 @@ static int div_ints(int x, int y);
 static float div_floats(float x, float y);
 static int mod_ints(int x, int y);
 static float mod_floats(float x, float y);
+obj* equal(const obj *args, obj **envp);
 static obj* apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp);
 
-static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", NULL };
-static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod, NULL };
+static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", "=", NULL };
+static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod, &equal, NULL };
 
 obj* get_math_library() {
   return make_environment(math_reserved_atoms, math_primitives);
@@ -64,6 +66,16 @@ obj* mod(const obj *o, obj **env) {
   obj* answer = apply_arithmetic(o, env, &mod_ints, &mod_floats);
   if (answer == NULL) LOG_ERROR("Modulus operator returned in NULL");
   return answer;
+}
+
+obj* equal(const obj *args, obj **envp) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+  obj* first = eval(ith(args, 0), envp);
+  obj* second = eval(ith(args, 1), envp);
+  if (!is_number(first) || !is_number(second)) return empty();
+  if (is_int(first) && is_int(second))
+    return get_int(first) == get_int(second) ? t() : empty();
+  return get_float(first) == get_float(second) ? t() : empty();
 }
 
 // todo: Add documentation

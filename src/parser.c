@@ -18,7 +18,6 @@
 static obj* parse_atom(const_expression e, size_t *num_parsed_p);
 static obj* parse_list(const_expression e, size_t *num_parsed_p);
 static obj* get_quote_list();
-static obj* put_into_list(obj *o);
 static bool contains_dot(const_expression e, size_t length);
 
 static expression unparse_list(const obj *o);
@@ -50,7 +49,7 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
     o = get_quote_list();
     obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
     expr_size += 1; // for the quote character
-    list_of(o)->cdr = put_into_list(quoted);
+    list_of(o)->cdr = new_list_set(quoted, NULL);
 
   } else if (expr_start[0] == '(')  { // Expression starts with opening paren
     o = parse_list((char *) expr_start + 1, &expr_size);
@@ -136,11 +135,12 @@ static expression unparse_closure(const obj* o) {
   if (!is_closure(o)) return NULL;
 
   closure_t* closure = closure_of(o);
-  const_expression para = unparse(closure->parameters);
+  expression para = unparse(closure->parameters);
   int num_capt = list_length(closure->captured);
 
   char buf[256];
   sprintf(buf, "<closure:%s, %d vars captured>", para, num_capt);
+  free(para);
   return strdup(buf);
 }
 
@@ -283,7 +283,7 @@ static obj* parse_list(const_expression e, size_t *num_parsed_p) {
 
   size_t exprSize;
   obj* nextElement = parse_expression(exprStart, &exprSize); // will find closing paren
-  obj* o = put_into_list(nextElement);
+  obj* o = new_list_set(nextElement, NULL);
 
   size_t restSize;
   expression restOfList = (char*) exprStart + exprSize;
@@ -303,20 +303,7 @@ static obj* get_quote_list() {
   size_t i;
   obj* quote_atom = parse_atom("quote", &i);
   if (quote_atom == NULL) return NULL;
-  return put_into_list(quote_atom);
-}
-
-/**
- * Function: put_into_list
- * -----------------------
- * Makes a list object with car pointing to the object passed
- * @param o: The object that the list's car should point to
- * @return: A pointer to the list object containing only the argument object
- */
-static obj* put_into_list(obj *o) {
-  obj* list = new_list();
-  list_of(list)->car = o;
-  return list;
+  return new_list_set(quote_atom, NULL);
 }
 
 /**

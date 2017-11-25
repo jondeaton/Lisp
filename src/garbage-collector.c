@@ -29,6 +29,7 @@ void add_allocated_recursive(const obj* o) {
     add_allocated_recursive(list_of(o)->car);
     add_allocated_recursive(list_of(o)->cdr);
   } else if (is_closure(o)) {
+    add_allocated_recursive(closure_of(o)->parameters);
     add_allocated_recursive(closure_of(o)->procedure);
     add_allocated_recursive(closure_of(o)->captured);
   }
