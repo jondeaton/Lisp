@@ -27,15 +27,20 @@ obj* make_environment(atom_t const primitive_names[], const primitive_t primitiv
 
   obj* key = new_atom(primitive_names[0]);
   obj* value = new_primitive(primitive_list[0]);
-  obj* pair = make_pair(key, value);
+  obj* pair = make_pair(key, value, false);
 
   obj* cdr = make_environment(primitive_names + 1, primitive_list + 1);
   return new_list_set(pair, cdr);
 }
 
-obj* make_pair(const obj *key, const obj *value) {
-  obj* second = new_list_set(copy_recursive(value), NULL);
-  return new_list_set(copy_recursive(key), second);
+obj *make_pair(obj *key, obj *value, bool copy) {
+  if (copy) {
+    obj *second = new_list_set(copy_recursive(value), NULL);
+    return new_list_set(copy_recursive(key), second);
+  } else {
+    obj* second = new_list_set(value, NULL);
+    return new_list_set(key, second);
+  }
 }
 
 obj* lookup(const obj* o, const obj* env) {

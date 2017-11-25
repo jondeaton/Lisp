@@ -19,8 +19,8 @@ obj* make_closure(const obj *lambda, obj *env) {
   obj* params = copy_recursive(get_lambda_parameters(lambda));
   obj* procedure = copy_recursive(get_lambda_body(lambda));
 
-  obj* captured;
-  get_captured_vars(&captured, procedure, params, env);
+  obj* captured = NULL;
+  get_captured_vars(&captured, params, procedure, env);
 
   obj* closure = new_closure_set(params, procedure, captured);
   add_allocated_recursive(closure);
@@ -44,11 +44,11 @@ obj* copy_closure_recursive(const obj* closure) {
 }
 
 obj* get_lambda_parameters(const obj *lambda) {
-  return ith(lambda, 0);
+  return ith(lambda, 1);
 }
 
 obj* get_lambda_body(const obj *lambda) {
-  return ith(lambda, 1);
+  return ith(lambda, 2);
 }
 
 /**
@@ -63,6 +63,7 @@ obj* get_lambda_body(const obj *lambda) {
  * @param env: Environment to search for values to capture
  */
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env) {
+  if (procedure == NULL) return;
 
   if (is_list(procedure)) { // good ol' depth-first search
     get_captured_vars(capturedp, params, list_of(procedure)->car, env);
@@ -72,7 +73,7 @@ static void get_captured_vars(obj **capturedp, const obj *params, const obj *pro
     if (lookup_pair(procedure, *capturedp)) return; // Already captured
     if (list_contains(params, procedure)) return; // Don't capture parameters (those get bound at apply-time)
 
-    obj* matching_pair = lookup_pair(env, procedure);
+    obj* matching_pair = lookup_pair(procedure, env);
     if (!matching_pair) return; // No value to be captured
     *capturedp = new_list_set(copy_recursive(matching_pair), *capturedp); // Prepend to capture list
   }

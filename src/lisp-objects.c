@@ -32,7 +32,7 @@ obj* new_closure() {
   obj* o = malloc(sizeof(obj) + sizeof(closure_t));
   if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = closure_obj;
-  closure_of(o);
+  return o;
 }
 
 obj* new_primitive(primitive_t primitive) {

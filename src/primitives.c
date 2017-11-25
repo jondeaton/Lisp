@@ -114,7 +114,7 @@ obj* set(const obj* args, obj** envp) {
   obj* value = ith_arg_value(args, envp, 1);
 
   obj** prev_value_p = lookup_entry(var_name, *envp);
-  if (prev_value_p) { // Dynamic Scoping
+  if (prev_value_p) {
     dispose_recursive(*prev_value_p);
     *prev_value_p = copy_recursive(value);
 

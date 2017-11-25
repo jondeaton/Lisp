@@ -8,6 +8,7 @@
 #include <stack-trace.h>
 #include <string.h>
 #include <stdio.h>
+#include <lisp-objects.h>
 
 
 #define KMAG  "\x1B[35m"
@@ -133,9 +134,14 @@ static expression unparse_list(const obj *o) {
  */
 static expression unparse_closure(const obj* o) {
   if (!is_closure(o)) return NULL;
-  // todo: implement this
-  // Should we just print something like <Closure: body> ?
-  return NULL;
+
+  closure_t* closure = closure_of(o);
+  const_expression para = unparse(closure->parameters);
+  int num_capt = list_length(closure->captured);
+
+  char buf[256];
+  sprintf(buf, "<closure:%s, %d vars captured>", para, num_capt);
+  return strdup(buf);
 }
 
 /**

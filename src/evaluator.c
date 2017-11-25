@@ -26,7 +26,7 @@ obj* eval(const obj* o, obj** envp) {
   if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
-  if (o->objtype == atom_obj) {
+  if (is_atom(o)) {
     obj* value = lookup(o, *envp);
     if (value) return value;
     return LOG_ERROR("Variable: \"%s\" not found in environment", atom_of(o));
@@ -109,7 +109,7 @@ static obj* associate(obj* names, obj* values) {
   if (names == NULL || values == NULL) return NULL;
   if (!is_list(names) || !is_list(values)) return NULL;
 
-  obj* pair = make_pair(list_of(names)->car, list_of(values)->car);
+  obj* pair = make_pair(list_of(names)->car, list_of(values)->car, true);
   obj* cdr = associate(list_of(names)->cdr, list_of(values)->cdr);
   return new_list_set(pair, cdr);
 }

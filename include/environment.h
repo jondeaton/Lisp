@@ -65,9 +65,10 @@ obj* lookup_pair(const obj* key, const obj* env);
  * value into a new list. Both the copies and the list are in newly dynamically allocated memory
  * @param key: A name to associate with a value (will be copied)
  * @param value: The value to associate with a name (will be copied)
+ * @param copy: If true, copy the key and value, and if false, make the pair using the provided key and pair pointers
  * @return: A list of length two where the first element is the copy of the name and the second element
  * is a copy of the value.
  */
-obj* make_pair(const obj *key, const obj *value);
+obj *make_pair(obj *key, obj *value, bool copy);
 
 #endif // _ENVIRONMENT_H_INCLUDED
