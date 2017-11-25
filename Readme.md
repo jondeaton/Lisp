@@ -28,9 +28,6 @@ Alternatively run a Lisp script by adding it as an argument.
 - The empty list, despite being considered an atom type, shall be a a list object (`list_obj`) with two `NULL` pointers in `car` and `cdr`.
 - Single environment
     - In a Lisp-1 manner, there is only a single environment that stores both variables and functions.
-- Dynamic scoping
-    - All environment variables are stored in a Lisp list of pairs
-    - Calls to the `set` primitive will lookup if there is a previously stored value for the specified primitive. If so, that value will be over-written, otherwise a new value will be pushed on to the top of the environment "stack".
 - Results of computation will only be copied when they are being set in the environment
 - Lambda functions
     - When evaluating an object, the interpreter will check if `caar` of the object is equal to the C-string `lambda`.
@@ -44,6 +41,7 @@ Alternatively run a Lisp script by adding it as an argument.
         - Objects allocated during evaluation (such as in `cons`, or creation of closures) are added to a CVector of allocated objects
         - After each expression evaluation (excluding *recursive* calls to `eval`), the entire vector of allocated object pointers is disposed of.
         - Objects with a lifetime longer than the single evaluation has been copied into the environment at the conclusion of `eval`.
+        - Closures create an interesting challenge: lambda expressions are promoted to closure status during evaluation. Thus, closures are counted as dynamically allocated and are added to the vector of blocks to be freed.
 - Error reporting
     - Basic stack traces are provided for inappropriate Lisp code.
 
@@ -64,8 +62,8 @@ and can be run with the `test-lisp` executable.
 - ~~Use `readline` for interactive prompt~~
 - ~~Math library~~
 - ~~`env` primitive to print the environment~~
-- memory management
-- closures
+- ~~memory management~~
+- ~~closures~~
 - Tests specified in test files
 - `defmacro`
 - Strings
