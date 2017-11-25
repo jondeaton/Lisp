@@ -1,18 +1,22 @@
 # Lisp
 Author: Jon Deaton
 
-This repository contains an interpreter for Common Lisp implemented in pure C.
+This repository contains an interpreter for Lisp implemented in pure C.
 
 ## Use
-Build with `cmake` like so
+Build with `cmake` like so: `cmake .; make`
 
-`cmake .; make`
+Run the REPL (read-eval-print loop) with the `lisp` executable for an interactive prompt. 
+If you want to have matching parentheses highlighting then you can `echo "set blink-matching-paren on" >> ~/.inputrc`.
+Alternatively run a Lisp script by adding it as an argument.
 
-Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or run a lisp script by adding it as an argument.
-
+   `./lisp my-program.lisp`
 
 ## Dependencies
-1. `C99`
+1. `C99` compiler
+2. Readline
+    - Ubuntu: `sudo apt-get install libreadline-dev`
+    - MacOS: `brew install readline`
 
 ## Design choices
 - Object structure (`obj`)
@@ -24,21 +28,26 @@ Run the REPL (read-eval-print loop) with `lisp` for an interactive prompt, or ru
 - The empty list, despite being considered an atom type, shall be a a list object (`list_obj`) with two `NULL` pointers in `car` and `cdr`.
 - Single environment
     - In a Lisp-1 manner, there is only a single environment that stores both variables and functions.
-- Dynamic scoping
-    - All environment variables are stored in a Lisp list of pairs
-    - Calls to the `set` primitive will lookup if there is a previously stored value for the specified primitive. If so, that value will be over-written, otherwise a new value will be pushed on to the top of the environment "stack".
 - Results of computation will only be copied when they are being set in the environment
 - Lambda functions
     - When evaluating an object, the interpreter will check if `caar` of the object is equal to the C-string `lambda`.
     - If it is, then the arguments will be evaluated into a new list, bound to the parameters, and prepended onto the current environment
     - The body of the lambda expression will then be evaluated in this augmented environment
 - Memory Management
-    - Uhh... yeah this still needs to be implemented. Just you wait, it's gonna be great.
+    - Garbage collection in this Lisp interpreter is much easier to implement than it would be to write a generic garbage collector in say C.
+    - It is easy to track the lifetimes of objects **not** created during evaluation
+        - For instance, parsed objects are not modified during evaluation, and are *copied* into the environment. Therefore, after evaluation, the parsed object can be recursively deleted.
+    - Objects created during evaluation have a somewhat more complicated lifetime, and this are tracked as such:
+        - Objects allocated during evaluation (such as in `cons`, or creation of closures) are added to a CVector of allocated objects
+        - After each expression evaluation (excluding *recursive* calls to `eval`), the entire vector of allocated object pointers is disposed of.
+        - Objects with a lifetime longer than the single evaluation has been copied into the environment at the conclusion of `eval`.
+        - Closures create an interesting challenge: lambda expressions are promoted to closure status during evaluation. Thus, closures are counted as dynamically allocated and are added to the vector of blocks to be freed.
 - Error reporting
-
+    - Basic stack traces are provided for inappropriate Lisp code.
 
 ## Testing
-A testing framework for the interpreter is also included in the `test-lisp` executable.
+If you would like to check out my handiwork, a testing framework for the interpreter is also included
+and can be run with the `test-lisp` executable.
 
 ## To do
 - ~~REPL prompt and re-prompt~~
@@ -46,13 +55,17 @@ A testing framework for the interpreter is also included in the `test-lisp` exec
 - ~~`eval` and `apply`~~
 - ~~Implement testing framework~~
 - ~~Seven primitives~~
-- ~~set primitive with dynamic scoping~~
+- ~~set primitive~~
 - ~~basic `lambda` functionality~~
-- memory management
-- Closures
+- ~~Error messages and stack trace~~
+- ~~Smart indentation in re-prompt'~~
+- ~~Use `readline` for interactive prompt~~
+- ~~Math library~~
+- ~~`env` primitive to print the environment~~
+- ~~memory management~~
+- ~~closures~~
+- Tests specified in test files
 - `defmacro`
-- `env` primitive to print the environment
-- Error messages and stack trace
-- Smart indentation in re-prompt'
-- Math library
-- [Derive lexical scoping from dynamic scoping](https://stackoverflow.com/questions/29347648/can-dynamic-scoping-implement-lexical-scoping)
+- Strings
+- Dot notation
+

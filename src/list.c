@@ -9,98 +9,95 @@
 #include <stdlib.h>
 #include <string.h>
 #include <list.h>
+#include <stack-trace.h>
+#include <lisp-objects.h>
+#include <closure.h>
 
 // Static function declarations
-static obj* copy_list(const obj* o);
-static obj* copy_atom(const obj* o);
+static obj* copy_list_recursive(const obj *o);
 static obj* copy_primitive(const obj* o);
-static void* get_contents(const obj *o);
 
-obj* new_list() {
-  obj* o = malloc(sizeof(obj) + sizeof(list_t));
-  if (o == NULL) return NULL;
-  o->objtype = list_obj;
-  list_of(o)->car = NULL;
-  list_of(o)->cdr = NULL;
-  return o;
+obj* new_list_set(obj* car, obj* cdr) {
+  obj* list = new_list();
+  list_of(list)->car = car;
+  list_of(list)->cdr = cdr;
+  return list;
 }
 
 // Copy an object recursively
-obj* copy(const obj* o) {
+obj* copy_recursive(const obj *o) {
   if (o == NULL) return NULL;
 
   // Different kind of copying for each object type
-  if (o->objtype == atom_obj) return copy_atom(o);
-  if (o->objtype == primitive_obj) return copy_primitive(o);
-  if (o->objtype == list_obj) return copy_list(o);
+  if (is_atom(o)) return copy_atom(o);
+  if (is_primitive(o)) return copy_primitive(o);
+  if (is_list(o)) return copy_list_recursive(o);
+  if (is_int(o)) return new_int(get_int(o));
+  if (is_float(o)) return new_float(get_float(o));
+  if (is_closure(o)) return copy_closure_recursive(o);
   return NULL;
 }
 
-// Recursive disposal of an object
-void dispose(obj* o) {
+void dispose_recursive(obj *o) {
   if (o == NULL) return;
-  if (o->objtype == list_obj) {
+  if (is_list(o)) { // Recursive disposal of lists and closures
     list_t *l = list_of(o);
-    dispose(l->car);
-    dispose(l->cdr);
+    dispose_recursive(l->car);
+    dispose_recursive(l->cdr);
+  } else if (is_closure(o)) {
+    closure_t* closure = closure_of(o);
+    dispose_recursive(closure->parameters);
+    dispose_recursive(closure->procedure);
+    dispose_recursive(closure->captured);
   }
-  free(o);
-}
-
-list_t* list_of(const obj *o) {
-  return (list_t*) get_contents(o);
-}
-
-atom_t atom_of(const obj *o) {
-  return (atom_t) get_contents(o);
-}
-
-primitive_t* primitive_of(const obj *o) {
-  return (primitive_t*) get_contents(o);
+  dispose(o);
 }
 
 bool is_empty(const obj* o) {
   if (o == NULL) return false;
-  if (o->objtype != list_obj) return false;
+  if (!is_list(o)) return false;
   return list_of(o)->car == NULL && list_of(o)->cdr == NULL;
 }
 
-bool deep_compare(obj* x, obj* y) {
+bool compare_recursive(const obj *x, const obj *y) {
   if (x->objtype != y->objtype) return false;
-  if (x->objtype == atom_obj) return strcmp(atom_of(x), atom_of(y)) == 0;
-  if (x->objtype == primitive_obj) return primitive_of(x) == primitive_of(y);
+  if (is_atom(x)) return strcmp(atom_of(x), atom_of(y)) == 0;
+  if (is_primitive(x)) return primitive_of(x) == primitive_of(y);
 
   // List: cars must match and cdrs must match
-  if (x->objtype == list_obj)
-    return deep_compare(list_of(x)->car, list_of(y)->car) && deep_compare(list_of(x)->cdr, list_of(y)->cdr);
+  if (is_list(x))
+    return compare_recursive(list_of(x)->car, list_of(y)->car) && compare_recursive(list_of(x)->cdr, list_of(y)->cdr);
   else return x == y;
 }
 
-/**
- * Function: copy_atom
- * -------------------
- * Copy an object that is an atom by dynamically allocating space for an identical object, and then
- * copying the contents of the atom over into the new object.
- * @param o: The object (of type atom) to copy
- * @return: A pointer to a copy of the object in dynamically allocated space
- */
-static obj* copy_atom(const obj* o) {
-  if (o == NULL) return NULL;
+obj* ith(const obj* o, int i) {
+  if (o == NULL || i < 0 || !is_list(o)) return NULL;
+  if (i == 0) return list_of(o)->car;
+  return ith(list_of(o)->cdr, i - 1);
+}
 
-  atom_t atom_source = atom_of(o); // The atom contents to be copied
+obj* join_lists(obj *list1, obj *list2) {
+  if (list_of(list1)->cdr == NULL) list_of(list1)->cdr = list2;
+  else join_lists(list_of(list1)->cdr, list2);
+  return list1;
+}
 
-  // Get the size of the atom to be copied
-  size_t atom_size = strlen(atom_source);
+void split_lists(obj *to_split, obj *second_list) {
+  if (to_split == NULL || second_list == NULL) return;
+  if (list_of(to_split)->cdr == second_list) list_of(to_split)->cdr = NULL;
+  else split_lists(list_of(to_split)->cdr, second_list);
+}
 
-  // Allocate space for copy
-  obj* obj_copy = malloc(sizeof(obj) + atom_size + 1);
+int list_length(const obj* o) {
+  if (o == NULL) return 0;
+  if (!is_list(o)) return 0;
+  return 1 + list_length(list_of(o)->cdr);
+}
 
-  // The copy is also an atom
-  obj_copy->objtype = atom_obj;
-
-  // Copy the atom contents itself
-  strcpy(get_contents(obj_copy), atom_source);
-  return obj_copy;
+bool list_contains(const obj* list, const obj* query) {
+  if (query == NULL || list == NULL) return false;
+  bool found_here = compare_recursive(list_of(list)->car, query);
+  return found_here || list_contains(list_of(list)->cdr, query);
 }
 
 /**
@@ -110,14 +107,11 @@ static obj* copy_atom(const obj* o) {
  * @param o: An object that is a list to copy
  * @return: A pointer to a new list object
  */
-static obj* copy_list(const obj* o) {
+static obj* copy_list_recursive(const obj *o) {
   if (o == NULL) return NULL;
-
-  obj* list_copy = new_list();
-  list_of(list_copy)->car = copy(list_of(o)->car);
-  list_of(list_copy)->cdr = copy_list(list_of(o)->cdr);
-
-  return list_copy;
+  obj* car = copy_recursive(list_of(o)->car);
+  obj* cdr = copy_recursive(list_of(o)->cdr);
+  return new_list_set(car, cdr);
 }
 
 /**
@@ -129,25 +123,5 @@ static obj* copy_list(const obj* o) {
  */
 static obj* copy_primitive(const obj* o) {
   if (o == NULL) return NULL;
-
-  obj* new_primitive_obj = malloc(sizeof(obj) + sizeof(primitive_t));
-  new_primitive_obj->objtype = primitive_obj; // New object should also be a primitive
-
-  // Get pointer to the function pointers
-  primitive_t* new_prim = primitive_of(new_primitive_obj);
-  primitive_t* old_prim = primitive_of(o);
-
-  // Copy the function pointer over
-  memcpy(new_prim, old_prim, sizeof(primitive_t));
-  return new_primitive_obj;
-}
-
-/**
- * Function: get_contents
- * ----------------------
- * Utility function for getting the contents of the object that exists just to the right of
- * the object type enum.
- */
-static void* get_contents(const obj *o) {
-  return (void*) ((char*) o + sizeof(obj));
+  return new_primitive(*primitive_of(o));
 }

@@ -4,39 +4,52 @@
  * Presents the interface to the Read-Eval-Print Loop
  */
 
-#ifndef _REPL_H
-#define _REPL_H
+#ifndef _REPL_H_INCLUDED
+#define _REPL_H_INCLUDED
 
-#include <primitives.h>
-#include <stdio.h>
-
-/**
- * Function: repl
- * --------------
- * The read-eval-print loop which
- * simply calls read, eval, and print
- * in that order over and over again.
- * @return : Exit status
- */
-int repl();
+#include "parser.h"
 
 /**
- * Function: readExpression
- * --------------
- * Takes an expression from standard input, turns it into
- * an object and returns the object
- * @return : The object representation of the expression read from stdin
+ * Function: repl_init
+ * -------------------
+ * Initializes the read eval print loop by creating
+ * the global environment and the vector of allocated
+ * objects.
  */
-obj* read_expression(FILE *fd, const char *prompt, const char *reprompt);
+void repl_init();
 
 /**
- * Function: print
- * ---------------
- * Converts an object to an expression and then prints it
- * to standard output
- * @param o : An object to print
- * @return : Nothing
+ * Function: repl_run_program
+ * --------------------------
+ * Reads in expressions from a file, and runs them
+ * in the environment initialized in repl_init
+ * @param program_file: The file containing the program to run
  */
-void print(FILE* fd, obj* o);
+void repl_run_program(const char* program_file);
 
-#endif
+/**
+ * Function: repl_run
+ * ------------------
+ * Run the interactive REPL prompt
+ */
+void repl_run();
+
+/**
+ * Function: repl_eval
+ * -------------------
+ * Evaluate a single expression in the global environment
+ * @param expr: The expression to evaluate
+ * @return: The an expression representing the result of evaluating
+ * the passed expression, in dynamically allocated memory that must
+ * be freed
+ */
+expression repl_eval(const_expression expr);
+
+/**
+ * Function: repl_dispose
+ * ----------------------
+ * Dispose of the global environment and vector of allocated objects.
+ */
+void repl_dispose();
+
+#endif //_REPL_H_INCLUDED

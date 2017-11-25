@@ -4,11 +4,11 @@
  * Lisp interpreter tester
  */
 
-#include "primitives.h"
-#include "parser.h"
-#include "environment.h"
-#include "evaluator.h"
-#include "list.h"
+#include <primitives.h>
+#include <parser.h>
+#include <environment.h>
+#include <evaluator.h>
+#include <repl.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -38,17 +38,18 @@ static int test_eq();
 static int test_cons();
 static int test_cond();
 static int test_set();
+static int test_math();
 static int test_lambda();
+static int test_Y_combinator();
+static int test_recursion();
 
 /**
  * Function: main
  * --------------
  * Entry point to the testing program
- * @param argc: Size of elements in argv
- * @param argv: Null terminated list of command line arguments
  * @return: Program exit code
  */
-int main(int argc, char* argv[]) {
+int main() {
   int num_fails = run_all_tests();
   if (num_fails == 0) printf(KGRN "All tests passed.\n");
   else printf(KRED "%d test(s) failed\n" RESET, num_fails);
@@ -71,7 +72,10 @@ static int run_all_tests() {
   num_fails += test_cons();
   num_fails += test_cond();
   num_fails += test_set();
+  num_fails += test_math();
   num_fails += test_lambda();
+//  num_fails += test_Y_combinator();
+//  num_fails += test_recursion();
   return num_fails;
 }
 
@@ -86,6 +90,7 @@ static int run_all_tests() {
 static bool test_single_parse(const_expression expr, const_expression expected) {
   obj* o = parse_expression(expr, NULL);
   expression result_exp = unparse(o);
+  dispose_recursive(o);
   bool test_result = strcmp(result_exp, expected) == 0;
 
   printf("%s Parsing:\t%s\n", test_result ? PASS : FAIL, expr);
@@ -93,6 +98,7 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
+  free(result_exp);
   return test_result;
 }
 
@@ -103,15 +109,14 @@ static bool test_single_parse(const_expression expr, const_expression expected) 
  * results to stdout
  * @param expr: The expression to evaluate
  * @param expected: The expected result of evaluating the expression
- * @return: True if the expressoin evluated to the expected thing, false otherwise
+ * @return: True if the expression evaluated to the expected thing, false otherwise
  */
 static bool test_single_eval(const_expression expr, const_expression expected) {
-  obj* env = init_env(); // The global environment
+  repl_init();
+  expression result_exp = repl_eval(expr);
+  repl_dispose();
 
-  obj* to_eval = parse_expression(expr, NULL);
-  obj* eval_result = eval(to_eval, env);
-  expression result_exp = unparse(eval_result);
-  bool test_result = strcmp(result_exp, expected) == 0;
+  bool test_result = result_exp && strcmp(result_exp, expected) == 0;
 
   printf("%s Evaluation:\t%s\n", test_result ? PASS : FAIL, expr);
 
@@ -119,7 +124,7 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
-  // todo: dispose of unused things
+  free(result_exp);
   return test_result;
 }
 
@@ -134,27 +139,21 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
  * @return: True if expr evaluates to expected, and false otherwise
  */
 static bool test_multi_eval(const_expression before[], const_expression expr, const_expression expected) {
-  obj* env = init_env(); // The global environment
 
-  const_expression next = before[0];
-  for (int i = 0; before[i]; i++) {
-    next = before[i];
-    obj* next_to_eval = parse_expression(next, NULL);
-    eval(next_to_eval, env);
-  }
+  repl_init();
 
-  obj* to_eval = parse_expression(expr, NULL);
-  obj* result = eval(to_eval, env);
-  expression result_exp = unparse(result);
-  bool test_result = strcmp(result_exp, expected) == 0;
+  for (int i = 0; before[i]; i++) free(repl_eval(before[i]));
+  expression result_exp = repl_eval(expr);
+  repl_dispose();
+
+  bool test_result = result_exp && strcmp(result_exp, expected) == 0;
 
   printf("%s Multi eval:\t%s\n", test_result ? PASS : FAIL, expr);
-
   if (!test_result) {
     printf(KRED "\tExpecting:\t%s\n", expected);
     printf("\tResult:\t\t%s\n" RESET, result_exp);
   }
-
+  free(result_exp);
   return test_result;
 }
 
@@ -175,8 +174,14 @@ static int test_parser() {
   num_fails += test_single_parse("(a)", "(a)") ? 0 : 1;
   num_fails += test_single_parse("(a b c)", "(a b c)") ? 0 : 1;
   num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
+  num_fails += test_single_parse("123", "123") ? 0 : 1;
+  num_fails += test_single_parse("(42)", "(42)") ? 0 : 1;
+  num_fails += test_single_parse("(1 2 3 2701)", "(1 2 3 2701)") ? 0 : 1;
+  num_fails += test_single_parse("3.14", "3.14") ? 0 : 1;
+  num_fails += test_single_parse("(6.28)", "(6.28)") ? 0 : 1;
+  num_fails += test_single_parse("(6.28 1.234 5 6)", "(6.28 1.234 5 6)") ? 0 : 1;
   num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("(quote (a b c d e f hello 123456789098))", "(quote (a b c d e f hello 123456789098))") ? 0 : 1;
+  num_fails += test_single_parse("(quote (a b c d e f hello 1234))", "(quote (a b c d e f hello 1234))") ? 0 : 1;
   num_fails += test_single_parse("((((((()))))))", "((((((()))))))") ? 0 : 1;
   num_fails += test_single_parse("'(a b c)", "(quote (a b c))") ? 0 : 1;
   num_fails += test_single_parse("(car (quote (a b c)))", "(car (quote (a b c)))") ? 0 : 1;
@@ -251,6 +256,12 @@ static int test_eq() {
   num_fails += test_single_eval("(eq 'a 'b)", "()") ? 0 : 1;
   num_fails += test_single_eval("(eq '() '())", "t") ? 0 : 1;
   num_fails += test_single_eval("(eq (car '(a b c)) 'a)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(eq 3 3)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(eq 3.0 3.0)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(eq 3.0 3)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(eq 3 3.0)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(eq (cons 'a 'b) (cons 'a 'c))", "()") ? 0 : 1;
+  num_fails += test_single_eval("(eq (cons 'a 'b) (cons 'a 'b))", "()") ? 0 : 1;
   printf("Test eq: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
@@ -299,13 +310,14 @@ static int test_set() {
 
   // Testing that you can set something
   const_expression set_x[] = {
-    "(set 'x '5)",
+    "(set 'x 5)",
     NULL,
   };
   num_fails += test_multi_eval(set_x, "x", "5") ? 0 : 1;
 
   const_expression set_y[] = {
-    "(set 'y '10)",
+    "(set 'y 5)",
+    "(set 'y 10)",
     NULL,
   };
   num_fails += test_multi_eval(set_y, "y", "10") ? 0 : 1;
@@ -317,24 +329,30 @@ static int test_set() {
   };
   num_fails += test_multi_eval(set_x_eval, "(cond (x '5) ('() '6))", "5") ? 0 : 1;
 
-  // Dynamic scoping test
-  const_expression before[] = {
-    "(set 'y '(a b c))",
-    "(set 'f    (lambda (x) (cons x y)))",
-    NULL,
-  };
-  num_fails += test_multi_eval(before, "(f '(1 2 3))", "((1 2 3) a b c)") ? 0 : 1;
-
-  // Dynamic scoping test
-  const_expression before2[] = {
-    "(set 'y '(a b c))",
-    "(set 'y '(4 5 6))",
-    "(set 'f    (lambda (x) (cons x y)))",
-    NULL,
-  };
-  num_fails += test_multi_eval(before2, "(f '(1 2 3))", "((1 2 3) 4 5 6)") ? 0 : 1;
-
   printf("Test set: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_math
+ * -------------------
+ * Tests if arithmetic works correctly
+ * @return: The number of tests that failed
+ */
+static int test_math() {
+  printf(KMAG "\nTesting math...\n" RESET);
+  int num_fails = 0;
+  num_fails += test_single_eval("(= 1 1)", "t") ? 0 : 1;
+  num_fails += test_single_eval("(= 1 0)", "()") ? 0 : 1;
+  num_fails += test_single_eval("(+ 1 1)", "2") ? 0 : 1;
+  num_fails += test_single_eval("(+ 20 -25)", "-5") ? 0 : 1;
+  num_fails += test_single_eval("(- 13 7)", "6") ? 0 : 1;
+  num_fails += test_single_eval("(- 10 100)", "-90") ? 0 : 1;
+  num_fails += test_single_eval("(* 1337 0)", "0") ? 0 : 1;
+  num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
+  num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
+  num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
+  printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
 
@@ -352,21 +370,73 @@ static int test_lambda() {
   num_fails += test_single_eval("((lambda (x y) (cons x (cdr y))) 'a '(z b c))", "(a b c)") ? 0 : 1;
   num_fails += test_single_eval("((lambda (x) (cons 'z x)) '(a b c))", "(z a b c)") ? 0 : 1;
 
-  const_expression before[] = {
+  const_expression before0[] = {
+    "(set 'y '(a b c))",
+    "(set 'f  (lambda (x) (cons x y)))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before0, "(f '(1 2 3))", "((1 2 3) a b c)") ? 0 : 1;
+
+  const_expression before1[] = {
+    "(set 'y '(a b c))",
+    "(set 'y '(4 5 6))",
+    "(set 'f    (lambda (x) (cons x y)))",
+    NULL,
+  };
+  num_fails += test_multi_eval(before1, "(f '(1 2 3))", "((1 2 3) 4 5 6)") ? 0 : 1;
+
+  const_expression before2[] = {
     "(set 'caar (lambda (x) (car (car x))))",
     "(set 'f    (lambda (x) (cons 'z x)))",
     "(set 'g    (lambda (x) (f (caar x))))",
     NULL,
   };
-  num_fails += test_multi_eval(before,"(g '(((a b) c) d) )", "(z a b)") ? 0 : 1;
+  num_fails += test_multi_eval(before2,"(g '(((a b) c) d) )", "(z a b)") ? 0 : 1;
 
-  const_expression before1[] = {
+  const_expression before3[] = {
+    "(set 'make-adder (lambda (x) (lambda (y) (+ x y))))",
+    "(set 'add-5 (make-adder 5)",
+    NULL,
+  };
+
+  num_fails += test_multi_eval(before3, "(add-5 7)", "12") ? 0 : 1;
+
+  const_expression before4[] = {
     "(set 'make-prepender (lambda (x) (lambda (y) (cons x y))))",
     "(set 'prepend-z (make-prepender 'z))",
     NULL,
   };
-  num_fails += test_multi_eval(before1, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1; 
+  num_fails += test_multi_eval(before4, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1;
 
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_Y_combinator
+ * ---------------------------
+ * Tests the functionality of purely functional recursion in the lisp interpreter
+ * @return: The number of tests that failed
+ */
+static int test_Y_combinator() {
+  printf(KMAG "Testing Y Combinator...\n" RESET);
+  int num_fails = 0;
+
+  // Testing Y combinator with factorial function definition
+  const_expression before[] = {
+    "(set 'Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x))))))"
+      "(set 'F (lambda (f) (lambda (n) (if (= n 0) 1 (* n (f (- n 1)))))))"
+  };
+  num_fails += test_multi_eval(before, "((Y F) 5)", "120") ? 0 : 1;
+  printf("Test Y Combinator: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+static int test_recursion() {
+  printf(KMAG "Testing recursion...\n" RESET);
+  // todo: implement some recursion tests
+  printf("No tests yet.\n");
+  int num_fails = 0;
+  printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

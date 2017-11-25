@@ -4,10 +4,11 @@
  * Presents the lisp parser interface
  */
 
-#ifndef _LISP_PARSER_H
-#define _LISP_PARSER_H
+#ifndef _PARSER_H_INCLUDED
+#define _PARSER_H_INCLUDED
 
 #include "primitives.h"
+#include <stdlib.h>
 
 typedef char* expression;
 typedef const char* const_expression;
@@ -51,4 +52,4 @@ bool is_balanced(const_expression e);
  */
 bool is_valid(const_expression e);
 
-#endif
+#endif // _PARSER_H_INCLUDED

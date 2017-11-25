@@ -1,165 +1,76 @@
 /*
  * File: environment.c
  * -------------------
- * Presents the implementation of the default lisp environment
+ * Presents the implementation of the lisp environment
  */
 
-#include "environment.h"
-#include "parser.h"
-#include "list.h"
+#include <environment.h>
+#include <lisp-objects.h>
+#include <list.h>
+#include <math.h>
+#include <parser.h>
 #include <string.h>
 
-#define NUMBUILTINS 9
-#define QUOTE_RESV "quote"
-#define ATOM_RESV "atom"
-#define EQ_RESV "eq"
-#define CAR_RESV "car"
-#define CDR_RESV "cdr"
-#define CONS_RESV "cons"
-#define COND_RESV "cond"
-#define SET_RESV "set"
-#define DEFMACRO_RESV "defmacro"
-
-static atom_t primitive_names[NUMBUILTINS] = {
-  QUOTE_RESV,
-  ATOM_RESV,
-  EQ_RESV,
-  CAR_RESV,
-  CDR_RESV,
-  CONS_RESV,
-  COND_RESV,
-  SET_RESV,
-  DEFMACRO_RESV
-};
-
 // Static function declarations
-static void insert_primitives(obj *pair_list);
-static void replace_primitive_placeholder(obj *pair);
-static obj* wrap_primitive(primitive_t primitive);
-
-static obj* makeFuncPair(atom_t a, void* fp);
-static ssize_t index_of(char *query, char **strings, size_t num_strings);
-static primitive_t lookup_primitive(atom_t atm);
-
-static primitive_t kFuncPts[NUMBUILTINS] = {&quote, &atom, &eq, &car, &cdr, &cons, &cond, &set, &defmacro};
-static expression kEnvExp = "((quote x) (atom x) (eq x) (car x) (cdr x) (cons x) (cond x) (set x) (defmacro x)";
+static bool pair_matches_key(const obj *pair, const obj *key);
 
 obj* init_env() {
-  size_t unused;
-  obj* env = parse_expression(kEnvExp, &unused); // cheeky
-  if (env == NULL) return NULL; // ERROR
-  insert_primitives(env);
+  obj* prim_env = get_primitive_library();
+  obj* math_env = get_math_library();
+  obj* env = join_lists(math_env, prim_env);
   return env;
 }
 
-obj* make_pair(const obj* name, const obj* value) {
-  obj* first_item = new_list();
-  list_of(first_item)->car = copy(name);
+obj* make_environment(atom_t const primitive_names[], const primitive_t primitive_list[]) {
+  if (primitive_names[0] == NULL || primitive_list[0] == NULL) return NULL;
 
-  obj* second_item = new_list();
-  list_of(second_item)->car = copy(value);
+  obj* key = new_atom(primitive_names[0]);
+  obj* value = new_primitive(primitive_list[0]);
+  obj* pair = make_pair(key, value, false);
 
-  list_of(first_item)->cdr = second_item;
-
-  return first_item;
+  obj* cdr = make_environment(primitive_names + 1, primitive_list + 1);
+  return new_list_set(pair, cdr);
 }
 
-
-obj** lookup_entry(const obj* o, const obj* env) {
-  if (o == NULL || env == NULL) return NULL;
-
-  // Error: The environment should be a list
-  if (env->objtype != list_obj) return NULL;
-
-  // Error: Can't lookup something that isn't an atom
-  if (o->objtype != atom_obj) return NULL;
-
-  // Get the list
-  obj* pair = list_of(env)->car;
-
-  if (strcmp(atom_of(o), atom_of(list_of(pair)->car)) == 0)
-    return &list_of(list_of(pair)->cdr)->car;
-
-  else return lookup_entry(o, list_of(env)->cdr);
+obj *make_pair(obj *key, obj *value, bool copy) {
+  if (copy) {
+    obj *second = new_list_set(copy_recursive(value), NULL);
+    return new_list_set(copy_recursive(key), second);
+  } else {
+    obj* second = new_list_set(value, NULL);
+    return new_list_set(key, second);
+  }
 }
-
 
 obj* lookup(const obj* o, const obj* env) {
   obj** entry = lookup_entry(o, env);
   return entry ? *entry : NULL;
 }
 
-/**
- * Function: insert_primitives
- * ---------------------------
- * Replaces the second element of the pairs
- * @param pair_list: The list of pairs to insert primitives into
- */
-static void insert_primitives(obj *pair_list) {
-  if (pair_list == NULL) return;
-  obj* pair = list_of(pair_list)->car;
-  replace_primitive_placeholder(pair);
-  insert_primitives(list_of(pair_list)->cdr);
+obj** lookup_entry(const obj* key, const obj* env) {
+  obj* pair = lookup_pair(key, env);
+  if (pair == NULL) return NULL;
+  return &list_of(list_of(pair)->cdr)->car;
+}
+
+obj* lookup_pair(const obj* key, const obj* env) {
+  if (key == NULL || env == NULL) return NULL;
+  if (!is_list(env) || !is_atom(key))  return NULL;  // Environment should be a list, key should be atom
+
+  obj* pair = list_of(env)->car;
+  if (pair_matches_key(pair, key)) return pair;
+  return lookup_pair(key, list_of(env)->cdr);
 }
 
 /**
- * Function: replace_primitive_placeholder
- * ---------------------------------------
- * Replaces the second element of a name-primitive pair with a primitive object
- * corresponding to the name stored in the first element of the pair.
- * @param pair: A pointer to a two element list of an atom with the name of the primitive and a
- * placeholder second item that will be DISPOSED of and replaced with a primitive object
- * corresponding to the name in the first element.
+ * Function: pair_matches_key
+ * ----------------------------
+ * Determines if a key-value pair has the specified key
+ * @param pair: The pair to look for the key in
+ * @param key: The key to look for in the pair
+ * @return: True if the key in the pair is equal to the specified key
  */
-static void replace_primitive_placeholder(obj *pair) {
-  if (pair == NULL) return;
-  atom_t primitive_name = atom_of(list_of(pair)->car);
-  primitive_t primitive = lookup_primitive(primitive_name);
-
-  obj* second = list_of(pair)->cdr;
-  dispose(list_of(second)->car);
-  list_of(second)->car = wrap_primitive(primitive);
-}
-
-/**
- * Function: wrap_primitive
- * ------------------------
- * Wraps the provided primitive in a primitive object in dynamically allocated memory
- * @param primitive : A primitive to wrap in an object
- * @return : A pointer to the object in dynamically allocated memory
- */
-static obj* wrap_primitive(primitive_t primitive) {
-  obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
-  o->objtype = primitive_obj;
-  primitive_t* primp = primitive_of(o);
-  *primp = primitive;
-  return o;
-}
-
-/**
- * Function: lookup_primitive
- * --------------------------
- * Get the function pointer to the primitive that the atom refers to by name
- * @return : A primitive function pointer if the atom is found, NULL otherwise
- */
-static primitive_t lookup_primitive(atom_t atm) {
-  ssize_t i = index_of(atm, primitive_names, NUMBUILTINS);
-  if (i == -1) return NULL;
-  return kFuncPts[i];
-}
-
-/**
- * Function: index_of
- * ------------------
- * Determines which (if any) string in a list of strings match some query string.
- * @param query: Query string
- * @param strings: List of strings to search through
- * @param num_strings: Number of strings in the search list
- * @return: Index of the matching string, or -1 if no match
- */
-static ssize_t index_of(char *query, char **strings, size_t num_strings) {
-  for(size_t i = 0; i < num_strings; i++) {
-    if (strcmp(query, strings[i]) == 0) return i;
-  }
-  return -1;
+static bool pair_matches_key(const obj *pair, const obj *key) {
+  obj* pair_key = ith(pair, 0);
+  return compare(pair_key, key);
 }

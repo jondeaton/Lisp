@@ -4,30 +4,31 @@
  * Presents the interface to the
  */
 
-#ifndef _LISP_EVALUATOR_H
-#define _LISP_EVALUATOR_H
+#ifndef _EVALUATOR_H_INCLUDED
+#define _EVALUATOR_H_INCLUDED
 
-#include <list.h>
+#include "lisp-objects.h"
 
 /**
  * Function: eval
  * --------------
- * Evaluates a lisp object in an environment
+ * Evaluates a lisp object in an environment, potentially allocating
+ * objects in the global allocated vector.
  * @param o: An object to be evaluated
- * @param env: Environment to evaluate the expression in
+ * @param envp: Environment to evaluate the expression in
  * @return: The result of the evaluation of the object
  */
-obj* eval(const obj* o, obj* env);
+obj* eval(const obj* o, obj** envp);
 
 /**
  * Function: apply
  * ---------------
  * Applies a lisp function to an argument list
- * @param o: A lisp function object (will be asserted)
+ * @param operator: A lisp function object
  * @param args: List of arguments
- * @param env: Environment to evaluate the expression in
+ * @param envp: Environment to evaluate the expression in
  * @return: The result of the application of the function to the arguments
  */
-obj* apply(const obj* closure, const obj* args, obj* env);
+obj* apply(const obj* operator, const obj* args, obj** envp);
 
-#endif
+#endif // _EVALUATOR_H_INCLUDED

@@ -96,7 +96,7 @@ CVector *cvec_create(size_t elemsz, size_t capacity_hint, CleanupElemFn fn);
  * Function: cvec_dispose
  * ----------------------
  * Disposes of the CVector. Calls the client's cleanup function on each element
- * and deallocates memory used for the CVector's storage. Operates in linear-time.
+ * and de-allocates memory used for the CVector's storage. Operates in linear-time.
  * Usage: cvec_dispose(v)
  */
 void cvec_dispose(CVector *cv);
@@ -146,7 +146,7 @@ void *cvec_nth(const CVector *cv, int index);
  *
  * Usage: cvec_insert(v, &elem, 0)
  */
-void cvec_insert(CVector *cv, const void *addr, int index);
+void cvec_insert(CVector *cv, const void *source, int index);
 
 /**
  * Function: cvec_append
@@ -193,14 +193,18 @@ void cvec_replace(CVector *cv, const void *addr, int index);
 void cvec_remove(CVector *cv, int index);
 
 /**
+ * Function: cvec_clear
+ * -------------------
+ * Disposes of all elements in the CVector by calling the cleanup function on all elements
+ * @param cv: The CVector to clear of all elements
+ */
+void cvec_clear(CVector *cv);
+
+/**
  * Function: cvec_search
  * ---------------------
- * Searches the CVector for an element matching a key element.
- * It uses the provided cmp callback to compare elements.
- * The search considers all elements from start index to end.
- * To search the entire CVector, specify a start index of 0.
- *
- * This function does not
+ * Searches the CVector for an element matching a key element from a starting
+ * index to the end of the vector. This function does not
  * re-arrange/modify elements within the CVector or modify the key.
  * Operates in linear-time or logarithmic-time (if sorted).
  *
@@ -209,7 +213,7 @@ void cvec_remove(CVector *cv, int index);
  * allowing this case means client can search an empty CVector from 0 without
  * getting an assert).
  *
- * Asserts: invalid start index
+ * Asserts: valid start index
  * Assumes: address of valid key, cmp fn is valid
  *
  * @param cv: The CVector to search
@@ -224,7 +228,6 @@ void cvec_remove(CVector *cv, int index);
  * matching indexes can be returned.
  */
 int cvec_search(const CVector *cv, const void *keyaddr, CompareFn cmp, int start, bool sorted);
-
 
 /**
  * Function: cvec_sort
