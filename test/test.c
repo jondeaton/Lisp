@@ -40,8 +40,8 @@ static int test_cond();
 static int test_set();
 static int test_math();
 static int test_lambda();
-static int test_Y_combinator();
 static int test_recursion();
+static int test_Y_combinator();
 
 /**
  * Function: main
@@ -74,8 +74,8 @@ static int run_all_tests() {
   num_fails += test_set();
   num_fails += test_math();
   num_fails += test_lambda();
-//  num_fails += test_Y_combinator();
-//  num_fails += test_recursion();
+  num_fails += test_recursion();
+  num_fails += test_Y_combinator();
   return num_fails;
 }
 
@@ -413,14 +413,52 @@ static int test_lambda() {
 }
 
 /**
+ * Function: test_recursion
+ * ------------------------
+ * Tests the functionality of using recursion with set and lambda functions
+ * @return: The number of tests that failed
+ */
+static int test_recursion() {
+  printf(KMAG "\nTesting recursion...\n" RESET);
+  int num_fails = 0;
+
+  // 5!
+  const_expression five[] = {
+    "(set 'factorial (lambda (x)  (cond ((= x 0) 1) ((= 1 1) (* x (factorial (- x 1)))))))",
+    NULL,
+  };
+  num_fails += test_multi_eval(five, "(factorial 5)", "120") ? 0 : 1;
+
+  // 8!
+  const_expression eight[] = {
+    "(set 'factorial (lambda (x)  (cond ((= x 0) 1) ((= 1 1) (* x (factorial (- x 1)))))))",
+    NULL,
+  };
+  num_fails += test_multi_eval(eight, "(factorial 8)", "40320") ? 0 : 1;
+
+  // ith element
+  const_expression end[] = {
+    "(set 'ith (lambda (x i) (cond ((= i 0) (car x)) ((= 1 1) (ith (cdr x) (- i 1))))))",
+    NULL,
+  };
+  num_fails += test_multi_eval(end, "(ith '(1 2 3 4 5) 2)", "3") ? 0 : 1;
+
+  printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
  * Function: test_Y_combinator
  * ---------------------------
  * Tests the functionality of purely functional recursion in the lisp interpreter
  * @return: The number of tests that failed
  */
 static int test_Y_combinator() {
-  printf(KMAG "Testing Y Combinator...\n" RESET);
+  printf(KMAG "\nTesting Y Combinator...\n" RESET);
   int num_fails = 0;
+
+  printf("No tests yet.\n");
+  return num_fails;
 
   // Testing Y combinator with factorial function definition
   const_expression before[] = {
@@ -432,11 +470,3 @@ static int test_Y_combinator() {
   return num_fails;
 }
 
-static int test_recursion() {
-  printf(KMAG "Testing recursion...\n" RESET);
-  // todo: implement some recursion tests
-  printf("No tests yet.\n");
-  int num_fails = 0;
-  printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
-  return num_fails;
-}
