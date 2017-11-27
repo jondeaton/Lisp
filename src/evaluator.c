@@ -62,10 +62,10 @@ obj* apply(const obj* operator, const obj* args, obj** envp) {
 
     obj* new_env = bind_args_and_captured(operator, args, envp); // Append bound args, and captured vars
     obj* old_env = *envp; // gotta keep one around in case points is modified in eval
-    obj* result =  eval(closure_of(operator)->procedure, &new_env); // Evaluate body in prepended
+    obj* result =  eval(closure_of(operator)->procedure, &new_env); // Evaluate body in prepended environment
 
     split_lists(new_env, old_env);
-    add_allocated_recursive(new_env); // All of the newly allocated things
+    add_allocated_recursive(new_env); // Mark the bound elements for cleanup
 
     return result;
   }

@@ -5,13 +5,12 @@
  * such as copying and and disposal
  */
 
-#include "list.h"
-#include <stdlib.h>
-#include <string.h>
 #include <list.h>
 #include <stack-trace.h>
 #include <lisp-objects.h>
 #include <closure.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Static function declarations
 static obj* copy_list_recursive(const obj *o);
@@ -29,12 +28,12 @@ obj* copy_recursive(const obj *o) {
   if (o == NULL) return NULL;
 
   // Different kind of copying for each object type
-  if (is_atom(o)) return copy_atom(o);
-  if (is_primitive(o)) return copy_primitive(o);
-  if (is_list(o)) return copy_list_recursive(o);
-  if (is_int(o)) return new_int(get_int(o));
-  if (is_float(o)) return new_float(get_float(o));
-  if (is_closure(o)) return copy_closure_recursive(o);
+  if (is_atom(o))       return copy_atom(o);
+  if (is_primitive(o))  return copy_primitive(o);
+  if (is_list(o))       return copy_list_recursive(o);
+  if (is_int(o))        return new_int(get_int(o));
+  if (is_float(o))      return new_float(get_float(o));
+  if (is_closure(o))    return copy_closure_recursive(o);
   return NULL;
 }
 
@@ -90,7 +89,7 @@ void split_lists(obj *to_split, obj *second_list) {
 
 int list_length(const obj* o) {
   if (o == NULL) return 0;
-  if (!is_list(o)) return 0;
+  if (!is_list(o)) return 1;
   return 1 + list_length(list_of(o)->cdr);
 }
 

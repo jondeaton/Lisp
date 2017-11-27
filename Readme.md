@@ -66,7 +66,9 @@ and can be run with the `test-lisp` executable.
 - ~~closures~~
 - Partial binding of lambda parameters
 - Lambda with zero arguments
+- Greater than and less than primitives
 - Null
+- Signal handler in REPL
 - Tests specified in test files
 - `defmacro`
 - Strings

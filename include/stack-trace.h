@@ -39,9 +39,9 @@
  *
  *      LOG_ERROR("Expecting %d, saw %d", expected_num, observed_num);
  *
- * which could produce the same style error above.
- * @param context: The context in which the error occurred
- * @param message_format: The format to format the message with
+ * which produces the same format of error message as above.
+ * @param context: The context in which the error occurred (will be placed between brackets)
+ * @param message_format: The format of the error message content
  * @param ... (additional arguments): A sequence of additional arguments, each containing a value to be used to
  * replace a format specifier in the message_format string. There should be at least as many of these
  * arguments as the number of values specified in the format specifiers. Additional arguments are ignored
