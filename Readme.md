@@ -64,6 +64,9 @@ and can be run with the `test-lisp` executable.
 - ~~`env` primitive to print the environment~~
 - ~~memory management~~
 - ~~closures~~
+- Partial binding of lambda parameters
+- Lambda with zero arguments
+- Null
 - Tests specified in test files
 - `defmacro`
 - Strings
