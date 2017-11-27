@@ -115,31 +115,44 @@ obj* new_float(float value) {
 }
 
 bool is_atom(const obj* o) {
+  if (o == NULL) return false;
   return o->objtype == atom_obj;
 }
 
 bool is_primitive(const obj* o) {
+  if (o == NULL) return false;
   return o->objtype == primitive_obj;
 }
 
 bool is_list(const obj* o) {
+  if (o == NULL) return false;
   return o->objtype == list_obj;
 }
 
 bool is_closure(const obj* o) {
+  if (o == NULL) return false;
   return o->objtype == closure_obj;
 }
 
 bool is_int(const obj* o) {
+  if (o == NULL) return false;
   return o->objtype == integer_obj;
 }
 
 bool is_float(const obj* o) {
+  if (o == NULL) return false;
   return o->objtype == float_obj;
 }
 
 bool is_number(const obj* o) {
+  if (o == NULL) return false;
   return is_float(o) || is_int(o);
+}
+
+bool is_t(const obj* o) {
+  if (o == NULL) return false;
+  if (!is_atom(o)) return false;
+  return strcmp(atom_of(o), "t") == 0 || strcmp(atom_of(o), "true") == 0;
 }
 
 float get_float(const obj* o) {

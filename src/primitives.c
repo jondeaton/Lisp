@@ -10,8 +10,8 @@
 #include <garbage-collector.h>
 #include <stack-trace.h>
 #include <string.h>
+#include <lisp-objects.h>
 
-static const char* t_contents = "t";
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "defmacro", NULL };
 
@@ -19,7 +19,6 @@ static const primitive_t primitive_functions[] = { &quote,  &atom,  &eq,  &car, 
                                                    &cond,  &set, &env_prim, &defmacro,  NULL };
 
 // Static function declarations
-static bool is_t(const obj* o);
 static obj* ith_arg_value(const obj *args, obj** envp, int i);
 
 obj* get_primitive_library() {
@@ -28,7 +27,7 @@ obj* get_primitive_library() {
 
 // Allocate new truth atom
 obj* t() {
-  obj* t = new_atom(t_contents);
+  obj* t = new_atom("t");
   add_allocated(t);
   return t;
 }
@@ -66,14 +65,15 @@ obj* eq(const obj* args, obj** envp) {
 obj* car(const obj* args, obj** envp) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(list_of(args)->car, envp);
+  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
   return list_of(arg_value)->car;
 }
 
 obj* cdr(const obj* args, obj** envp) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-
-  obj* result = eval(list_of(args)->car, envp);
-  return list_of(result)->cdr;
+  obj* arg_value = eval(list_of(args)->car, envp);
+  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
+  return list_of(arg_value)->cdr;
 }
 
 obj* cons(const obj* args, obj** envp) {
@@ -81,8 +81,10 @@ obj* cons(const obj* args, obj** envp) {
 
   obj* x = list_of(args)->car;
   obj* y = list_of(list_of(args)->cdr)->car;
+  if (!is_list(y)) return LOG_ERROR("Second argument is not a list");
 
   obj* new_obj = new_list();
+  if (new_obj == NULL) return NULL;
   add_allocated(new_obj); // Record allocation
   list_of(new_obj)->car = eval(x, envp);
   list_of(new_obj)->cdr = eval(y, envp);
@@ -91,18 +93,21 @@ obj* cons(const obj* args, obj** envp) {
 }
 
 obj* cond(const obj* o, obj** envp) {
-  if (o == NULL) return NULL;
+  if (o == NULL) return empty();
+
+  if (!is_list(o)) return LOG_ERROR("Arguments are not a list of pairs");
 
   obj* pair = list_of(o)->car;
-  list_t* pl = list_of(pair);
+  if (!is_list(pair)) return LOG_ERROR("Conditional pair clause is not a list");
 
-  obj* predicate = eval(pl->car, envp);
+  obj* predicate = eval(list_of(pair)->car, envp);
   if (is_t(predicate)) {
-    obj* e = list_of(pl->cdr)->car;
+    obj* e = ith(pair, 1);
+    if (e == NULL) return LOG_ERROR("Predicate has no associated value");
     return eval(e, envp);
   } else {
-    if (pl->cdr == NULL) return empty();
-    return cond(list_of(o)->cdr, envp);
+    if (list_of(pair)->cdr == NULL) return empty(); // nothing evaluated to true
+    return cond(list_of(o)->cdr, envp); // recurse on the rest of the list
   }
 }
 
@@ -135,19 +140,6 @@ obj* defmacro(const obj* args, obj** envp) {
   (void) args;
   (void) envp;
   return LOG_ERROR("Macro definition not yet supported");
-}
-
-/**
- * Function: is_t
- * --------------
- * Determines if a lisp object is the truth atom
- * @param o: A lisp object to determine if it is the t atom
- * @return: True if it is the truth atom, false otherwise
- */
-static bool is_t(const obj* o) {
-  if (o == NULL) return false;
-  if (!is_atom(o)) return false;
-  return strcmp(atom_of(o), t_contents) == 0;
 }
 
 /**

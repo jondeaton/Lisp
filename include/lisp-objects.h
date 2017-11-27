@@ -10,7 +10,13 @@
 #include <stdbool.h>
 
 // The different types of lists
-enum type {atom_obj, list_obj, primitive_obj, closure_obj, integer_obj, float_obj};
+enum type {
+    atom_obj,
+    list_obj,
+    primitive_obj,
+    closure_obj,
+    integer_obj,
+    float_obj };
 
 typedef const char* atom_t;
 
@@ -212,6 +218,15 @@ bool is_float(const obj* o);
  * @return: True if the object type is a int or float, false otherwise
  */
 bool is_number(const obj* o);
+
+/**
+ * Function: is_t
+ * --------------
+ * Determines if a lisp object is the truth atom
+ * @param o: A lisp object to determine if it is the truth atom
+ * @return: True if it is the truth atom, false otherwise.
+ */
+bool is_t(const obj* o);
 
 /**
  * Function: get_int

@@ -26,6 +26,7 @@ obj* eval(const obj* o, obj** envp) {
 
   // Atom type means its just a literal that needs to be looked up
   if (is_atom(o)) {
+    if (is_t(o)) return (obj*) o;
     obj* value = lookup(o, *envp);
     if (value) return value;
     return LOG_ERROR("Variable: \"%s\" not found in environment", atom_of(o));
