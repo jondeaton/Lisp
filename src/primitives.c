@@ -80,8 +80,7 @@ obj* cons(const obj* args, obj** envp) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* x = list_of(args)->car;
-  obj* y = list_of(list_of(args)->cdr)->car;
-  if (!is_list(y)) return LOG_ERROR("Second argument is not a list");
+  obj* y = ith(args, 1);
 
   obj* new_obj = new_list();
   if (new_obj == NULL) return NULL;
