@@ -18,8 +18,8 @@
  *  ./lisp -b my-bootstrap.lisp
  */
 
-#include "repl.h"
-#include "run-lisp.h"
+#include <repl.h>
+#include <run-lisp.h>
 #include <unistd.h>
 
 void parse_command_line_args(int argc, char* argv[]);

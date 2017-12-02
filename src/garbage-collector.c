@@ -23,17 +23,17 @@ void add_allocated(const obj* o) {
   cvec_append(allocated, &o);
 }
 
-void add_allocated_recursive(const obj* o) {
-  if (o == NULL) return;
-  if (is_list(o)) {
-    add_allocated_recursive(list_of(o)->car);
-    add_allocated_recursive(list_of(o)->cdr);
-  } else if (is_closure(o)) {
-    add_allocated_recursive(closure_of(o)->parameters);
-    add_allocated_recursive(closure_of(o)->procedure);
-    add_allocated_recursive(closure_of(o)->captured);
+void add_allocated_recursive(const obj* root) {
+  if (root == NULL) return;
+  if (is_list(root)) {
+    add_allocated_recursive(list_of(root)->car);
+    add_allocated_recursive(list_of(root)->cdr);
+  } else if (is_closure(root)) {
+    add_allocated_recursive(closure_of(root)->parameters);
+    add_allocated_recursive(closure_of(root)->procedure);
+    add_allocated_recursive(closure_of(root)->captured);
   }
-  add_allocated(o);
+  add_allocated(root);
 }
 
 void clear_allocated() {

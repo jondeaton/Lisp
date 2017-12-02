@@ -4,7 +4,7 @@
  * Presents the implementation of the lisp parser
  */
 
-#include "parser.h"
+#include <parser.h>
 #include <stack-trace.h>
 #include <string.h>
 #include <stdio.h>

@@ -67,10 +67,8 @@ and can be run with the `test-lisp` executable.
 - Partial binding of lambda parameters
 - Lambda with zero arguments
 - Greater than and less than primitives
-- Null
-- Signal handler in REPL
+- Signal handler in REPL (to exit gracefully)
 - Tests specified in test files
 - `defmacro`
 - Strings
 - Dot notation
-

@@ -78,8 +78,16 @@ obj* equal(const obj *args, obj **envp) {
   return get_float(first) == get_float(second) ? t() : empty();
 }
 
-// todo: Add documentation
-
+/**
+ * Function: apply_arithmetic
+ * --------------------------
+ * Apply an arithmetic operation
+ * @param args: The lisp object containing the argument list
+ * @param env: The environment to apply the operation in
+ * @param intOp: The operation corresponding to applying to integers
+ * @param floatOp: The operation corresponding to applying to floating point numbers
+ * @return: The result of applying the arithmetic operation to the values of the arguments
+ */
 static obj* apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
