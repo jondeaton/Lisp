@@ -76,6 +76,8 @@ obj* ith(const obj* o, int i) {
 }
 
 obj* join_lists(obj *list1, obj *list2) {
+  if (list1 == NULL) return list2;
+  if (list2 == NULL) return list1;
   if (list_of(list1)->cdr == NULL) list_of(list1)->cdr = list2;
   else join_lists(list_of(list1)->cdr, list2);
   return list1;

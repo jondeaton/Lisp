@@ -457,13 +457,11 @@ static int test_Y_combinator() {
   printf(KMAG "\nTesting Y Combinator...\n" RESET);
   int num_fails = 0;
 
-  printf("No tests yet.\n");
-  return num_fails;
-
   // Testing Y combinator with factorial function definition
   const_expression before[] = {
-    "(set 'Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x))))))"
-      "(set 'F (lambda (f) (lambda (n) (if (= n 0) 1 (* n (f (- n 1)))))))"
+    "(set 'Y (lambda (H) ((lambda (x) (H (x x))) (lambda (x) (H (x x))))))",
+    "(set 'F (lambda (G) (lambda (x)  (cond ((= x 0) 1) ((= 1 1) (* x (G (- x 1))))))))",
+    NULL,
   };
   num_fails += test_multi_eval(before, "((Y F) 5)", "120") ? 0 : 1;
   printf("Test Y Combinator: %s\n", num_fails == 0 ? PASS : FAIL);
