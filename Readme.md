@@ -64,11 +64,10 @@ and can be run with the `test-lisp` executable.
 - ~~`env` primitive to print the environment~~
 - ~~memory management~~
 - ~~closures~~
-- Partial binding of lambda parameters
+- Partial binding of lambda parameters/arguments.
 - Lambda with zero arguments
 - Greater than and less than primitives
 - Signal handler in REPL (to exit gracefully)
-- Tests specified in test files
 - `defmacro`
 - Strings
 - Dot notation
