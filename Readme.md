@@ -64,6 +64,7 @@ and can be run with the `test-lisp` executable.
 - ~~`env` primitive to print the environment~~
 - ~~memory management~~
 - ~~closures~~
+- Use CList instead of CVector
 - Fix environment interface (make it more modular)
 - Closure Partial Application
 - Lambda with zero arguments

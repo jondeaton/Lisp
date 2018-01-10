@@ -5,22 +5,21 @@
  */
 
 #include <garbage-collector.h>
-#include <cvector.h>
+#include <clist.h>
 #include <lisp-objects.h>
 
 static void obj_cleanup(obj** op);
 
-CVector* allocated; // Vector of allocated objects needing to be freed
+CList* allocated; // List of allocated objects needing to be freed
 
 void init_allocated() {
   size_t elemsz = sizeof(obj*);   // Vector stores pointers to objects needing to be free'd
-  size_t capacity_hint = 0;       // no hint...
   CleanupElemFn cleanup_fn = (CleanupElemFn) &obj_cleanup;
-  allocated = cvec_create(elemsz, capacity_hint, cleanup_fn);
+  allocated = clist_create(elemsz, cleanup_fn);
 }
 
 void add_allocated(const obj* o) {
-  cvec_append(allocated, &o);
+  clist_push_front(allocated, &o);
 }
 
 void add_allocated_recursive(const obj* root) {
@@ -37,11 +36,11 @@ void add_allocated_recursive(const obj* root) {
 }
 
 void clear_allocated() {
-  cvec_clear(allocated); // Free all the contents
+  clist_clear(allocated); // Free all the contents
 }
 
 void dispose_allocated() {
-  cvec_dispose(allocated); // Destroy the vector
+  clist_dispose(allocated); // Destroy the list of objects
 }
 
 /**
