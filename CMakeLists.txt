@@ -33,7 +33,6 @@ set(COMMON_SRC
         include/list.h              src/evaluator.c
         include/garbage-collector.h src/garbage-collector.c
         include/environment.h       src/environment.c
-        include/cvector.h           src/cvector.c
         include/clist.h             src/clist.c
         include/math.h              src/math.c
         include/run-lisp.h          src/run-lisp.c
