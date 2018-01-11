@@ -1,6 +1,7 @@
 
 #include <clist.h>
 #include <string.h>
+#include <assert.h>
 
 typedef struct CListNode Node;
 
@@ -45,10 +46,12 @@ int clist_count(const CList* cl) {
 }
 
 void* clist_front(const CList* cl) {
+  if (!cl->front) return NULL;
   return cl->front->data;
 }
 
 void* clist_back(const CList* cl) {
+  if (!cl->back) return NULL;
   return cl->back->data;
 }
 
@@ -57,7 +60,7 @@ void clist_push_front(CList* cl, const void* source) {
   node->next = cl->front;
   if (cl->front) cl->front->previous = node;
   cl->front = node;
-  if (cl->back == NULL) cl->back = cl->front;
+  if (!cl->back) cl->back = cl->front;
   cl->nelems++;
 }
 
@@ -66,7 +69,7 @@ void clist_push_back(CList* cl, const void* source) {
   node->previous = cl->back;
   if (cl->back) cl->back->next = node;
   cl->back = node;
-  if (cl->front == NULL) cl->front = cl->back;
+  if (!cl->front) cl->front = cl->back;
   cl->nelems++;
 }
 
@@ -76,6 +79,7 @@ void clist_pop_front(CList* cl) {
   Node* front = cl->front;
   cl->front = front->next;
   if (cl->front) cl->front->previous = NULL;
+  else cl->back = NULL;
 
   delete_node(cl, front);
   cl->nelems--;
@@ -87,6 +91,7 @@ void clist_pop_back(CList* cl) {
   Node* back = cl->back;
   cl->back = back->previous;
   if (cl->back) cl->back->next = NULL;
+  else cl->front = NULL;
 
   delete_node(cl, back);
   cl->nelems--;
@@ -133,6 +138,7 @@ static inline void delete_node(CList* cl, Node* node) {
 
 static inline Node* new_node(const CList* cl, const void* source) {
   Node* node = malloc(sizeof(Node));
+  assert(node);
   node->next = NULL;
   node->previous = NULL;
   node->data = malloc(cl->elemsz);
