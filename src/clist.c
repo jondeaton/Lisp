@@ -8,7 +8,6 @@ typedef struct CListNode Node;
 struct CListNode {
   Node* next;
   Node* previous;
-  void* data;
 };
 
 struct CListImplementation {
@@ -19,8 +18,10 @@ struct CListImplementation {
   CleanupElemFn cleanup;
 };
 
+static Node* node_at(const CList* cl, int i);
 static inline Node* new_node(const CList* cl, const void* source);
 static inline void delete_node(CList* cl, Node* node);
+static inline void* data_of(const Node* node);
 
 CList* clist_create(size_t elemsz, CleanupElemFn fn) {
   CList* cl = malloc(sizeof(CList));
@@ -47,12 +48,12 @@ int clist_count(const CList* cl) {
 
 void* clist_front(const CList* cl) {
   if (!cl->front) return NULL;
-  return cl->front->data;
+  return data_of(cl->front);
 }
 
 void* clist_back(const CList* cl) {
   if (!cl->back) return NULL;
-  return cl->back->data;
+  return data_of(cl->back);
 }
 
 void clist_push_front(CList* cl, const void* source) {
@@ -71,6 +72,36 @@ void clist_push_back(CList* cl, const void* source) {
   cl->back = node;
   if (!cl->front) cl->front = cl->back;
   cl->nelems++;
+}
+
+void clist_insert(CList* cl, const void* source, int i) {
+  if (i > cl->nelems) return; // invalid index
+
+  Node* node = new_node(cl, source);
+  Node* previous = node_at(cl, i - 1);
+
+  Node* next;
+  if (previous) next = previous->next;
+  else next = cl->front;
+
+  if (previous) previous->next = node;
+  else cl->front = node;
+
+  if (next) next->previous = node;
+  else cl->back = node;
+
+  node->next = next;
+  node->previous = previous;
+
+  cl->nelems++;
+}
+
+void clist_erase(CList* cl, int i) {
+  Node* node = node_at(cl, i);
+  if (!node) return;
+  if (node->previous) node->previous->next = node->next;
+  if (node->next) node->next->previous = node->previous;
+  cl->nelems--;
 }
 
 void clist_pop_front(CList* cl) {
@@ -127,21 +158,35 @@ void clist_remove(CList* cl, clist_iterator it) {
 
 void *clist_data(clist_const_iterator it) {
   const Node* node = (const Node*) it;
-  return node->data;
+  return data_of(node);
+}
+
+static Node* node_at(const CList* cl, int i) {
+  if (cl->nelems <= i) return NULL; // invalid index
+
+  Node* node = cl->front;
+  while (i > 0 && node) {
+    i--;
+    node = node->next;
+  }
+  return node;
 }
 
 static inline void delete_node(CList* cl, Node* node) {
-  if (cl->cleanup) cl->cleanup(node->data);
-  free(node->data);
+  if (cl->cleanup) cl->cleanup(data_of(node));
   free(node);
 }
 
 static inline Node* new_node(const CList* cl, const void* source) {
-  Node* node = malloc(sizeof(Node));
+  Node* node = malloc(sizeof(Node) + cl->elemsz);
   assert(node);
   node->next = NULL;
   node->previous = NULL;
-  node->data = malloc(cl->elemsz);
-  memcpy(node->data, source, cl->elemsz);
+  memcpy(data_of(node), source, cl->elemsz);
   return node;
 }
+
+static inline void* data_of(const Node* node) {
+  return (char*) node + sizeof(Node);
+}
+

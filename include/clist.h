@@ -25,6 +25,8 @@ void* clist_back(const CList* cl);
 
 void clist_push_front(CList* cl, const void* source);
 void clist_push_back(CList* cl, const void* source);
+void clist_insert(CList* cl, const void* source, int i);
+void clist_erase(CList* cl, int i);
 
 void clist_pop_front(CList* cl);
 void clist_pop_back(CList* cl);
