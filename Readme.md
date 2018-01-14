@@ -66,7 +66,7 @@ and can be run with the `test-lisp` executable.
 - ~~closures~~
 - ~~Use CList instead of CVector~~
 - Closure partial application
-- Lambda with zero arguments
+- ~~Lambda with zero arguments~~
 - Y combinator tests
 - Greater than and less than primitives
 - Signal handler in REPL (to exit gracefully with GC)

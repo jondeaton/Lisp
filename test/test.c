@@ -410,10 +410,19 @@ static int test_lambda() {
 
   const_expression before5[] = {
     "(set 'f (lambda () 4))",
-    "(f)"
+    "(f)",
+    NULL
   };
 
   num_fails += test_multi_eval(before5, "(f)", "4") ? 0 : 1;
+
+  const_expression before6[] = {
+    "(set 'f (lambda () (+ 5 6)))",
+    "(f)",
+    NULL
+  };
+
+  num_fails += test_multi_eval(before6, "(f)", "11") ? 0 : 1;
 
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;

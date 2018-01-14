@@ -59,6 +59,7 @@ bool is_empty(const obj* o) {
 }
 
 bool compare_recursive(const obj *x, const obj *y) {
+  if (x == NULL) return y == NULL;
   if (x->objtype != y->objtype) return false;
   if (is_atom(x)) return strcmp(atom_of(x), atom_of(y)) == 0;
   if (is_primitive(x)) return primitive_of(x) == primitive_of(y);
