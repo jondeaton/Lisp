@@ -1,7 +1,7 @@
 /*
  * File: closures.c
  * ----------------
- * Presents the implementation of closure related functionality
+ * Implements closure related functionality
  */
 
 #include <lisp-objects.h>

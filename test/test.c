@@ -408,6 +408,13 @@ static int test_lambda() {
   };
   num_fails += test_multi_eval(before4, "(prepend-z '(a b c))", "(z a b c)") ? 0 : 1;
 
+  const_expression before5[] = {
+    "(set 'f (lambda () 4))",
+    "(f)"
+  };
+
+  num_fails += test_multi_eval(before5, "(f)", "4") ? 0 : 1;
+
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

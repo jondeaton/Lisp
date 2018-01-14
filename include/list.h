@@ -84,7 +84,7 @@ obj* join_lists(obj *list1, obj *list2);
  * @param to_split: The list to split
  * @param second_list: Pointer to the start of the second list, where the list should be split.
  */
-void split_lists(obj *to_split, obj *second_list);
+bool split_lists(obj *to_split, obj *second_list);
 
 /**
  * Function: list_length

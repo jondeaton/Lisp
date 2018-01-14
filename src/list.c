@@ -83,10 +83,14 @@ obj* join_lists(obj *list1, obj *list2) {
   return list1;
 }
 
-void split_lists(obj *to_split, obj *second_list) {
-  if (to_split == NULL || second_list == NULL) return;
-  if (list_of(to_split)->cdr == second_list) list_of(to_split)->cdr = NULL;
-  else split_lists(list_of(to_split)->cdr, second_list);
+bool split_lists(obj *to_split, obj *second_list) {
+  if (to_split == NULL || second_list == NULL) return false;
+  if (to_split == second_list) return false;
+  if (list_of(to_split)->cdr == second_list) {
+    list_of(to_split)->cdr = NULL;
+    return true;
+  }
+  else return split_lists(list_of(to_split)->cdr, second_list);
 }
 
 int list_length(const obj* o) {

@@ -65,7 +65,7 @@ and can be run with the `test-lisp` executable.
 - ~~memory management~~
 - ~~closures~~
 - ~~Use CList instead of CVector~~
-- Closure Partial Application
+- Closure partial application
 - Lambda with zero arguments
 - Y combinator tests
 - Greater than and less than primitives

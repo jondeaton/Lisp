@@ -65,8 +65,8 @@ obj* apply(const obj* operator, const obj* args, obj** envp) {
     obj* old_env = *envp; // gotta keep one around in case points is modified in eval
     obj* result =  eval(closure_of(operator)->procedure, &new_env); // Evaluate body in prepended environment
 
-    split_lists(new_env, old_env);
-    add_allocated_recursive(new_env); // Mark the bound elements for cleanup
+    bool split = split_lists(new_env, old_env);
+    if (split) add_allocated_recursive(new_env); // Mark the bound elements for cleanup
 
     return result;
   }
@@ -75,6 +75,15 @@ obj* apply(const obj* operator, const obj* args, obj** envp) {
   return LOG_ERROR("Non-procedure cannot be applied");
 }
 
+/**
+ * Function: bind_args_and_captured
+ * --------------------------------
+ * Prepends a list of arguments bound to parameters, and captured variables to an environment
+ * @param operator: The operator (closure object) containing the parameter names + captured variables
+ * @param args: The arguments to bind to the operator's parameters
+ * @param envp: Pointer to the environment to prepend the bound arguments to
+ * @return: The new environment
+ */
 static obj* bind_args_and_captured(const obj *operator, const obj *args, obj **envp) {
   closure_t* closure = closure_of(operator);
   obj* new_env = bind(closure->parameters, args, envp); // Bind the parameters to the arguments
@@ -102,14 +111,14 @@ static obj* bind(obj *params, const obj *args, obj **envp) {
  * Takes a list of variable names and pairs them up with values in a list of pairs
  * @param names: List of names to associate with values
  * @param args: List of values each associated with the name in the name list
+ * @param envp: Pointer to the environment to associate the
  * @return: A list containing pairs of name-value pairs
  */
 static obj *associate(obj *names, const obj *args, obj **envp) {
-  if (names == NULL || args == NULL) return NULL;
   if (!is_list(names) || !is_list(args)) return NULL;
 
   obj* value = eval(list_of(args)->car, envp);
-  obj* pair = make_pair(list_of(names)->car,value, true);
+  obj* pair = make_pair(list_of(names)->car, value, true);
   obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp);
   return new_list_set(pair, cdr);
 }
