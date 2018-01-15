@@ -87,6 +87,33 @@ expression unparse(const obj* o) {
   return NULL;
 }
 
+bool empty_expression(const_expression e) {
+  if (e == NULL) return true;
+  for (unsigned int i = 0; i < strlen(e); i++)
+    if (!is_white_space(e[i])) return false;
+  return true;
+}
+
+bool is_balanced(const_expression e) {
+  int net = 0;
+  for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '(') net++;
+    if (e[i] == ')') net--;
+  }
+  return net == 0;
+}
+
+bool is_valid(const_expression e) {
+  int net = 0;
+  for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '(') net++;
+    if (e[i] == ')') net--;
+    if (net < 0) return false;
+  }
+  return net >= 0;
+}
+
+
 /**
  * Function: unparse_list
  * ----------------------
@@ -191,40 +218,6 @@ static expression unparse_primitive(const obj *o) {
   memcpy(&p, (void**) primitive_of(o), sizeof(primitive_t));
   sprintf(e, KMAG "%p" RESET, p);
   return e;
-}
-
-/**
- * Function: is_balanced
- * ---------------------
- * Determines if an expression has balanced parenthesis
- * @param e: The lisp expression to check
- * @return: True if each opening parentheses in the expression is balanced by a closing parentheses
- * and there are no extra closing parentheses, false otherwise.
- */
-bool is_balanced(const_expression e) {
-  int net = 0;
-  for (size_t i = 0; i < strlen(e); i++) {
-    if (e[i] == '(') net++;
-    if (e[i] == ')') net--;
-  }
-  return net == 0;
-}
-
-/**
- * Function: is_valid
- * ------------------
- * Determines if an expression has extra closing parentheses
- * @param e: A lisp expression
- * @return: True is there are no extra closing parentheses, false otherwise
- */
-bool is_valid(const_expression e) {
-  int net = 0;
-  for (size_t i = 0; i < strlen(e); i++) {
-    if (e[i] == '(') net++;
-    if (e[i] == ')') net--;
-    if (net < 0) return false;
-  }
-  return net >= 0;
 }
 
 /**

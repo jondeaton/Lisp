@@ -26,12 +26,21 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p);
 /**
  * Function: unparse
  * -----------------
- * Stringifies a lisp data structure. Will return a pointer to dynamically
+ * Serializes a lisp object into a string. Will return a pointer to dynamically
  * allocated memory that must be freed.
  * @param o: A lisp object
  * @return: The string representation of the lisp data structure
  */
 expression unparse(const obj* o);
+
+/**
+ * Function: empty_expression
+ * --------------------------
+ * Determines if an expression is empty (all white space or NULL)
+ * @param e: The expression to determine if it's empty
+ * @return: True it the expression is all white space or NULL, false otherwise
+ */
+bool empty_expression(const_expression e);
 
 /**
  * Function: is_balanced

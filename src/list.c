@@ -76,6 +76,12 @@ obj* ith(const obj* o, int i) {
   return ith(list_of(o)->cdr, i - 1);
 }
 
+obj* sublist(const obj* o, int i) {
+  if (o == NULL || o->objtype != list_obj) return NULL;
+  if (i == 0) return (obj*) o;
+  return sublist(list_of(o)->cdr, i - 1);
+}
+
 obj* join_lists(obj *list1, obj *list2) {
   if (list1 == NULL) return list2;
   if (list2 == NULL) return list1;

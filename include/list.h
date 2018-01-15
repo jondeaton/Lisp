@@ -68,6 +68,16 @@ bool compare_recursive(const obj *x, const obj *y);
 obj* ith(const obj* o, int i);
 
 /**
+ * Function: sublist
+ * -----------------
+ * Gets the elements of a list after (inclusive) a specified index
+ * @param o: The list to get the sublist of
+ * @param i: The index to get elements after (and including)
+ * @return: The list starting at index i
+ */
+obj* sublist(const obj* o, int i);
+
+/**
  * Function: join_lists
  * ---------------------
  * Prepends one list to another at their top levels

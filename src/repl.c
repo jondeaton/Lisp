@@ -73,6 +73,7 @@ expression repl_eval(const_expression expr) {
   if (expr == NULL) return NULL;
 
   obj* o = parse_expression(expr, NULL);
+  if (o == NULL) return NULL;
   obj* result_obj = eval(o, &env);
   expression result = unparse(result_obj);
   clear_allocated(); // frees the objects in result_obj that were allocated during eval
@@ -95,7 +96,11 @@ void repl_dispose() {
  * @return: The parsed lisp object from dynamically allocated memory
  */
 static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
-  expression next_expr = get_expression(fd, prompt, eof);
+  expression next_expr = NULL;
+  *eof = false;
+  while (empty_expression(next_expr) && !*eof)
+    next_expr = get_expression(fd, prompt, eof);
+
   if (next_expr == NULL) return NULL;
   if (prompt) add_history(next_expr);
   obj* o = parse_expression(next_expr, NULL);
@@ -141,15 +146,16 @@ static expression get_expression_from_prompt(bool* eof) {
     *eof = line == NULL;
 
     input_size = strlen(line);
-    e = realloc(e, sizeof(char) * (total_size + input_size + 1));
+    e = realloc(e, sizeof(char) * (total_size + 1 + input_size + 1));
     if (e == NULL) {
       free(line);
       return LOG_MALLOC_FAIL();;
     }
 
-    strcpy(e + total_size, line);
+    strcpy(e + total_size, " ");
+    strcpy(e + total_size + 1, line);
     free(line);
-    total_size += input_size;
+    total_size += 1 + input_size;
   }
 }
 

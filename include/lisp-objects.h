@@ -33,6 +33,7 @@ typedef struct {
   obj* parameters;
   obj* procedure;
   obj* captured;
+  int nargs;
 } closure_t;
 
 typedef obj*(*primitive_t)(const obj*, obj**);

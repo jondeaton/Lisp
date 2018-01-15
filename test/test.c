@@ -40,6 +40,7 @@ static int test_cond();
 static int test_set();
 static int test_math();
 static int test_lambda();
+static int test_closure();
 static int test_recursion();
 static int test_Y_combinator();
 
@@ -74,6 +75,7 @@ static int run_all_tests() {
   num_fails += test_set();
   num_fails += test_math();
   num_fails += test_lambda();
+  num_fails += test_closure();
   num_fails += test_recursion();
   num_fails += test_Y_combinator();
   return num_fails;
@@ -425,6 +427,28 @@ static int test_lambda() {
   num_fails += test_multi_eval(before6, "(f)", "11") ? 0 : 1;
 
   printf("Test lambda: %s\n", num_fails == 0 ? PASS : FAIL);
+  return num_fails;
+}
+
+/**
+ * Function: test_closure
+ * ----------------------
+ * Tests the functionality of creating closures with lambda functions
+ * @return: The number of tests that failed
+ */
+static int test_closure() {
+  printf(KMAG "\nTesting closure...\n" RESET);
+  int num_fails = 0;
+
+  const_expression before[] = {
+    "(set 'f (lambda (x y) (+ x y)))",
+    "(set 'add-5 (f 5)",
+    NULL
+  };
+
+  num_fails += test_multi_eval(before, "(add-5 100)", "105") ? 0 : 1;
+
+  printf("Test closure: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
 

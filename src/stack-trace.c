@@ -35,3 +35,10 @@ bool check_nargs_min(const char *context, const obj *args, int minimum) {
   log_error(context, "Expected %d or more arguments, got %d", minimum, nargs);
   return false;
 }
+
+bool check_nargs_max(const char* context, const obj *args, int maximum) {
+  int nargs = list_length(args);
+  if (nargs <= maximum) return true;
+  log_error(context, "Expected %d or fewer arguments, got %d", maximum, nargs);
+  return false;
+}

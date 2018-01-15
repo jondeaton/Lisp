@@ -18,7 +18,6 @@
 // Static function declarations
 static obj* bind_args_and_captured(const obj *operator, const obj *args, obj **envp);
 static obj* bind(obj *params, const obj *args, obj **envp);
-static obj *associate(obj *names, const obj *args, obj **envp);
 static bool is_lambda(const obj* o);
 
 obj* eval(const obj* o, obj** envp) {
@@ -57,6 +56,12 @@ obj* apply(const obj* operator, const obj* args, obj** envp) {
   }
 
   if (is_closure(operator)) {
+    if (!CHECK_NARGS_MAX(args, closure_of(operator)->nargs)) return NULL;
+
+    // Partial closure application
+    if (list_length(args) < closure_of(operator)->nargs)
+      return closure_partial_application(operator, args, envp);
+
     // The result of a closure application is the evaluation of the body of the closure in an environment
     // containing the captured variables from the closure, along with the values of the arguments
     // bound to the parameters of the closure.
@@ -94,7 +99,7 @@ static obj* bind_args_and_captured(const obj *operator, const obj *args, obj **e
 /**
  * Function: bind
  * --------------
- * binds a list of arguments to parameters and prepends them onto an environment
+ * binds a list of arguments to parameters and prepends them on to an environment
  * @param params: List of parameters
  * @param args: List of arguments to bind to the parameters
  * @param envp: Environment to prepend the bound arguments to
@@ -103,24 +108,6 @@ static obj* bind_args_and_captured(const obj *operator, const obj *args, obj **e
 static obj* bind(obj *params, const obj *args, obj **envp) {
   obj* frame = associate(params, args, envp);
   return join_lists(frame, *envp);
-}
-
-/**
- * Function: associate
- * -------------------
- * Takes a list of variable names and pairs them up with values in a list of pairs
- * @param names: List of names to associate with values
- * @param args: List of values each associated with the name in the name list
- * @param envp: Pointer to the environment to associate the
- * @return: A list containing pairs of name-value pairs
- */
-static obj *associate(obj *names, const obj *args, obj **envp) {
-  if (!is_list(names) || !is_list(args)) return NULL;
-
-  obj* value = eval(list_of(args)->car, envp);
-  obj* pair = make_pair(list_of(names)->car, value, true);
-  obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp);
-  return new_list_set(pair, cdr);
 }
 
 /**

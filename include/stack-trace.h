@@ -21,6 +21,7 @@
 #define LOG_MALLOC_FAIL() LOG_ERROR("Memory allocation failure")
 #define CHECK_NARGS(args, expected) check_nargs(__func__, args, expected)
 #define CHECK_NARGS_MIN(args, minimum) check_nargs_min(__func__, args, minimum)
+#define CHECK_NARGS_MAX(argc, maximum) check_nargs_max(__func__, args, maximum)
 
 /**
  * Function: log_error
@@ -67,7 +68,7 @@ bool check_nargs(const char *context, const obj *args, int expected);
  * Function: check_nargs_min
  * -------------------------
  * Determines if a sufficient number of arguments are present, logging an informative error if there
- * are fewer arguments than the specified minimum number
+ * are fewer arguments than the specified minimum number of arguments.
  * @param context: The context in which the arguments are being checked
  * @param args: The arguments to check
  * @param minimum: The minimum allowable number of arguments
@@ -75,5 +76,17 @@ bool check_nargs(const char *context, const obj *args, int expected);
  * number, and false otherwise
  */
 bool check_nargs_min(const char *context, const obj *args, int minimum);
+
+/**
+ * Function: check_nargs_max
+ * -------------------------
+ * Determines if the number of arguments does not exceed some maximum number, logging an informative error
+ * if there are more than the specified maximum number of arguments.
+ * @param context: The context in which the arguments are being checked
+ * @param args: The arguments to check
+ * @param maximum: The maximum number of arguments allowable
+ * @return: True if there are fewer than or equal to the maximum number of arguments, false otherwise.
+ */
+bool check_nargs_max(const char* context, const obj *args, int maximum);
 
 #endif // _STACK_TRACE_H_INCLUDED

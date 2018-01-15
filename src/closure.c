@@ -9,6 +9,7 @@
 #include <garbage-collector.h>
 #include <list.h>
 #include <environment.h>
+#include <evaluator.h>
 #include <stdlib.h>
 
 // Static function declarations
@@ -27,11 +28,28 @@ obj* make_closure(const obj *lambda, obj *env) {
   return closure;
 }
 
+obj *closure_partial_application(const obj *closure, const obj *args, obj **envp) {
+  if (closure == NULL) return NULL;
+
+  int nargs = list_length(args);
+
+  obj* params = copy_recursive(sublist(closure_of(closure)->parameters, nargs));
+  obj* procedure = copy_recursive(closure_of(closure)->procedure);
+
+  obj* new_bindings = associate(closure_of(closure)->parameters, args, envp);
+  obj* captured = join_lists(new_bindings, copy_recursive(closure_of(closure)->captured));
+
+  obj* new_closure = new_closure_set(params, procedure, captured);
+  add_allocated_recursive(new_closure);
+  return new_closure;
+}
+
 obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
   obj* o = new_closure();
   closure_of(o)->parameters = params;
   closure_of(o)->procedure = procedure;
   closure_of(o)->captured = captured;
+  closure_of(o)->nargs = is_empty(params) ? 0 : list_length(params);
   return o;
 }
 
@@ -41,6 +59,15 @@ obj* copy_closure_recursive(const obj* closure) {
   obj* proc = copy_recursive(c->procedure);
   obj* capt = copy_recursive(c->captured);
   return new_closure_set(params, proc, capt);
+}
+
+obj *associate(obj *names, const obj *args, obj **envp) {
+  if (!is_list(names) || !is_list(args)) return NULL;
+
+  obj* value = eval(list_of(args)->car, envp);
+  obj* pair = make_pair(list_of(names)->car, value, true);
+  obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp);
+  return new_list_set(pair, cdr);
 }
 
 obj* get_lambda_parameters(const obj *lambda) {
@@ -65,7 +92,7 @@ obj* get_lambda_body(const obj *lambda) {
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env) {
   if (procedure == NULL) return;
 
-  if (is_list(procedure)) { // good ol' depth-first search
+  if (is_list(procedure)) { // depth-first search
     get_captured_vars(capturedp, params, list_of(procedure)->car, env);
     get_captured_vars(capturedp, params, list_of(procedure)->cdr, env);
 
