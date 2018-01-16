@@ -88,7 +88,7 @@ expression unparse(const obj* o) {
 }
 
 bool empty_expression(const_expression e) {
-  if (e == NULL) return true;
+  if (e == NULL) return false;
   for (unsigned int i = 0; i < strlen(e); i++)
     if (!is_white_space(e[i])) return false;
   return true;

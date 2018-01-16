@@ -96,11 +96,7 @@ void repl_dispose() {
  * @return: The parsed lisp object from dynamically allocated memory
  */
 static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
-  expression next_expr = NULL;
-  *eof = false;
-  while (empty_expression(next_expr) && !*eof)
-    next_expr = get_expression(fd, prompt, eof);
-
+  expression next_expr = get_expression(fd, prompt, eof);
   if (next_expr == NULL) return NULL;
   if (prompt) add_history(next_expr);
   obj* o = parse_expression(next_expr, NULL);
@@ -133,12 +129,19 @@ static expression get_expression_from_prompt(bool* eof) {
   *eof = e == NULL;
   if (e == NULL) return NULL;
 
+  bool empty = empty_expression(e);
+  if (empty) {
+    free(e);
+    return get_expression_from_prompt(eof);
+  }
+
   size_t input_size = strlen(e);
   size_t total_size = input_size;
 
   while (true) {
     bool valid = is_valid(e);
     bool balanced = is_balanced(e);
+    
     if (valid && balanced) return e;
     if (!valid || *eof) return NULL;
 
