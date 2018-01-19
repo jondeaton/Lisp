@@ -69,6 +69,10 @@ and can be run with the `test-lisp` executable.
 - ~~Closure partial application~~
 - ~~Empty expression is not invalid~~
 - ~~Signal handler in REPL (to exit gracefully with garbage collection)~~
+- Allow for REPL to run from any file descriptor
+- Proper error reporting on file reading
+- Specify lisp history file
+- Verbose logging functionality with CLI flag
 - Y combinator tests
 - Greater than and less than primitives
 - `defmacro`
