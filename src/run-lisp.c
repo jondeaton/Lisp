@@ -27,7 +27,7 @@ int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl
   if (program_file && check_read_permissions(program_file)) return errno;
 
   int err = read_history(LISP_HISTORY);
-  if (err) perror(LISP_HISTORY);
+  if (err && err != ENOENT) perror(LISP_HISTORY);
 
   repl_init();
   signal(SIGINT, int_handler);
