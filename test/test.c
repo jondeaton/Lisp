@@ -143,7 +143,6 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
 static bool test_multi_eval(const_expression before[], const_expression expr, const_expression expected) {
 
   repl_init();
-
   for (int i = 0; before[i]; i++) free(repl_eval(before[i]));
   expression result_exp = repl_eval(expr);
   repl_dispose();
