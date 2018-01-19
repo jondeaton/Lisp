@@ -68,9 +68,9 @@ and can be run with the `test-lisp` executable.
 - ~~Lambda with zero arguments~~
 - ~~Closure partial application~~
 - ~~Empty expression is not invalid~~
+- ~~Signal handler in REPL (to exit gracefully with garbage collection)~~
 - Y combinator tests
 - Greater than and less than primitives
-- Signal handler in REPL (to exit gracefully with garbage collection)
 - `defmacro`
 - Strings
 - Dot notation
