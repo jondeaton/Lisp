@@ -483,6 +483,12 @@ static int test_recursion() {
   };
   num_fails += test_multi_eval(end, "(ith '(1 2 3 4 5) 2)", "3") ? 0 : 1;
 
+  const_expression repeat[] = {
+    "(set 'repeat (lambda (item n) (cond ((= n 1) item) (t (cons (car item) (repeat item (- n 1)))))))",
+    NULL,
+  };
+  num_fails += test_multi_eval(repeat, "(repeat '(3) 7)", "(3 3 3 3 3 3 3)") ? 0 : 1;
+
   printf("Test recursion: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
