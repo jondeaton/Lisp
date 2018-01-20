@@ -21,12 +21,15 @@
 #include <repl.h>
 #include <run-lisp.h>
 #include <unistd.h>
+#include <stdio.h>
 
-void parse_command_line_args(int argc, char* argv[]);
+static void parse_command_line_args(int argc, char* argv[]);
+static void print_version_information();
 
-const char* optstring = ":rb:";
+const char* optstring = ":rb:t:v";
 char const* bootstrap_path = NULL;
 char const* program_path = NULL;
+char const* history_file = "~/.lisp-history";
 bool run_repl = true;
 
 /**
@@ -51,7 +54,7 @@ int main(int argc, char* argv[]) {
  * @param argc; Argument count
  * @param argv: Argument array
  */
-void parse_command_line_args(int argc, char* argv[]) {
+static void parse_command_line_args(int argc, char* argv[]) {
   while (optind < argc) {
     int c;
     if ((c = getopt(argc, argv, optstring)) != -1) {
@@ -64,10 +67,29 @@ void parse_command_line_args(int argc, char* argv[]) {
           bootstrap_path = optarg;
           break;
         }
+        case 't': {
+          history_file = optarg;
+          break;
+        }
+        case 'v': {
+          print_version_information();
+          exit(0);
+          break;
+        }
         default: break;
       }
     } else {
       if (optind < argc) program_path = argv[optind];
     }
   }
+}
+
+/**
+ * Function: print_version_information
+ * -----------------------------------
+ * Prints the version information for the Lisp interpreter.
+ */
+static void print_version_information() {
+  printf("Lisp Interpreter 1.0\n"
+           "Author: Jon Deaton, January 2018\n");
 }
