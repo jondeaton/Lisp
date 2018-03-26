@@ -28,6 +28,8 @@
 
 #include "lisp-objects.h"
 
+typedef struct GarbageCollectorImpl GarbageCollector;
+
 /**
  * Function: init_allocated
  * ------------------------
@@ -35,7 +37,7 @@
  * to eval are made. Calling eval without first calling this method results in
  * undefined behavior.
  */
-void init_allocated();
+GarbageCollector * gc_init();
 
 /**
  *  Function: add_allocated
@@ -45,7 +47,7 @@ void init_allocated();
  * internal to eval that allocates Lisp objects in dynamically allocated memory.
  * @param o: A pointer to a lisp object that needs to be free'd
  */
-void add_allocated(const obj* o);
+void gc_add(GarbageCollector *gc, const obj *o);
 
 /**
  * Function: add_allocated_recursive
@@ -55,7 +57,7 @@ void add_allocated(const obj* o);
  * in a recursive manner (the entire object tree).
  * @param root: The root object to add to the list
  */
-void add_allocated_recursive(const obj* root);
+void gc_add_recursive(GarbageCollector *gc, const obj *root);
 
 /**
  * Function: clear_allocated
@@ -64,7 +66,7 @@ void add_allocated_recursive(const obj* root);
  * call this function after each call to repl_eval, after the object returned from
  * eval has been completely processed (e.g. copied into environment, serialized, etc...).
  */
-void clear_allocated();
+void gc_clear(GarbageCollector *gc);
 
 /**
  * Function: dispose_allocated
@@ -73,6 +75,6 @@ void clear_allocated();
  * all calls to eval are completed to free the memory used to store the
  * CVector of allocated objects.
  */
-void dispose_allocated();
+void gc_dispose(GarbageCollector *gc);
 
 #endif //_LISP_GARBAGE_COLLECTOR_H_INCLUDED

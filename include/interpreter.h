@@ -4,10 +4,12 @@
  * Presents the interface to the Read-Eval-Print Loop
  */
 
-#ifndef _REPL_H_INCLUDED
-#define _REPL_H_INCLUDED
+#ifndef _LISP_INTERPRETER_H_INCLUDED
+#define _LISP_INTERPRETER_H_INCLUDED
 
 #include "parser.h"
+
+typedef struct LispInterpreterImpl LispInterpreter;
 
 /**
  * Function: repl_init
@@ -16,7 +18,7 @@
  * the global environment and the vector of allocated
  * objects.
  */
-void repl_init();
+LispInterpreter * interpreter_init();
 
 /**
  * Function: repl_run_program
@@ -25,14 +27,14 @@ void repl_init();
  * in the environment initialized in repl_init
  * @param program_file: The file containing the program to run
  */
-void repl_run_program(const char* program_file);
+void interpret_program(LispInterpreter *interpreter, const char *program_file);
 
 /**
  * Function: repl_run
  * ------------------
  * Run the interactive REPL prompt
  */
-void repl_run();
+void interpret_fd(LispInterpreter *interpreter);
 
 /**
  * Function: repl_eval
@@ -43,13 +45,13 @@ void repl_run();
  * the passed expression, in dynamically allocated memory that must
  * be freed
  */
-expression repl_eval(const_expression expr);
+expression interpret_expression(LispInterpreter *interpreter, const_expression expr);
 
 /**
  * Function: repl_dispose
  * ----------------------
  * Dispose of the global environment and vector of allocated objects.
  */
-void repl_dispose();
+void interpreter_dispose(LispInterpreter *interpreter);
 
-#endif //_REPL_H_INCLUDED
+#endif //_LISP_INTERPRETER_H_INCLUDED

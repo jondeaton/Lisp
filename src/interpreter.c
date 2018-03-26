@@ -4,14 +4,17 @@
  * Presents the implementation of the Read-Eval-Print Loop for Lisp
  */
 
-#include <repl.h>
+#include <interpreter.h>
+#include <garbage-collector.h>
 #include <environment.h>
 #include <evaluator.h>
-#include <garbage-collector.h>
 #include <stack-trace.h>
+#include <list.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <sys/file.h>
+
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -33,14 +36,19 @@ static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
-static obj* env;
+struct LispInterpreterImpl {
+  obj* env;
+  GarbageCollector* gc;
+};
 
-void repl_init() {
-  env = init_env();
-  init_allocated();
+LispInterpreter* interpreter_init() {
+  LispInterpreter* interp = malloc(sizeof(LispInterpreter));
+  interp->env = init_env();
+  interp->gc = gc_init();
+  return interp;
 }
 
-void repl_run_program(const char* program_file) {
+void interpret_program(LispInterpreter *interpreter, const char *program_file) {
   if (program_file == NULL) return;
   FILE* fd = fopen(program_file, O_RDONLY);
 
@@ -48,13 +56,13 @@ void repl_run_program(const char* program_file) {
   while (!eof) {
     obj* o = read_expression(fd, false, &eof);
     if (o == NULL) break; // Error -> end
-    obj* evaluation = eval(o, &env);
+    obj* evaluation = eval(o, &interpreter->env, NULL);
     print_object(stdout, evaluation);
-    clear_allocated();
+    gc_clear(interpreter->gc); // collect garbage
   }
 }
 
-void repl_run() {
+void interpret_fd(LispInterpreter *interpreter) {
   bool eof = false;
   while (!eof) {
     obj* o = read_expression(stdin, true, &eof);
@@ -63,27 +71,28 @@ void repl_run() {
       LOG_ERROR("Invalid expression");
       continue;
     }
-    obj* evaluation = eval(o, &env);
+    obj* evaluation = eval(o, &(interpreter->env), NULL);
     print_object(stdout, evaluation);
-    clear_allocated();
+    gc_clear(interpreter->gc);
   }
 }
 
-expression repl_eval(const_expression expr) {
+expression interpret_expression(LispInterpreter *interpreter, const_expression expr) {
   if (expr == NULL) return NULL;
 
   obj* o = parse_expression(expr, NULL);
   if (o == NULL) return NULL;
-  obj* result_obj = eval(o, &env);
+  obj* result_obj = eval(o, &(interpreter->env), interpreter->gc);
   expression result = unparse(result_obj);
-  clear_allocated(); // frees the objects in result_obj that were allocated during eval
+  gc_clear(interpreter->gc); // frees the objects in result_obj that were allocated during eval
   dispose_recursive(o);
   return result;
 }
 
-void repl_dispose() {
-  dispose_allocated();
-  dispose_recursive(env);
+void interpreter_dispose(LispInterpreter *interpreter) {
+  gc_dispose(interpreter->gc);
+  dispose_recursive(interpreter->env);
+  free(interpreter);
 }
 
 /**

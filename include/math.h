@@ -8,6 +8,7 @@
 #define _LISP_MATH_H_INCLUDED
 
 #include "list.h"
+#include "garbage-collector.h"
 
 /**
  * Function: add_math_library
@@ -25,7 +26,7 @@ obj* get_math_library();
  * @param envp: The environment to evaluate the addition
  * @return: A newly allocated number/float object containing the result of the addition
  */
-obj* plus(const obj *args, obj **envp);
+obj *plus(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: subtract
@@ -35,7 +36,7 @@ obj* plus(const obj *args, obj **envp);
  * @param env: The environment to evaluate the subtraction
  * @return: A newly allocated number/float object containing the result of the subtraction
  */
-obj* subtract(const obj *o, obj **env);
+obj *subtract(const obj *o, obj **env, GarbageCollector *gc);
 
 /**
  * Primitive: multiply
@@ -45,7 +46,7 @@ obj* subtract(const obj *o, obj **env);
  * @param env: The environment to evaluate the multiplication
  * @return: A newly allocated number/float object containing the result of the multiplication
  */
-obj* multiply(const obj *o, obj **env);
+obj *multiply(const obj *o, obj **env, GarbageCollector *gc);
 
 /**
  * Primitive: divide
@@ -55,7 +56,7 @@ obj* multiply(const obj *o, obj **env);
  * @param env: The environment to evaluate the division
  * @return: A newly allocated number/float object containing the result of the division
  */
-obj* divide(const obj *o, obj **env);
+obj *divide(const obj *o, obj **env, GarbageCollector *gc);
 
 /**
  * Primitive: mod
@@ -65,6 +66,6 @@ obj* divide(const obj *o, obj **env);
  * @param env: The environment to evaluate the modulus
  * @return: A newly allocated number/float object containing the result of the modulus
  */
-obj* mod(const obj *o, obj **env);
+obj *mod(const obj *o, obj **env, GarbageCollector *gc);
 
 #endif // _LISP_MATH_H_INCLUDED

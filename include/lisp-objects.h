@@ -16,7 +16,8 @@ enum type {
     primitive_obj,
     closure_obj,
     integer_obj,
-    float_obj };
+    float_obj
+};
 
 typedef const char* atom_t;
 
@@ -36,7 +37,6 @@ typedef struct {
   int nargs;
 } closure_t;
 
-typedef obj*(*primitive_t)(const obj*, obj**);
 
 /**
  * Function: new_atom
@@ -55,14 +55,6 @@ obj* new_atom(atom_t name);
  */
 obj* new_list();
 
-/**
- * Function: new_primitive
- * -----------------------
- * Create a new primitive object
- * @param primitive: The primitive to wrap in an object
- * @return; The new primitive object wrapping the raw primitive instruction pointer
- */
-obj* new_primitive(primitive_t primitive);
 
 /**
  * Function: new_closure
@@ -89,15 +81,6 @@ list_t* list_of(const obj *o);
  * @return: A pointer to the atom in the object
  */
 atom_t atom_of(const obj *o);
-
-/**
- * Function: get_primitive
- * -----------------------
- * Gets a pointer to a function pointer to the primitive function for a primitive object list
- * @param o: Pointer to a lisp data structure
- * @return: Function pointer to primitive function
- */
-primitive_t* primitive_of(const obj *o);
 
 /**
  * Function: closure_of

@@ -10,37 +10,42 @@
 
 static void obj_cleanup(obj** op);
 
-CList* allocated; // List of allocated objects needing to be freed
+struct GarbageCollectorImpl {
+  CList* allocated; // List of allocated objects needing to be freed
+};
 
-void init_allocated() {
-  size_t elemsz = sizeof(obj*);   // Vector stores pointers to objects needing to be free'd
+GarbageCollector * gc_init() {
+  GarbageCollector* gc = (GarbageCollector*) malloc(sizeof(GarbageCollector));
+  size_t elemsz = sizeof(obj*); // Vector stores pointers to objects needing to be free'd
   CleanupElemFn cleanup_fn = (CleanupElemFn) &obj_cleanup;
-  allocated = clist_create(elemsz, cleanup_fn);
+  gc->allocated = clist_create(elemsz, cleanup_fn);
+  return gc;
 }
 
-void add_allocated(const obj* o) {
-  clist_push_front(allocated, &o);
+void gc_add(GarbageCollector *gc, const obj *o) {
+  clist_push_front(gc->allocated, &o);
 }
 
-void add_allocated_recursive(const obj* root) {
+void gc_add_recursive(GarbageCollector *gc, const obj *root) {
   if (root == NULL) return;
   if (is_list(root)) {
-    add_allocated_recursive(list_of(root)->car);
-    add_allocated_recursive(list_of(root)->cdr);
+    gc_add_recursive(gc, list_of(root)->car);
+    gc_add_recursive(gc, list_of(root)->cdr);
   } else if (is_closure(root)) {
-    add_allocated_recursive(closure_of(root)->parameters);
-    add_allocated_recursive(closure_of(root)->procedure);
-    add_allocated_recursive(closure_of(root)->captured);
+    gc_add_recursive(gc, closure_of(root)->parameters);
+    gc_add_recursive(gc, closure_of(root)->procedure);
+    gc_add_recursive(gc, closure_of(root)->captured);
   }
-  add_allocated(root);
+  gc_add(gc, root);
 }
 
-void clear_allocated() {
-  clist_clear(allocated); // Free all the contents
+void gc_clear(GarbageCollector *gc) {
+  clist_clear(gc->allocated); // Free all the contents
 }
 
-void dispose_allocated() {
-  clist_dispose(allocated); // Destroy the list of objects
+void gc_dispose(GarbageCollector *gc) {
+  clist_dispose(gc->allocated); // Destroy the list of objects
+  free(gc);
 }
 
 /**

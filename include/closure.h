@@ -6,6 +6,7 @@
 #define _CLOSURE_H_INCLUDED
 
 #include "lisp-objects.h"
+#include "garbage-collector.h"
 
 /**
  * Function: make_closure
@@ -17,7 +18,7 @@
  * in the resulting closure
  * @return: A closure object made from the lambda
  */
-obj* make_closure(const obj *lambda, obj *env);
+obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc);
 
 /**
  * Function: closure_partial_application
@@ -27,7 +28,7 @@ obj* make_closure(const obj *lambda, obj *env);
  * @param args: The (unevaluated) argument list to apply to the closure
  * @return: A newly allocated closure with arguments bound
  */
-obj *closure_partial_application(const obj *closure, const obj *args, obj **envp);
+obj *closure_partial_application(const obj *closure, const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Function: new_closure_set
@@ -59,7 +60,7 @@ obj* copy_closure_recursive(const obj* closure);
  * @param envp: Pointer to the environment to associate the
  * @return: A list of name-value pairs (names are copied)
  */
-obj *associate(obj *names, const obj *args, obj **envp);
+obj *associate(obj *names, const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Function: get_lambda_parameters

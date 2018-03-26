@@ -18,7 +18,7 @@
  *  ./lisp -b my-bootstrap.lisp
  */
 
-#include <repl.h>
+#include <interpreter.h>
 #include <run-lisp.h>
 #include <unistd.h>
 #include <stdio.h>

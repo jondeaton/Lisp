@@ -15,7 +15,7 @@
 // Static function declarations
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
-obj* make_closure(const obj *lambda, obj *env) {
+obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc) {
 
   obj* params = copy_recursive(get_lambda_parameters(lambda));
   obj* procedure = copy_recursive(get_lambda_body(lambda));
@@ -24,11 +24,11 @@ obj* make_closure(const obj *lambda, obj *env) {
   get_captured_vars(&captured, params, procedure, env);
 
   obj* closure = new_closure_set(params, procedure, captured);
-  add_allocated_recursive(closure);
+  gc_add_recursive(gc, closure);
   return closure;
 }
 
-obj *closure_partial_application(const obj *closure, const obj *args, obj **envp) {
+obj *closure_partial_application(const obj *closure, const obj *args, obj **envp, GarbageCollector *gc) {
   if (closure == NULL) return NULL;
 
   int nargs = list_length(args);
@@ -36,11 +36,11 @@ obj *closure_partial_application(const obj *closure, const obj *args, obj **envp
   obj* params = copy_recursive(sublist(closure_of(closure)->parameters, nargs));
   obj* procedure = copy_recursive(closure_of(closure)->procedure);
 
-  obj* new_bindings = associate(closure_of(closure)->parameters, args, envp);
+  obj* new_bindings = associate(closure_of(closure)->parameters, args, envp, gc);
   obj* captured = join_lists(new_bindings, copy_recursive(closure_of(closure)->captured));
 
   obj* new_closure = new_closure_set(params, procedure, captured);
-  add_allocated_recursive(new_closure);
+  gc_add_recursive(gc, new_closure);
   return new_closure;
 }
 
@@ -61,12 +61,12 @@ obj* copy_closure_recursive(const obj* closure) {
   return new_closure_set(params, proc, capt);
 }
 
-obj *associate(obj *names, const obj *args, obj **envp) {
+obj *associate(obj *names, const obj *args, obj **envp, GarbageCollector *gc) {
   if (!is_list(names) || !is_list(args)) return NULL;
 
-  obj* value = eval(list_of(args)->car, envp);
+  obj* value = eval(list_of(args)->car, envp, gc);
   obj* pair = make_pair(list_of(names)->car, value, true);
-  obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp);
+  obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp, gc);
   return new_list_set(pair, cdr);
 }
 

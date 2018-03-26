@@ -69,7 +69,7 @@ and can be run with the `test-lisp` executable.
 - ~~Closure partial application~~
 - ~~Empty expression is not invalid~~
 - ~~Signal handler in REPL (to exit gracefully with garbage collection)~~
-- Make a Lisp interpreter struct/object for abstraction
+- ~~Abstract Lisp Interpreter and Garbage Collector into structure~~
 - Allow for REPL to run from any file descriptor
 - Proper error reporting on file reading and malloc failure
 - Specify lisp history file

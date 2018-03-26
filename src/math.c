@@ -16,8 +16,8 @@
 typedef int (*intArithmeticFuncPtr)(int, int);
 typedef float (*floatArithmeticFuncPtr)(float, float);
 
-static obj* allocate_integer(int value);
-static obj* allocate_float(float value);
+static obj *allocate_integer(int value, GarbageCollector *gc);
+static obj *allocate_float(float value, GarbageCollector *gc);
 static int add_ints(int x, int y);
 static float add_floats(float x, float y);
 static int sub_ints(int x, int y);
@@ -28,54 +28,55 @@ static int div_ints(int x, int y);
 static float div_floats(float x, float y);
 static int mod_ints(int x, int y);
 static float mod_floats(float x, float y);
-obj* equal(const obj *args, obj **envp);
-static obj* apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp);
+obj *equal(const obj *args, obj **envp, GarbageCollector *gc);
+static obj *apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp,
+                            GarbageCollector *gc);
 
 static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%", "=", NULL };
-static const primitive_t math_primitives[]= { &plus, &subtract, &multiply, &divide, &mod, &equal, NULL };
+static const primitive_t math_primitives[]= {&plus, &subtract, &multiply, &divide, &mod, &equal, NULL };
 
 obj* get_math_library() {
   return make_environment(math_reserved_atoms, math_primitives);
 }
 
-obj* plus(const obj *args, obj **envp) {
-  obj* answer = apply_arithmetic(args, envp, &add_ints, &add_floats);
+obj *plus(const obj *args, obj **envp, GarbageCollector *gc) {
+  obj* answer = apply_arithmetic(args, envp, &add_ints, &add_floats, gc);
   if (answer == NULL) LOG_ERROR("Addition operator returned in NULL");
   return answer;
 }
 
-obj* subtract(const obj *o, obj **env) {
-  obj* answer = apply_arithmetic(o, env, &sub_ints, &sub_floats);
+obj *subtract(const obj *o, obj **env, GarbageCollector *gc) {
+  obj* answer = apply_arithmetic(o, env, &sub_ints, &sub_floats, gc);
   if (answer == NULL) LOG_ERROR("Subtraction operator returned in NULL");
   return answer;
 }
 
-obj* multiply(const obj *o, obj **env) {
-  obj* answer = apply_arithmetic(o, env, &mul_ints, &mul_floats);
+obj *multiply(const obj *o, obj **env, GarbageCollector *gc) {
+  obj* answer = apply_arithmetic(o, env, &mul_ints, &mul_floats, gc);
   if (answer == NULL) LOG_ERROR("Multiplication operator returned in NULL");
   return answer;
 }
 
-obj* divide(const obj *o, obj **env) {
-  obj* answer = apply_arithmetic(o, env, &div_ints, &div_floats);
+obj *divide(const obj *o, obj **env, GarbageCollector *gc) {
+  obj* answer = apply_arithmetic(o, env, &div_ints, &div_floats, gc);
   if (answer == NULL) LOG_ERROR("Division operator returned in NULL");
   return answer;
 }
 
-obj* mod(const obj *o, obj **env) {
-  obj* answer = apply_arithmetic(o, env, &mod_ints, &mod_floats);
+obj *mod(const obj *o, obj **env, GarbageCollector *gc) {
+  obj* answer = apply_arithmetic(o, env, &mod_ints, &mod_floats, gc);
   if (answer == NULL) LOG_ERROR("Modulus operator returned in NULL");
   return answer;
 }
 
-obj* equal(const obj *args, obj **envp) {
+obj *equal(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 2)) return NULL;
-  obj* first = eval(ith(args, 0), envp);
-  obj* second = eval(ith(args, 1), envp);
-  if (!is_number(first) || !is_number(second)) return empty();
+  obj* first = eval(ith(args, 0), envp, gc);
+  obj* second = eval(ith(args, 1), envp, gc);
+  if (!is_number(first) || !is_number(second)) return empty(gc);
   if (is_int(first) && is_int(second))
-    return get_int(first) == get_int(second) ? t() : empty();
-  return get_float(first) == get_float(second) ? t() : empty();
+    return get_int(first) == get_int(second) ? t(gc) : empty(gc);
+  return get_float(first) == get_float(second) ? t(gc) : empty(gc);
 }
 
 /**
@@ -88,33 +89,35 @@ obj* equal(const obj *args, obj **envp) {
  * @param floatOp: The operation corresponding to applying to floating point numbers
  * @return: The result of applying the arithmetic operation to the values of the arguments
  */
-static obj* apply_arithmetic(const obj *args, obj **env, intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp) {
+static obj *apply_arithmetic(const obj *args, obj **env,
+                             intArithmeticFuncPtr intOp, floatArithmeticFuncPtr floatOp,
+                             GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first = eval(ith(args, 0), env);
-  obj* second = eval(ith(args, 1), env);
+  obj* first = eval(ith(args, 0), env, gc);
+  obj* second = eval(ith(args, 1), env, gc);
 
   if (first == NULL) return LOG_ERROR("First argument evaluated to NULL");
   if (second == NULL) return LOG_ERROR("Second argument evaluated to NULL");
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = floatOp(get_float(first), get_float(second));
-    return allocate_float(value);
+    return allocate_float(value, gc);
   } else {
     int value = intOp(get_int(first), get_int(second));
-    return allocate_integer(value);
+    return allocate_integer(value, gc);
   }
 }
 
-static obj* allocate_integer(int value) {
+static obj *allocate_integer(int value, GarbageCollector *gc) {
   obj* o = new_int(value);
-  add_allocated(o);
+  gc_add(gc, o);
   return o;
 }
 
-static obj* allocate_float(float value) {
+static obj *allocate_float(float value, GarbageCollector *gc) {
   obj* o = new_float(value);
-  add_allocated(o);
+  gc_add(gc, o);
   return o;
 }
 

@@ -9,6 +9,8 @@
 #include <stack-trace.h>
 #include <lisp-objects.h>
 #include <closure.h>
+#include <primitives.h>
+
 #include <stdlib.h>
 #include <string.h>
 

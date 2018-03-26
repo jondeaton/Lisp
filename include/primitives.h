@@ -4,10 +4,31 @@
  * Presents the interface to the lisp primitives. Th
  */
 
-#ifndef _PRIMITIVES_H_INCLUDED
-#define _PRIMITIVES_H_INCLUDED
+#ifndef _LISP_PRIMITIVES_H_INCLUDED
+#define _LISP_PRIMITIVES_H_INCLUDED
 
-#include "list.h"
+#include "lisp-objects.h"
+#include "garbage-collector.h"
+
+typedef obj*(*primitive_t)(const obj*, obj**, GarbageCollector*);
+
+/**
+ * Function: new_primitive
+ * -----------------------
+ * Create a new primitive object
+ * @param primitive: The primitive to wrap in an object
+ * @return; The new primitive object wrapping the raw primitive instruction pointer
+ */
+obj* new_primitive(primitive_t primitive);
+
+/**
+ * Function: get_primitive
+ * -----------------------
+ * Gets a pointer to a function pointer to the primitive function for a primitive object list
+ * @param o: Pointer to a lisp data structure
+ * @return: Function pointer to primitive function
+ */
+primitive_t* primitive_of(const obj *o);
 
 /**
  * Function: get_primitive_env
@@ -25,7 +46,7 @@ obj* get_primitive_library();
  * memory and must be freed
  * @return: A pointer to a new truth atom in dynamically allocated memory
  */
-obj* t();
+obj *t(GarbageCollector *gc);
 
 /**
  * Function: empty
@@ -35,7 +56,7 @@ obj* t();
  * memory and must be freed
  * @return: A pointer to the a new empty list in dynamically allocated memory
  */
-obj* empty();
+obj *empty(GarbageCollector *gc);
 
 /**
  * Primitive: quote
@@ -45,7 +66,7 @@ obj* empty();
  * @param envp: The environment to evaluate this primitive in
  * @return: Pointer to the lisp object without evaluating it
  */
-obj* quote(const obj* args, obj** envp);
+obj *quote(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: atom
@@ -55,7 +76,7 @@ obj* quote(const obj* args, obj** envp);
  * @param env: The environment to evaluate this primitive in
  * @return: t if it is an atom, else the empty list
  */
-obj* atom(const obj* args, obj** envp);
+obj *atom(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: eq
@@ -65,7 +86,7 @@ obj* atom(const obj* args, obj** envp);
  * @param env : The environment to evaluate this primitive in
  * @return t if both are equal, empty list (false) otherwise
  */
-obj* eq(const obj* args, obj** envp);
+obj *eq(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: car
@@ -75,7 +96,7 @@ obj* eq(const obj* args, obj** envp);
  * @param env : The environment to evaluate this primitive in
  * @return : The first element of the list
  */
-obj* car(const obj* args, obj** envp);
+obj *car(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: cdr
@@ -85,7 +106,7 @@ obj* car(const obj* args, obj** envp);
  * @param env: The environment to evaluate this primitive in
  * @return: Everything after the first element of the list
  */
-obj* cdr(const obj* args, obj** envp);
+obj *cdr(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: cons
@@ -96,7 +117,7 @@ obj* cdr(const obj* args, obj** envp);
  * @param env: The environment to evaluate this primitive in
  * @return: Pointer to the concatenated list
  */
-obj* cons(const obj* args, obj** envp);
+obj *cons(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: cond
@@ -109,7 +130,7 @@ obj* cons(const obj* args, obj** envp);
  * @param env: The environment to evaluate this primitive in
  * @return: Pointer to the evaluation of expression the predicated of which evaluated to true
  */
-obj* cond(const obj* o, obj** envp);
+obj *cond(const obj *o, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: set
@@ -121,7 +142,7 @@ obj* cond(const obj* o, obj** envp);
  * @param env: The environment to evaluate this primitive in (will be modified!)
  * @return: todo
  */
-obj* set(const obj* args, obj** envp);
+obj *set(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: env
@@ -131,7 +152,7 @@ obj* set(const obj* args, obj** envp);
  * @param env: The environment to evaluate
  * @return: The environment object (unmodified)
  */
-obj* env_prim(const obj* args, obj** envp);
+obj *env_prim(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
  * Primitive: defmacro
@@ -141,6 +162,6 @@ obj* env_prim(const obj* args, obj** envp);
  * @param env: The environment to define the macro in
  * @return: todo
  */
-obj* defmacro(const obj* args, obj** envp);
+obj *defmacro(const obj *args, obj **envp, GarbageCollector *gc);
 
-#endif // _PRIMITIVES_H_INCLUDED
+#endif // _LISP_PRIMITIVES_H_INCLUDED

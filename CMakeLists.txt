@@ -28,7 +28,7 @@ set(COMMON_SRC
         include/evaluator.h         src/list.c
         include/primitives.h        src/primitives.c
         include/closure.h src/closure.c
-        include/repl.h              src/repl.c
+        include/interpreter.h src/interpreter.c
         include/parser.h            src/parser.c
         include/list.h              src/evaluator.c
         include/garbage-collector.h src/garbage-collector.c

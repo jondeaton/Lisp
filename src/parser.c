@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <lisp-objects.h>
-
+#include <list.h>
 
 #define KMAG  "\x1B[35m"
 #define RESET "\033[0m"

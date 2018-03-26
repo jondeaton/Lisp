@@ -5,6 +5,7 @@
  */
 
 #include <lisp-objects.h>
+#include <primitives.h>
 #include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,14 +33,6 @@ obj* new_closure() {
   obj* o = malloc(sizeof(obj) + sizeof(closure_t));
   if (o == NULL) return LOG_MALLOC_FAIL();
   o->objtype = closure_obj;
-  return o;
-}
-
-obj* new_primitive(primitive_t primitive) {
-  obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
-  if (o == NULL) return LOG_MALLOC_FAIL();
-  o->objtype = primitive_obj;
-  memcpy(primitive_of(o), &primitive, sizeof(primitive));
   return o;
 }
 
@@ -81,10 +74,6 @@ list_t* list_of(const obj *o) {
 
 atom_t atom_of(const obj *o) {
   return (atom_t) get_contents(o);
-}
-
-primitive_t* primitive_of(const obj *o) {
-  return (primitive_t*) get_contents(o);
 }
 
 closure_t* closure_of(const obj* o) {
