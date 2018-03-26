@@ -70,10 +70,11 @@ and can be run with the `test-lisp` executable.
 - ~~Empty expression is not invalid~~
 - ~~Signal handler in REPL (to exit gracefully with garbage collection)~~
 - ~~Abstract Lisp Interpreter and Garbage Collector into structure~~
-- Allow for REPL to run from any file descriptor
+- ~~Allow for REPL to run from any file descriptor~~
 - Proper error reporting on file reading and malloc failure
 - Specify lisp history file
 - Verbose logging functionality with CLI flag
+- Tests for proper error behavior
 - Y combinator tests
 - Greater than and less than primitives
 - `defmacro`

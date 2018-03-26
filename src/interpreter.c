@@ -37,7 +37,7 @@ static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
 struct LispInterpreterImpl {
-  obj* env;
+  obj* env;  // Interpreter environment
   GarbageCollector* gc;
 };
 
@@ -62,17 +62,17 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file) {
   }
 }
 
-void interpret_fd(LispInterpreter *interpreter) {
+void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out) {
   bool eof = false;
   while (!eof) {
-    obj* o = read_expression(stdin, true, &eof);
+    obj* o = read_expression(fd_in, true, &eof);
     if (eof) break;
     if (o == NULL) {
       LOG_ERROR("Invalid expression");
       continue;
     }
-    obj* evaluation = eval(o, &(interpreter->env), NULL);
-    print_object(stdout, evaluation);
+    obj* result = eval(o, &(interpreter->env), NULL);
+    print_object(fd_out, result);
     gc_clear(interpreter->gc);
   }
 }

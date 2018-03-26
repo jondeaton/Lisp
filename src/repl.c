@@ -4,7 +4,7 @@
  * Presents the implementation of the lisp file runner
  */
 
-#include <run-lisp.h>
+#include <repl.h>
 #include <interpreter.h>
 #include <sys/file.h>
 #include <unistd.h>
@@ -31,10 +31,10 @@ int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl
   if (err && err != ENOENT) perror(LISP_HISTORY);
 
   interpreter = interpreter_init();
-  signal(SIGINT, int_handler);
+  signal(SIGINT, int_handler); // install signal handler
   if (bootstrap_path) interpret_program(interpreter, bootstrap_path);
   if (program_file) interpret_program(interpreter, program_file);
-  if (run_repl) interpret_fd(interpreter);
+  if (run_repl) interpret_fd(interpreter, stdin, stdout);
   interpreter_dispose(interpreter);
 
   err = write_history(LISP_HISTORY);

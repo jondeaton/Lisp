@@ -35,7 +35,7 @@ set(COMMON_SRC
         include/environment.h       src/environment.c
         include/clist.h             src/clist.c
         include/math.h              src/math.c
-        include/run-lisp.h          src/run-lisp.c
+        include/repl.h src/repl.c
         include/stack-trace.h       src/stack-trace.c)
 
 set(LISP_SRC ${COMMON_SRC} src/main.c)

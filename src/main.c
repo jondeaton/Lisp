@@ -18,10 +18,11 @@
  *  ./lisp -b my-bootstrap.lisp
  */
 
-#include <interpreter.h>
-#include <run-lisp.h>
+#include <repl.h>
+
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static void parse_command_line_args(int argc, char* argv[]);
 static void print_version_information();
@@ -91,5 +92,5 @@ static void parse_command_line_args(int argc, char* argv[]) {
  */
 static void print_version_information() {
   printf("Lisp Interpreter 1.0\n"
-           "Author: Jon Deaton, January 2018\n");
+           "Author: Jon Deaton, August 2017 - March 2018\n");
 }

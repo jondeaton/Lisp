@@ -8,6 +8,7 @@
 #define _LISP_INTERPRETER_H_INCLUDED
 
 #include "parser.h"
+#include <stdio.h>
 
 typedef struct LispInterpreterImpl LispInterpreter;
 
@@ -34,7 +35,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file);
  * ------------------
  * Run the interactive REPL prompt
  */
-void interpret_fd(LispInterpreter *interpreter);
+void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out);
 
 /**
  * Function: repl_eval
