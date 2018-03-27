@@ -15,20 +15,21 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define LISP_HISTORY ".lisp-history"
 
 static bool check_read_permissions(const char* path);
 static void int_handler(int signal);
 
 static LispInterpreter* interpreter;
 
-int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl) {
+int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl, const char *history_file) {
 
   if (bootstrap_path && !check_read_permissions(bootstrap_path)) return errno;
   if (program_file && !check_read_permissions(program_file)) return errno;
 
-  int err = read_history(LISP_HISTORY);
-  if (err && err != ENOENT) perror(LISP_HISTORY);
+  if (history_file) {
+    int err = read_history(history_file);
+    if (err && err != ENOENT) perror(history_file);
+  }
 
   interpreter = interpreter_init();
   signal(SIGINT, int_handler); // install signal handler
@@ -37,8 +38,10 @@ int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl
   if (run_repl) interpret_fd(interpreter, stdin, stdout);
   interpreter_dispose(interpreter);
 
-  err = write_history(LISP_HISTORY);
-  if (err) perror(LISP_HISTORY);
+  if (history_file) {
+    int err = write_history(history_file);
+    if (err) perror(history_file);
+  }
 
   return 0; // success
 }
