@@ -495,7 +495,7 @@ static int test_recursion() {
 
   // 8!
   const_expression eight[] = {
-    "(set 'factorial (lambda (x)  (cond ((= x 0) 1) ((= 1 1) (* x (factorial (- x 1)))))))",
+    "(set 'factorial (lambda (x)  (cond ((= x 0) 1) (t (* x (factorial (- x 1)))))))",
     NULL,
   };
   num_fails += test_multi_eval(eight, "(factorial 8)", "40320") ? 0 : 1;

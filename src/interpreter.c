@@ -70,7 +70,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out) {
       LOG_ERROR("Invalid expression");
       continue;
     }
-    obj* result = eval(o, &(interpreter->env), NULL);
+    obj* result = eval(o, &(interpreter->env), interpreter->gc);
     print_object(fd_out, result);
     gc_clear(interpreter->gc);
   }

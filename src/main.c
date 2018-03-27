@@ -23,16 +23,21 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pwd.h>
+#include <string.h>
 
 static void parse_command_line_args(int argc, char* argv[]);
 static void print_version_information();
 
-const char* optstring = ":rb:t:v";
+const char *const optstring = ":rb:t:v";
 char const* bootstrap_path = NULL;
 char const* program_path = NULL;
-char const* history_file = "~/.lisp-history";
 bool run_repl = true;
-bool repl_flag = false;
+
+#define HISTORY_FILE_LENGTH 128
+char history_file[HISTORY_FILE_LENGTH];
+#define DEFAULT_HISTORY_FILE "/.lisp-history"
+
 
 /**
  * Entry Point: main
@@ -46,7 +51,7 @@ bool repl_flag = false;
  */
 int main(int argc, char* argv[]) {
   parse_command_line_args(argc, argv);
-  return run_lisp(bootstrap_path, program_path, run_repl);
+  return run_lisp(bootstrap_path, program_path, run_repl, history_file);
 }
 
 /**
@@ -57,6 +62,12 @@ int main(int argc, char* argv[]) {
  * @param argv: Argument array
  */
 static void parse_command_line_args(int argc, char* argv[]) {
+
+  const char* home_dir = getpwuid(getuid())->pw_dir;
+  strcpy(history_file, home_dir);
+  strcat(history_file, DEFAULT_HISTORY_FILE);
+
+  bool repl_flag = false;
   while (optind < argc) {
     int c;
     if ((c = getopt(argc, argv, optstring)) != -1) {
@@ -70,7 +81,7 @@ static void parse_command_line_args(int argc, char* argv[]) {
           break;
         }
         case 't': {
-          history_file = optarg;
+          strcpy(history_file, optarg);
           break;
         }
         case 'v': {

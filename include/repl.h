@@ -18,6 +18,6 @@
  * @param env: Environment to run the program in
  * @return: Exit status
  */
-int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl);
+int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl, const char *history_file);
 
 #endif //_RUN_LISP_H_INCLUDED
