@@ -32,6 +32,7 @@ char const* bootstrap_path = NULL;
 char const* program_path = NULL;
 char const* history_file = "~/.lisp-history";
 bool run_repl = true;
+bool repl_flag = false;
 
 /**
  * Entry Point: main
@@ -61,7 +62,7 @@ static void parse_command_line_args(int argc, char* argv[]) {
     if ((c = getopt(argc, argv, optstring)) != -1) {
       switch(c) {
         case 'r': {
-          run_repl = true;
+          repl_flag = true;
           break;
         }
         case 'b': {
@@ -80,7 +81,11 @@ static void parse_command_line_args(int argc, char* argv[]) {
         default: break;
       }
     } else {
-      if (optind < argc) program_path = argv[optind];
+      if (optind < argc) {
+        program_path = argv[optind];
+        run_repl = repl_flag;
+      }
+      break;
     }
   }
 }

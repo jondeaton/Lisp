@@ -360,6 +360,24 @@ static int test_math() {
   num_fails += test_single_eval("(* 6 7)", "42") ? 0 : 1;
   num_fails += test_single_eval("(/ 42 6)", "7") ? 0 : 1;
   num_fails += test_single_eval("(/ 42 100)", "0") ? 0 : 1;
+
+  const_expression set_x[] = {
+    "(set 'x 5)",
+    NULL
+  };
+  num_fails += test_multi_eval(set_x, "(+ x 5)", "10") ? 0 : 1;
+
+  const_expression set_xy[] = {
+    "(set 'x 7)",
+    "(set 'y 13)",
+    NULL
+  };
+  num_fails += test_multi_eval(set_xy, "(+ x y)", "20") ? 0 : 1;
+  num_fails += test_multi_eval(set_xy, "(- x y)", "-6") ? 0 : 1;
+  num_fails += test_multi_eval(set_xy, "(* x y)", "91") ? 0 : 1;
+  num_fails += test_multi_eval(set_xy, "(/ y x)", "1") ? 0 : 1;
+  num_fails += test_multi_eval(set_xy, "(% y x)", "6") ? 0 : 1;
+
   printf("Test math: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }

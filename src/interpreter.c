@@ -12,7 +12,6 @@
 #include <list.h>
 
 #include <string.h>
-#include <stdio.h>
 #include <sys/file.h>
 
 #include <readline/readline.h>
@@ -49,14 +48,14 @@ LispInterpreter* interpreter_init() {
 }
 
 void interpret_program(LispInterpreter *interpreter, const char *program_file) {
-  if (program_file == NULL) return;
-  FILE* fd = fopen(program_file, O_RDONLY);
+  if (!program_file) return; // no program to interpret
+  FILE* fd = fopen(program_file, "r");
 
   bool eof = false;
   while (!eof) {
     obj* o = read_expression(fd, false, &eof);
     if (o == NULL) break; // Error -> end
-    obj* evaluation = eval(o, &interpreter->env, NULL);
+    obj* evaluation = eval(o, &interpreter->env, interpreter->gc);
     print_object(stdout, evaluation);
     gc_clear(interpreter->gc); // collect garbage
   }
@@ -159,10 +158,7 @@ static expression get_expression_from_prompt(bool* eof) {
 
     input_size = strlen(line);
     e = realloc(e, sizeof(char) * (total_size + 1 + input_size + 1));
-    if (e == NULL) {
-      free(line);
-      return LOG_MALLOC_FAIL();;
-    }
+    MALLOC_CHECK(e);
 
     strcpy(e + total_size, " ");
     strcpy(e + total_size + 1, line);
@@ -186,10 +182,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
 
   size_t total_size = input_size;
   expression e = malloc(sizeof(char) * (input_size + 1));
-  if (e == NULL) {
-    LOG_MALLOC_FAIL();
-    return NULL;
-  }
+  MALLOC_CHECK(e);
 
   strcpy(e, buff);
 
@@ -205,10 +198,7 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
     input_size = strlen(buff);
 
     e = realloc(e, sizeof(char) * (total_size + input_size + 1));
-    if (e == NULL) {
-      LOG_MALLOC_FAIL();
-      return NULL;
-    }
+    MALLOC_CHECK(e);
 
     strcpy((char*) e + total_size, buff);
     total_size += input_size;

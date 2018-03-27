@@ -71,7 +71,7 @@ and can be run with the `test-lisp` executable.
 - ~~Signal handler in REPL (to exit gracefully with garbage collection)~~
 - ~~Abstract Lisp Interpreter and Garbage Collector into structure~~
 - ~~Allow for REPL to run from any file descriptor~~
-- Proper error reporting on file reading and malloc failure
+- ~~Proper error reporting on file reading and malloc failure~~
 - Specify lisp history file
 - Verbose logging functionality with CLI flag
 - Tests for proper error behavior

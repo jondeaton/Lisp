@@ -14,7 +14,7 @@ obj* new_atom(atom_t name) {
   if (name == NULL) return NULL;
   size_t name_size = strlen(name);
   obj* o = malloc(sizeof(obj) + name_size + 1);
-  if (o == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(o);
   o->objtype = atom_obj;
   strcpy((char*) atom_of(o), name);
   return o;
@@ -22,7 +22,7 @@ obj* new_atom(atom_t name) {
 
 obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
-  if (o == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(o);
   o->objtype = list_obj;
   list_of(o)->car = NULL;
   list_of(o)->cdr = NULL;
@@ -31,7 +31,7 @@ obj* new_list() {
 
 obj* new_closure() {
   obj* o = malloc(sizeof(obj) + sizeof(closure_t));
-  if (o == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(o);
   o->objtype = closure_obj;
   return o;
 }
@@ -87,7 +87,7 @@ void* get_contents(const obj *o) {
 
 obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
-  if (o == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(o);
   o->objtype = integer_obj;
   int* contents = (int*) get_contents(o);
   *contents = value;
@@ -96,7 +96,7 @@ obj* new_int(int value) {
 
 obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
-  if (o == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(o);
   o->objtype = float_obj;
   float* contents = (float*) get_contents(o);
   *contents = value;

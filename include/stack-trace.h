@@ -9,6 +9,8 @@
 
 #include "lisp-objects.h"
 #include <stdbool.h>
+#include <errno.h>
+#include <stdio.h>
 
 /*
  * Variadic macro for easy printf-style error logging:
@@ -18,10 +20,10 @@
 #define LOG_ERROR(...) log_error(__func__, __VA_ARGS__)
 
 // Use of malloc is prevalent - this directive helps make cleaner code
-#define LOG_MALLOC_FAIL() LOG_ERROR("Memory allocation failure")
 #define CHECK_NARGS(args, expected) check_nargs(__func__, args, expected)
 #define CHECK_NARGS_MIN(args, minimum) check_nargs_min(__func__, args, minimum)
 #define CHECK_NARGS_MAX(argc, maximum) check_nargs_max(__func__, args, maximum)
+#define MALLOC_CHECK(o) if ((o) == NULL) { perror("malloc"); exit(ENOMEM); }
 
 /**
  * Function: log_error

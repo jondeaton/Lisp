@@ -29,7 +29,7 @@ obj* get_primitive_library() {
 
 obj* new_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
-  if (o == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(o);
   o->objtype = primitive_obj;
   memcpy(primitive_of(o), &primitive, sizeof(primitive));
   return o;

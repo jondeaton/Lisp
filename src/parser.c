@@ -77,7 +77,7 @@ expression unparse(const obj* o) {
     if (list_expr == NULL) return strdup("()");
 
     expression e = malloc(1 + strlen(list_expr) + 2); // open, close, null
-    if (e == NULL) return LOG_MALLOC_FAIL();
+    MALLOC_CHECK(e);
     e[0] = '(';
     strcpy((char *) e + 1, list_expr);
     strcpy((char *) e + 1 + strlen(list_expr), ")");
@@ -185,7 +185,7 @@ static expression unparse_atom(const obj *o) {
   if (is_atom(o)) {
     atom_t atm = atom_of(o);
     expression e = malloc(strlen(atm) + 1); // Cant use "new_atom"
-    if (e == NULL) return LOG_MALLOC_FAIL();
+    MALLOC_CHECK(e);
     return strcpy(e, atm);
   }
 
@@ -213,7 +213,7 @@ static expression unparse_atom(const obj *o) {
 static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
   expression e = malloc(strlen(KMAG) + 2 + sizeof(void*) * 8 / 4 + strlen(RESET) + 1);
-  if (e == NULL) return LOG_MALLOC_FAIL();
+  MALLOC_CHECK(e);
   void* p = NULL;
   memcpy(&p, (void**) primitive_of(o), sizeof(primitive_t));
   sprintf(e, KMAG "%p" RESET, p);

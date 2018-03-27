@@ -24,8 +24,8 @@ static LispInterpreter* interpreter;
 
 int run_lisp(const char* bootstrap_path, const char* program_file, bool run_repl) {
 
-  if (bootstrap_path && check_read_permissions(bootstrap_path) != 0) return errno;
-  if (program_file && check_read_permissions(program_file)) return errno;
+  if (bootstrap_path && !check_read_permissions(bootstrap_path)) return errno;
+  if (program_file && !check_read_permissions(program_file)) return errno;
 
   int err = read_history(LISP_HISTORY);
   if (err && err != ENOENT) perror(LISP_HISTORY);
@@ -61,12 +61,10 @@ static void int_handler(int signal) {
  * Checks if a file may be read, printing errors to standard error if
  * the file may not be read or does not exist.
  * @return: True if the file can be read, false otherwise
- * todo: change this to use perror!
  */
 static bool check_read_permissions(const char* path) {
   if (access(path, R_OK) != 0) {
-    if (errno == ENOENT) fprintf(stderr, "No such file: %s\n", path);
-    if (errno == EACCES) fprintf(stderr, "Permission denied: %s\n", path);
+    perror(path);
     return false;
   }
   return true;
