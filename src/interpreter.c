@@ -54,7 +54,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file) {
   bool eof = false;
   while (!eof) {
     obj* o = read_expression(fd, false, &eof);
-    if (o == NULL) break; // Error -> end
+    if (o == NULL) continue; // Error -> skip
     obj* evaluation = eval(o, &interpreter->env, interpreter->gc);
     print_object(stdout, evaluation);
     gc_clear(interpreter->gc); // collect garbage
