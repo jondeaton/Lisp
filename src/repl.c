@@ -6,6 +6,8 @@
 
 #include <repl.h>
 #include <interpreter.h>
+#include <stack-trace.h>
+
 #include <sys/file.h>
 #include <unistd.h>
 #include <errno.h>
@@ -15,13 +17,13 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-
 static bool check_read_permissions(const char* path);
 static void int_handler(int signal);
 
 static LispInterpreter* interpreter;
 
-int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl, const char *history_file) {
+int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl,
+             const char *history_file, bool verbose) {
 
   if (bootstrap_path && !check_read_permissions(bootstrap_path)) return errno;
   if (program_file && !check_read_permissions(program_file)) return errno;
@@ -31,11 +33,26 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
     if (err && err != ENOENT) perror(history_file);
   }
 
+  if (verbose) LOG_MSG("History: %s", history_file);
+
   interpreter = interpreter_init();
   signal(SIGINT, int_handler); // install signal handler
-  if (bootstrap_path) interpret_program(interpreter, bootstrap_path);
-  if (program_file) interpret_program(interpreter, program_file);
-  if (run_repl) interpret_fd(interpreter, stdin, stdout);
+  if (bootstrap_path) {
+    if (verbose) LOG_MSG("Interpreting library: %s", bootstrap_path);
+    interpret_program(interpreter, bootstrap_path);
+  }
+
+  if (program_file) {
+    if (verbose) LOG_MSG("Running script: %s", program_file);
+    interpret_program(interpreter, program_file);
+  }
+
+  if (run_repl) {
+    if (verbose) LOG_MSG("Running interactive interpreter.");
+    interpret_fd(interpreter, stdin, stdout);
+  }
+
+  if (verbose) LOG_MSG("Disposing of interpreter.");
   interpreter_dispose(interpreter);
 
   if (history_file) {

@@ -18,6 +18,7 @@
  *    LOG_ERROR("Error code: %d", 42);
  */
 #define LOG_ERROR(...) log_error(__func__, __VA_ARGS__)
+#define LOG_MSG(...) log_message(__func__, __VA_ARGS__)
 
 // Use of malloc is prevalent - this directive helps make cleaner code
 #define CHECK_NARGS(args, expected) check_nargs(__func__, args, expected)
@@ -52,6 +53,19 @@
  * @return: NULL pointer
  */
 void* log_error(const char* context, const char* message_format, ...);
+
+/**
+ * Function: log_message
+ * ---------------------
+ * Prints a message to standard error in blue.
+ * @param context: The context in which the message is relevant.
+ * @param message_format: The format of the message content
+ * @param ... (additional arguments): A sequence of additional arguments, each containing a value to be used to
+ * replace a format specifier in the message_format string. There should be at least as many of these
+ * arguments as the number of values specified in the format specifiers. Additional arguments are ignored
+ * by the function.
+ */
+void log_message(const char* context, const char* message_format, ...);
 
 /**
  * Function: check_nargs

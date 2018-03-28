@@ -33,11 +33,13 @@ const char *const optstring = ":rb:t:v";
 char const* bootstrap_path = NULL;
 char const* program_path = NULL;
 bool run_repl = true;
+bool verbose = false;
 
 #define HISTORY_FILE_LENGTH 128
-char history_file[HISTORY_FILE_LENGTH];
-#define DEFAULT_HISTORY_FILE "/.lisp-history"
+char history_buffer[HISTORY_FILE_LENGTH];
+#define DEFAULT_HISTORY_FILE ".lisp-history"
 
+const char* history_file = NULL;
 
 /**
  * Entry Point: main
@@ -51,7 +53,14 @@ char history_file[HISTORY_FILE_LENGTH];
  */
 int main(int argc, char* argv[]) {
   parse_command_line_args(argc, argv);
-  return run_lisp(bootstrap_path, program_path, run_repl, history_file);
+  if (!history_file) {
+    const char* home_dir = getpwuid(getuid())->pw_dir;
+    strcpy(history_buffer, home_dir);
+    strcat(history_buffer, "/");
+    strcat(history_buffer, DEFAULT_HISTORY_FILE);
+    history_file = history_buffer;
+  }
+  return run_lisp(bootstrap_path, program_path, run_repl, history_file, verbose);
 }
 
 /**
@@ -62,11 +71,6 @@ int main(int argc, char* argv[]) {
  * @param argv: Argument array
  */
 static void parse_command_line_args(int argc, char* argv[]) {
-
-  const char* home_dir = getpwuid(getuid())->pw_dir;
-  strcpy(history_file, home_dir);
-  strcat(history_file, DEFAULT_HISTORY_FILE);
-
   bool repl_flag = false;
   while (optind < argc) {
     int c;
@@ -81,13 +85,16 @@ static void parse_command_line_args(int argc, char* argv[]) {
           break;
         }
         case 't': {
-          strcpy(history_file, optarg);
+          history_file = optarg;
           break;
         }
         case 'v': {
+          verbose = true;
+          break;
+        }
+        case 'h': {
           print_version_information();
           exit(0);
-          break;
         }
         default: break;
       }

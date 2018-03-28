@@ -9,6 +9,7 @@
 #include <stdarg.h>
 
 #define KRED  "\x1B[31m"
+#define KBLU  "\x1B[34m"
 #define RESET "\033[0m"
 
 char err_buff[256];
@@ -20,6 +21,14 @@ void* log_error(const char* context, const char* message_format, ...) {
   fprintf(stderr, KRED "\t[%s]: %s\n" RESET, context, err_buff); // substitute message into error log
   va_end(ap);
   return NULL; // Return NULL for cleaner NULL-returning error handling
+}
+
+void log_message(const char* context, const char* message_format, ...) {
+  va_list ap;
+  va_start(ap, message_format);
+  vsprintf(err_buff, message_format, ap); // substitute var args into message
+  fprintf(stdout, KBLU "\t[%s]: %s\n" RESET, context, err_buff); // substitute message into error log
+  va_end(ap);
 }
 
 bool check_nargs(const char *context, const obj *args, int expected) {
