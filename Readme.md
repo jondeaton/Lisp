@@ -74,6 +74,7 @@ and can be run with the `test-lisp` executable.
 - ~~Proper error reporting on file reading and malloc failure~~
 - ~~Specify lisp history file~~
 - ~~Verbose logging functionality with CLI flag~~
+- ~~Exit on error during program execution~~
 - Tests for proper error behavior
 - Greater than and less than primitives
 - Y combinator tests

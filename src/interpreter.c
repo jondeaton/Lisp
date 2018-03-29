@@ -25,11 +25,11 @@ char buff[BUFSIZE];
 #define REPROMPT ">>"
 
 // Static function declarations
-static obj *read_expression(FILE *fd, bool prompt, bool *eof);
-static expression get_expression(FILE *fd, bool prompt, bool* eof);
+static obj *read_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error);
+static expression get_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error);
 static void print_object(FILE *fd, const obj *o);
 static expression get_expression_from_prompt(bool* eof);
-static expression get_expression_from_file(FILE *fd, bool* eof);
+static expression get_expression_from_file(FILE *fd, bool *eof, bool *syntax_error);
 static expression reprompt(const_expression expr);
 static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
@@ -52,9 +52,13 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
   FILE* fd = fopen(program_file, "r");
 
   bool eof = false;
+  bool syntax_error = false;
   while (!eof) {
-    obj* o = read_expression(fd, false, &eof);
-    if (o == NULL) continue; // Error -> skip
+    obj* o = read_expression(fd, false, &eof, &syntax_error);
+    if (o == NULL && syntax_error) {
+      LOG_ERROR("Syntax error.");
+      break;
+    }
     obj* result = eval(o, &interpreter->env, interpreter->gc);
     if (result == NULL) {
       if (verbose) LOG_MSG("NULL");
@@ -69,7 +73,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
 void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose) {
   bool eof = false;
   while (!eof) {
-    obj* o = read_expression(fd_in, true, &eof);
+    obj* o = read_expression(fd_in, true, &eof, NULL);
     if (eof) break;
     if (o == NULL) {
       LOG_ERROR("Invalid expression");
@@ -104,13 +108,13 @@ void interpreter_dispose(LispInterpreter *interpreter) {
  * Function: read_expression
  * -------------------------
  * Reads the next expression from standard input, turns it into a list object,
- * and then returns the object (in dynamically allocated memory
+ * and then returns the object (in dynamically allocated memory)
  * @param fd: The file descriptor to read the next expression from
  * @param prompt: If true, print prompt to standard output (for interactive prompt)
  * @return: The parsed lisp object from dynamically allocated memory
  */
-static obj *read_expression(FILE *fd, bool prompt, bool *eof) {
-  expression next_expr = get_expression(fd, prompt, eof);
+static obj *read_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error) {
+  expression next_expr = get_expression(fd, prompt, eof, syntax_error);
   if (next_expr == NULL) return NULL;
   if (prompt) add_history(next_expr);
   obj* o = parse_expression(next_expr, NULL);
@@ -126,9 +130,9 @@ static obj *read_expression(FILE *fd, bool prompt, bool *eof) {
  * @param fd: A file descriptor to read input from
  * @return: An expression that was read from that file descriptor
  */
-static expression get_expression(FILE *fd, bool prompt, bool* eof) {
+static expression get_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error) {
   if (prompt) return get_expression_from_prompt(eof);
-  else return get_expression_from_file(fd, eof);
+  else return get_expression_from_file(fd, eof, syntax_error);
 }
 
 /**
@@ -181,7 +185,7 @@ static expression get_expression_from_prompt(bool* eof) {
  * @param eof: Pointer to a bool to write whether or not EOF occured
  * @return: The next expression read form the file descriptor
  */
-static expression get_expression_from_file(FILE *fd, bool* eof) {
+static expression get_expression_from_file(FILE *fd, bool *eof, bool *syntax_error) {
   char* p = fgets(buff, sizeof buff, fd);
   *eof = p == NULL;
   size_t input_size = strlen(buff);
@@ -196,7 +200,11 @@ static expression get_expression_from_file(FILE *fd, bool* eof) {
     bool valid = is_valid(e);
     bool balanced = is_balanced(e);
     if (valid && balanced) return e;
-    if (!valid || *eof) return NULL;
+    if (!valid) {
+      if (syntax_error != NULL) *syntax_error = true;
+      return NULL;
+    }
+    if (*eof) return NULL;
 
     p = fgets(buff, sizeof buff, fd);
     *eof = p == NULL;
