@@ -6,14 +6,14 @@
 
 #include <primitives.h>
 #include <parser.h>
-#include <environment.h>
-#include <evaluator.h>
 #include <interpreter.h>
 #include <list.h>
 
-#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 // Terminal colors
 #define KNRM  "\x1B[0m"
@@ -55,9 +55,14 @@ bool verbose = false;
  * @return: Program exit code
  */
 int main() {
+  int fd = open("/dev/null", O_WRONLY);
+  dup2(fd, STDERR_FILENO);
+
   int num_fails = run_all_tests();
   if (num_fails == 0) printf(KGRN "All tests passed.\n");
   else printf(KRED "%d test(s) failed\n" RESET, num_fails);
+
+  close(fd);
   return 0;
 }
 
@@ -123,7 +128,11 @@ static bool test_single_eval(const_expression expr, const_expression expected) {
   expression result_exp = interpret_expression(interpreter, expr);
   interpreter_dispose(interpreter);
 
-  bool test_result = result_exp && strcmp(result_exp, expected) == 0;
+  bool test_result;
+  if (result_exp == NULL)
+    test_result = expected == NULL;
+  else
+    test_result = result_exp && strcmp(result_exp, expected) == 0;
 
   if (verbose)
     printf("%s Evaluation:\t%s\n", test_result ? PASS : FAIL, expr);
@@ -213,6 +222,8 @@ static int test_quote() {
   num_fails += test_single_eval("(quote (a b c))", "(a b c)") ? 0 : 1;
   num_fails += test_single_eval("'hello", "hello") ? 0 : 1;
   num_fails += test_single_eval("'(a b c)", "(a b c)") ? 0 : 1;
+  num_fails += test_single_eval("(quote)", NULL) ? 0 : 1;
+  num_fails += test_single_eval("(quote wan too three)", NULL) ? 0 : 1;
   printf("Test quote: %s\n", num_fails == 0 ? PASS : FAIL);
   return num_fails;
 }
