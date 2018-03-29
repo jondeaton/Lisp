@@ -55,10 +55,11 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
   bool syntax_error = false;
   while (!eof) {
     obj* o = read_expression(fd, false, &eof, &syntax_error);
-    if (o == NULL && syntax_error) {
+    if (syntax_error) {
       LOG_ERROR("Syntax error.");
       break;
     }
+    if (o == NULL) continue;
     obj* result = eval(o, &interpreter->env, interpreter->gc);
     if (result == NULL) {
       if (verbose) LOG_MSG("NULL");
