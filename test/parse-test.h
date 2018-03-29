@@ -5,6 +5,10 @@
 #ifndef LISP_PARSE_TEST_H
 #define LISP_PARSE_TEST_H
 
+#include <interpreter.h>
+#include <stdbool.h>
+
+
 /**
  * Function: test_single_parse
  * ---------------------------

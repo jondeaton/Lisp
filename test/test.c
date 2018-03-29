@@ -6,3 +6,5 @@
 
 #include "test.h"
 
+bool verbose = false;
+

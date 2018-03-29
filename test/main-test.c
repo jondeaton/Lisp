@@ -4,7 +4,9 @@
 
 #include "test.h"
 
-#include <stdio.h>
+#include "eval-test.h"
+#include "parse-test.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -35,6 +37,8 @@ int run_all_tests() {
 int main() {
   int fd = open("/dev/null", O_WRONLY);
   dup2(fd, STDERR_FILENO); // redirect stderr --> /dev/null
+
+  verbose = false;
 
   int num_fails = run_all_tests();
   if (num_fails == 0) printf(KGRN "All tests passed.\n");

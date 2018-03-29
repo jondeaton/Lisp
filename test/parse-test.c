@@ -1,7 +1,12 @@
-//
-// Created by Jonathan Deaton on 3/29/18.
-//
 
+#include <parser.h>
+#include <list.h>
+#include "parse-test.h"
+#include "test.h"
+
+#include <string.h>
+
+#define TEST_PARSE(a, b) TEST_ITEM(test_single_parse, a, b)
 
 bool test_single_parse(const_expression expr, const_expression expected) {
   obj* o = parse_expression(expr, NULL);
@@ -20,30 +25,27 @@ bool test_single_parse(const_expression expr, const_expression expected) {
 }
 
 int test_parser() {
-  printf(KMAG "\nTesting parsing...\n" RESET);
+  TESTING("parsing");
 
-  int num_fails = 0;
+  TEST_PARSE("atom!", "atom!");
+  TEST_PARSE("()", "()");
+  TEST_PARSE("(hello) there (jon)", "(hello)");
+  TEST_PARSE("(a)", "(a)");
+  TEST_PARSE("(a b c)", "(a b c)");
+  TEST_PARSE("(test (a b c))", "(test (a b c))");
+  TEST_PARSE("123", "123");
+  TEST_PARSE("(42)", "(42)");
+  TEST_PARSE("(1 2 3 2701)", "(1 2 3 2701)");
+  TEST_PARSE("3.14", "3.14");
+  TEST_PARSE("(6.28)", "(6.28)");
+  TEST_PARSE("(6.28 1.234 5 6)", "(6.28 1.234 5 6)");
+  TEST_PARSE("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))");
+  TEST_PARSE("(quote (a b c d e f hello 1234))", "(quote (a b c d e f hello 1234))");
+  TEST_PARSE("((((((()))))))", "((((((()))))))");
+  TEST_PARSE("'(a b c)", "(quote (a b c))");
+  TEST_PARSE("(car (quote (a b c)))", "(car (quote (a b c)))");
+  TEST_PARSE("(car '(a b c))", "(car (quote (a b c)))");
+  TEST_PARSE("(atom 'a)", "(atom (quote a))");
 
-  num_fails += test_single_parse("atom!", "atom!") ? 0 : 1;
-  num_fails += test_single_parse("()", "()") ? 0 : 1;
-  num_fails += test_single_parse("(hello) there (jon)", "(hello)") ? 0 : 1;
-  num_fails += test_single_parse("(a)", "(a)") ? 0 : 1;
-  num_fails += test_single_parse("(a b c)", "(a b c)") ? 0 : 1;
-  num_fails += test_single_parse("(test (a b c))", "(test (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("123", "123") ? 0 : 1;
-  num_fails += test_single_parse("(42)", "(42)") ? 0 : 1;
-  num_fails += test_single_parse("(1 2 3 2701)", "(1 2 3 2701)") ? 0 : 1;
-  num_fails += test_single_parse("3.14", "3.14") ? 0 : 1;
-  num_fails += test_single_parse("(6.28)", "(6.28)") ? 0 : 1;
-  num_fails += test_single_parse("(6.28 1.234 5 6)", "(6.28 1.234 5 6)") ? 0 : 1;
-  num_fails += test_single_parse("\t\t\r\n \t(test(a\tb\nc )\t\t\n \n\r    )      ", "(test (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("(quote (a b c d e f hello 1234))", "(quote (a b c d e f hello 1234))") ? 0 : 1;
-  num_fails += test_single_parse("((((((()))))))", "((((((()))))))") ? 0 : 1;
-  num_fails += test_single_parse("'(a b c)", "(quote (a b c))") ? 0 : 1;
-  num_fails += test_single_parse("(car (quote (a b c)))", "(car (quote (a b c)))") ? 0 : 1;
-  num_fails += test_single_parse("(car '(a b c))", "(car (quote (a b c)))") ? 0 : 1;
-  num_fails += test_single_parse("(atom 'a)", "(atom (quote a))") ? 0 : 1;
-
-  printf("Test parsing: %s\n", num_fails == 0 ? PASS : FAIL);
-  return num_fails;
+  REPORT("parsing", num_fails);
 }

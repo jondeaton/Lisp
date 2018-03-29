@@ -1,6 +1,7 @@
 
+#include "test.h"
 #include "eval-test.h"
- 
+
 bool test_single_eval(const_expression expr, const_expression expected) {
   LispInterpreter* interpreter = interpreter_init();
   expression result_exp = interpret_expression(interpreter, expr);
@@ -23,7 +24,8 @@ bool test_single_eval(const_expression expr, const_expression expected) {
   return test_result;
 }
 
-bool test_multi_eval(const_expression before[], const_expression expr, const_expression expected) {
+bool test_multi_eval(const_expression before[],
+                     const_expression expr, const_expression expected) {
 
   LispInterpreter* interpreter = interpreter_init();
   for (int i = 0; before[i]; i++) free(interpret_expression(interpreter, before[i]));
@@ -42,13 +44,6 @@ bool test_multi_eval(const_expression before[], const_expression expr, const_exp
   return test_result;
 }
 
-
-/**
- * Function: test_quote
- * --------------------
- * Tests if the quote language feature works correctly
- * @return: True if all the tests pass, false otherwise
- */
 int test_quote() {
   printf(KMAG "\nTesting quote...\n" RESET);
   int num_fails = 0;
@@ -63,12 +58,6 @@ int test_quote() {
   return num_fails;
 }
 
-/**
- * Function: test_car_cdr
- * ----------------------
- * Tests for proper functionality of car and cdr, printing results to standard output
- * @return: True if all the tests passed, false otherwise
- */
 int test_car_cdr() {
   printf(KMAG "\nTesting car/cdr...\n" RESET);
   int num_fails = 0;
@@ -81,12 +70,6 @@ int test_car_cdr() {
   return num_fails;
 }
 
-/**
- * Function: test_atom
- * -------------------
- * Tests the functionality of the atom primitive.
- * @return: True if all atom tests pass, false otherwise
- */
 int test_atom() {
   printf(KMAG "\nTesting atom...\n" RESET);
   int num_fails = 0;
@@ -97,12 +80,6 @@ int test_atom() {
   return num_fails;
 }
 
-/**
- * Function: test_eq
- * -----------------
- * Tests the functionality of the eq primitive
- * @return: The number of tests that were failed
- */
 int test_eq() {
   printf(KMAG "\nTesting eq...\n" RESET);
   int num_fails = 0;
@@ -120,12 +97,6 @@ int test_eq() {
   return num_fails;
 }
 
-/**
- * Function: test_cons
- * -------------------
- * Tests the functionality of the cons primitive
- * @return: The number of cons tests that failed
- */
 int test_cons() {
   printf(KMAG "\nTesting cons...\n" RESET);
   int num_fails = 0;
@@ -137,12 +108,6 @@ int test_cons() {
   return num_fails;
 }
 
-/**
- * Function: test_cond
- * -------------------
- * Tests the functionality of the cond primitive
- * @return: The number of cond tests that
- */
 int test_cond() {
   printf(KMAG "\nTesting cond...\n" RESET);
   int num_fails = 0;
@@ -152,12 +117,6 @@ int test_cond() {
   return num_fails;
 }
 
-/**
- * Function: test_set
- * ------------------
- * Tests whether something can be set correctly in the environment
- * @return: The number of tests that were failed
- */
 int test_set() {
   printf(KMAG "\nTesting set...\n" RESET);
   int num_fails = 0;
@@ -187,12 +146,6 @@ int test_set() {
   return num_fails;
 }
 
-/**
- * Function: test_math
- * -------------------
- * Tests if arithmetic works correctly
- * @return: The number of tests that failed
- */
 int test_math() {
   printf(KMAG "\nTesting math...\n" RESET);
   int num_fails = 0;
@@ -228,12 +181,6 @@ int test_math() {
   return num_fails;
 }
 
-/**
- * Function: test_lambda
- * ---------------------
- * Tests the functionality of the lambda function language feature
- * @return: The number of tests that failed
- */
 int test_lambda() {
   printf(KMAG "\nTesting lambda...\n" RESET);
   int num_fails = 0;
@@ -300,12 +247,6 @@ int test_lambda() {
   return num_fails;
 }
 
-/**
- * Function: test_closure
- * ----------------------
- * Tests the functionality of creating closures with lambda functions
- * @return: The number of tests that failed
- */
 int test_closure() {
   printf(KMAG "\nTesting closure...\n" RESET);
   int num_fails = 0;
@@ -322,12 +263,6 @@ int test_closure() {
   return num_fails;
 }
 
-/**
- * Function: test_recursion
- * ------------------------
- * Tests the functionality of using recursion with set and lambda functions
- * @return: The number of tests that failed
- */
 int test_recursion() {
   printf(KMAG "\nTesting recursion...\n" RESET);
   int num_fails = 0;
@@ -363,12 +298,6 @@ int test_recursion() {
   return num_fails;
 }
 
-/**
- * Function: test_Y_combinator
- * ---------------------------
- * Tests the functionality of purely functional recursion in the lisp interpreter
- * @return: The number of tests that failed
- */
 int test_Y_combinator() {
   printf(KMAG "\nTesting Y Combinator...\n" RESET);
   int num_fails = 0;
