@@ -28,14 +28,14 @@ LispInterpreter * interpreter_init();
  * in the environment initialized in repl_init
  * @param program_file: The file containing the program to run
  */
-void interpret_program(LispInterpreter *interpreter, const char *program_file);
+void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose);
 
 /**
  * Function: repl_run
  * ------------------
  * Run the interactive REPL prompt
  */
-void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out);
+void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose);
 
 /**
  * Function: repl_eval

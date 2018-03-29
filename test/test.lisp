@@ -14,7 +14,6 @@
               ((= i 0) (car x)) 
               ((= 1 1) (ith (cdr x) (- i 1))))))
 
-
 (set 'x (factorial 5))
 (set 'y (factorial 6))
 (/ y x)

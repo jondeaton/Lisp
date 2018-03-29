@@ -25,7 +25,7 @@ char buff[BUFSIZE];
 #define REPROMPT ">>"
 
 // Static function declarations
-static obj* read_expression(FILE *fd, bool prompt, bool* eof);
+static obj *read_expression(FILE *fd, bool prompt, bool *eof);
 static expression get_expression(FILE *fd, bool prompt, bool* eof);
 static void print_object(FILE *fd, const obj *o);
 static expression get_expression_from_prompt(bool* eof);
@@ -47,7 +47,7 @@ LispInterpreter* interpreter_init() {
   return interp;
 }
 
-void interpret_program(LispInterpreter *interpreter, const char *program_file) {
+void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose) {
   if (!program_file) return; // no program to interpret
   FILE* fd = fopen(program_file, "r");
 
@@ -55,13 +55,18 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file) {
   while (!eof) {
     obj* o = read_expression(fd, false, &eof);
     if (o == NULL) continue; // Error -> skip
-    obj* evaluation = eval(o, &interpreter->env, interpreter->gc);
-    print_object(stdout, evaluation);
+    obj* result = eval(o, &interpreter->env, interpreter->gc);
+    if (result == NULL) {
+      if (verbose) LOG_MSG("NULL");
+      break;
+    }
+    if (verbose) print_object(stdout, result);
     gc_clear(interpreter->gc); // collect garbage
   }
+  fclose(fd);
 }
 
-void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out) {
+void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose) {
   bool eof = false;
   while (!eof) {
     obj* o = read_expression(fd_in, true, &eof);
@@ -71,6 +76,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out) {
       continue;
     }
     obj* result = eval(o, &(interpreter->env), interpreter->gc);
+    if (result == NULL && verbose) LOG_MSG("NULL");
     print_object(fd_out, result);
     gc_clear(interpreter->gc);
   }
@@ -103,7 +109,7 @@ void interpreter_dispose(LispInterpreter *interpreter) {
  * @param prompt: If true, print prompt to standard output (for interactive prompt)
  * @return: The parsed lisp object from dynamically allocated memory
  */
-static obj* read_expression(FILE *fd, bool prompt, bool* eof) {
+static obj *read_expression(FILE *fd, bool prompt, bool *eof) {
   expression next_expr = get_expression(fd, prompt, eof);
   if (next_expr == NULL) return NULL;
   if (prompt) add_history(next_expr);
@@ -128,7 +134,7 @@ static expression get_expression(FILE *fd, bool prompt, bool* eof) {
 /**
  * Function: get_expression_from_prompt
  * ------------------------------------
- * Gets the next expression from an interactive prompt from standard inupt
+ * Gets the next expression from an interactive prompt from standard input
  * @param eof: Pointer to a boolean to write either EOF was encountered
  * @return: The next expression entered on the interactive prompt
  */
