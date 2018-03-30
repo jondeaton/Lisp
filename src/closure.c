@@ -18,12 +18,13 @@
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
 obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc) {
-  if (!CHECK_NARGS_MIN(get_lambda_parameters(lambda), 1)) return NULL;
-  if (!CHECK_NARGS_MAX(get_lambda_parameters(lambda), 2)) return NULL;
+  if (!CHECK_NARGS_MIN(list_of(lambda)->cdr, 1)) return NULL;
+  if (!CHECK_NARGS_MAX(list_of(lambda)->cdr, 2)) return NULL;
 
   obj* params = copy_recursive(get_lambda_parameters(lambda));
   if (!is_list(params)) return LOG_ERROR("Lambda parameters are not a list");
   FOR_LIST(params, var) {
+    if (var == NULL) continue;
     if (is_t(var)) return LOG_ERROR("Truth atom can't be parameter");
     if (is_empty(var)) return LOG_ERROR("Empty list can't be a parameter");
     if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
@@ -115,5 +116,4 @@ static void get_captured_vars(obj **capturedp, const obj *params, const obj *pro
     if (!matching_pair) return; // No value to be captured
     *capturedp = new_list_set(copy_recursive(matching_pair), *capturedp); // Prepend to capture list
   }
-
 }

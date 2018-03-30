@@ -74,8 +74,11 @@ bool compare_recursive(const obj *x, const obj *y) {
 
 obj* ith(const obj* o, int i) {
   if (o == NULL || i < 0 || !is_list(o)) return NULL;
-  if (i == 0) return list_of(o)->car;
-  return ith(list_of(o)->cdr, i - 1);
+  FOR_LIST(o, x) {
+    if (i == 0) return x;
+    i--;
+  }
+  return NULL;
 }
 
 obj* sublist(const obj* o, int i) {
@@ -105,13 +108,17 @@ bool split_lists(obj *to_split, obj *second_list) {
 int list_length(const obj* o) {
   if (o == NULL) return 0;
   if (!is_list(o)) return 1;
-  return 1 + list_length(list_of(o)->cdr);
+  int i = 0;
+  FOR_LIST(o, x) i++;
+  return i;
 }
 
 bool list_contains(const obj* list, const obj* query) {
   if (query == NULL || list == NULL) return false;
-  bool found_here = compare_recursive(list_of(list)->car, query);
-  return found_here || list_contains(list_of(list)->cdr, query);
+  FOR_LIST(list, el) {
+    if (compare_recursive(el, query)) return true;
+  }
+  return false;
 }
 
 /**

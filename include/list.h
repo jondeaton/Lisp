@@ -12,10 +12,10 @@
 #include <stdbool.h>
 
 // For loop for iterating through elements of a list
-#define FOR_LIST(list, element_name) obj* l = list; \
-  for (obj* (element_name) = list_of(l)->car; \
-  l != NULL && (element_name) != NULL; \
-  (element_name) = list_of(l)->car, l = list_of(l)->cdr)
+#define FOR_LIST(_list, _el) const obj* _l = _list; \
+  for (obj* (_el) = _l ? list_of(_l)->car : NULL; \
+  _l != NULL; \
+  _l = list_of(_l)->cdr, (_el) = _l ? list_of(_l)->car : NULL)
 
 /**
  * Function: new_list_set

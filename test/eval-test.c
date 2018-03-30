@@ -252,6 +252,7 @@ DEF_TEST(lambda) {
   TEST_EVAL("((lambda (x) (cdr x)) '(a b c))", "(b c)");
   TEST_EVAL("((lambda (x y) (cons x (cdr y))) 'a '(z b c))", "(a b c)");
   TEST_EVAL("((lambda (x) (cons 'z x)) '(a b c))", "(z a b c)");
+  TEST_EVAL("((lambda (a b c) 5) 1 2 3)", "5");
 
   SERIES(zero,
          "(set 'y '(a b c))",
@@ -294,6 +295,14 @@ DEF_TEST(lambda) {
   TEST_ERROR("(lambda 1)");
   TEST_ERROR("(lambda one two three four)");
   TEST_ERROR("(lambda t)");
+  TEST_ERROR("(lambda (t) 99)");
+  TEST_ERROR("(lambda (5) 99)");
+  TEST_ERROR("(lambda (a t) 99)");
+  TEST_ERROR("(lambda (a b d c t) 99)");
+  TEST_ERROR("(lambda (a b 5 c t) 99)");
+
+  TEST_ERROR("(lambda (()) 99)");
+  TEST_ERROR("(lambda (a b () c e) 99)");
 
   TEST_REPORT();
 }
