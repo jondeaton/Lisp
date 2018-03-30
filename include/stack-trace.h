@@ -23,7 +23,7 @@
 // Use of malloc is prevalent - this directive helps make cleaner code
 #define CHECK_NARGS(args, expected) check_nargs(__func__, args, expected)
 #define CHECK_NARGS_MIN(args, minimum) check_nargs_min(__func__, args, minimum)
-#define CHECK_NARGS_MAX(argc, maximum) check_nargs_max(__func__, args, maximum)
+#define CHECK_NARGS_MAX(args, maximum) check_nargs_max(__func__, args, maximum)
 #define MALLOC_CHECK(o) if ((o) == NULL) { perror("malloc"); exit(ENOMEM); }
 
 /**

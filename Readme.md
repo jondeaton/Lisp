@@ -75,8 +75,8 @@ and can be run with the `test-lisp` executable.
 - ~~Specify lisp history file~~
 - ~~Verbose logging functionality with CLI flag~~
 - ~~Exit on error during program execution~~
-- Tests for proper error behavior
-- Greater than and less than primitives
+- ~~Tests for proper error behavior~~
+- ~~Greater than and less than primitives~~
 - Y combinator tests
 - `defmacro`
 - Strings

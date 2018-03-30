@@ -10,6 +10,8 @@
 #include "primitives.h"
 #include <stdlib.h>
 
+#define PARSE(e) parse_expression(e, NULL)
+
 typedef char* expression;
 typedef const char* const_expression;
 

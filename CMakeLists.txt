@@ -22,26 +22,33 @@ else()
     set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
 endif()
 
-include_directories(include src test)
+include_directories(include src)
 set(COMMON_SRC
         include/lisp-objects.h      src/lisp-objects.c
         include/evaluator.h         src/list.c
         include/primitives.h        src/primitives.c
-        include/closure.h src/closure.c
-        include/interpreter.h src/interpreter.c
+        include/closure.h           src/closure.c
+        include/interpreter.h       src/interpreter.c
         include/parser.h            src/parser.c
         include/list.h              src/evaluator.c
         include/garbage-collector.h src/garbage-collector.c
         include/environment.h       src/environment.c
         include/clist.h             src/clist.c
         include/math.h              src/math.c
-        include/repl.h src/repl.c
+        include/repl.h              src/repl.c
         include/stack-trace.h       src/stack-trace.c)
 
 set(LISP_SRC ${COMMON_SRC} src/main.c)
 add_executable(lisp ${LISP_SRC})
 target_link_libraries(lisp readline)
 
-set(TEST_SRC ${COMMON_SRC} test/test.c)
+include_directories(test)
+set(TEST_SRC
+        test/eval-test.h        test/eval-test.c
+        test/parse-test.h       test/parse-test.c
+        test/test.h             test/test.c
+        test/main-test.c)
+
+set(TEST_SRC ${COMMON_SRC} ${TEST_SRC})
 add_executable(test-lisp ${TEST_SRC})
 target_link_libraries(test-lisp readline)

@@ -11,6 +11,12 @@
 #include "lisp-objects.h"
 #include <stdbool.h>
 
+// For loop for iterating through elements of a list
+#define FOR_LIST(list, element_name) obj* l = list; \
+  for (obj* (element_name) = list_of(l)->car; \
+  l != NULL && (element_name) != NULL; \
+  (element_name) = list_of(l)->car, l = list_of(l)->cdr)
+
 /**
  * Function: new_list_set
  * ----------------------
