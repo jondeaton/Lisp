@@ -5,8 +5,8 @@
 #include <string.h>
 
 #define TEST_EVAL(e, expected) TEST_ITEM(test_single_eval, e, expected)
-#define TEST_ERROR(e) TEST_EVAL(e, NULL)
 #define TEST_EVALS(pre, e, expected) TEST_ITEM(test_multi_eval, pre, e, expected)
+#define TEST_ERROR(e) TEST_EVAL(e, NULL)
 
 bool test_single_eval(const_expression expr, const_expression expected) {
   LispInterpreter* interpreter = interpreter_init();
@@ -57,6 +57,8 @@ DEF_TEST(quote) {
   TEST_EVAL("(quote (a b c))", "(a b c)");
   TEST_EVAL("'hello", "hello");
   TEST_EVAL("'(a b c)", "(a b c)");
+  TEST_EVAL("'()", "()");
+  TEST_EVAL("'t", "t");
   TEST_ERROR("(quote)");
   TEST_ERROR("(quote 1 2)");
   TEST_ERROR("(quote wan too three)");
