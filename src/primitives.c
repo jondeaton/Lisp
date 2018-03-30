@@ -69,9 +69,12 @@ obj *atom(const obj *args, obj **envp, GarbageCollector *gc) {
 
 obj *eq(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 2)) return NULL;
+  //
 
   obj* first = ith_arg_value(args, envp, 0, gc);
+  if (first == NULL) return NULL;
   obj* second = ith_arg_value(args, envp, 1, gc);
+  if (second == NULL) return NULL;
 
   bool same = compare(first, second);
   return same ? t(gc) : empty(gc);
@@ -97,11 +100,15 @@ obj *cons(const obj *args, obj **envp, GarbageCollector *gc) {
   obj* x = list_of(args)->car;
   obj* y = ith(args, 1);
 
+  obj* new_cdr = eval(y, envp, gc);
+  if (!is_list(new_cdr)) // no dot notation (yet) means second arg must be list
+    return LOG_ERROR("Second argument is not list.");
+
   obj* new_obj = new_list();
   if (new_obj == NULL) return NULL;
   gc_add(gc, new_obj); // Record allocation
   list_of(new_obj)->car = eval(x, envp, gc);
-  list_of(new_obj)->cdr = eval(y, envp, gc);
+  list_of(new_obj)->cdr = new_cdr;
 
   return new_obj;
 }
@@ -146,7 +153,7 @@ obj *set(const obj *args, obj **envp, GarbageCollector *gc) {
 }
 
 obj *env_prim(const obj *args, obj **envp, GarbageCollector *gc) {
-  (void) args;
+  (void) args; // to avoid "unused argument" warnings
   (void) envp;
   (void) gc;
   if (!check_nargs(__func__, args, 0)) return NULL;

@@ -25,7 +25,7 @@
 #define _TEST_NAME ((char*)__func__ + 5)
 
 #define TEST_INIT() printf(KMAG "\nTesting %s...\n" RESET, _TEST_NAME); *num_tests = 0, *num_fails = 0
-#define TEST_ITEM(f, ...) num_fails += f(__VA_ARGS__) ? 0 : 1; (*num_tests)++
+#define TEST_ITEM(f, ...) *num_fails += f(__VA_ARGS__) ? 0 : 1; (*num_tests)++
 #define TEST_REPORT() printf("%s: %d/%d %s\n", _TEST_NAME, (*num_tests - *num_fails), *num_tests, *(num_fails) == 0 ? PASS : FAIL);
 
 // Define and run a new test

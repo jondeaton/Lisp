@@ -104,12 +104,15 @@ DEF_TEST(eq) {
   TEST_EVAL("(eq 3.0 3.0)", "t");
   TEST_EVAL("(eq 3.0 3)", "()");
   TEST_EVAL("(eq 3 3.0)", "()");
-  TEST_EVAL("(eq (cons 'a 'b) (cons 'a 'c))", "()");
-  TEST_EVAL("(eq (cons 'a 'b) (cons 'a 'b))", "()");
+
+  TEST_EVAL("(eq (cons 'x '(a b c)) '(x a b c))", "()");
+  TEST_EVAL("(eq (cons 'x '(a b c)) '((x) a b c))", "()");
 
   TEST_ERROR("(eq)"); // no arguments
   TEST_ERROR("(eq one)"); // one argument
   TEST_ERROR("(eq one two three)"); // too many
+  TEST_ERROR("(eq (cons 'a 'b) (cons 'a 'c))"); // no dot notation (yet) means
+  TEST_ERROR("(eq (cons 'a 'b) (cons 'a 'b))"); // that these should error our
 
   TEST_REPORT();
 }
@@ -124,7 +127,7 @@ DEF_TEST(cons) {
   TEST_ERROR("(cons)"); // no arguments
   TEST_ERROR("(cons one)"); // one argument
   TEST_ERROR("(cons 'x '(a b c) three)"); // too many arguments
-  TEST_ERROR("(cons 'x 'y)"); // second argument isn't a list
+  TEST_ERROR("(cons 'x 'y)"); // second argument isn't a list (no dot notation yet)
 
   TEST_REPORT();
 }
