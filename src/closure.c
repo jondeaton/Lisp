@@ -21,7 +21,7 @@ obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc) {
   if (!CHECK_NARGS_MIN(list_of(lambda)->cdr, 1)) return NULL;
   if (!CHECK_NARGS_MAX(list_of(lambda)->cdr, 2)) return NULL;
 
-  obj* params = copy_recursive(get_lambda_parameters(lambda));
+  obj* params = ith(lambda, 1);
   if (!is_list(params)) return LOG_ERROR("Lambda parameters are not a list");
   FOR_LIST(params, var) {
     if (var == NULL) continue;
@@ -30,7 +30,8 @@ obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc) {
     if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
   }
 
-  obj* procedure = copy_recursive(get_lambda_body(lambda));
+  params = copy_recursive(params); // Params are well-formed, make a copy for saving.
+  obj* procedure = copy_recursive(ith(lambda, 2));
 
   obj* captured = NULL;
   get_captured_vars(&captured, params, procedure, env);
@@ -80,14 +81,6 @@ obj *associate(obj *names, const obj *args, obj **envp, GarbageCollector *gc) {
   obj* pair = make_pair(list_of(names)->car, value, true);
   obj* cdr = associate(list_of(names)->cdr, list_of(args)->cdr, envp, gc);
   return new_list_set(pair, cdr);
-}
-
-obj* get_lambda_parameters(const obj *lambda) {
-  return ith(lambda, 1);
-}
-
-obj* get_lambda_body(const obj *lambda) {
-  return ith(lambda, 2);
 }
 
 /**

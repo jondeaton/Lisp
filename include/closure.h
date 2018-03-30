@@ -62,22 +62,4 @@ obj* copy_closure_recursive(const obj* closure);
  */
 obj *associate(obj *names, const obj *args, obj **envp, GarbageCollector *gc);
 
-/**
- * Function: get_lambda_parameters
- * -------------------------------
- * Get the parameter list of a lambda expression
- * @param lambda: The lambda expression to get the parameters of
- * @return: The list of parameters in the lambda function definition
- */
-obj* get_lambda_parameters(const obj *lambda);
-
-/**
- * Function: get_lambda_body
- * -------------------------
- * Get the body of a lambda expression
- * @param lambda: The lambda expression to get the body of
- * @return: The body of the lambda expression
- */
-obj* get_lambda_body(const obj *lambda);
-
 #endif // _CLOSURE_H_INCLUDED
