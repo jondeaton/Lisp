@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+
 /**
  * Function: run_all_tests
  * -----------------------
@@ -17,20 +18,23 @@
  * @return: True if all of the tests passed, false otherwise
  */
 int run_all_tests() {
-  int num_fails = 0;
-  num_fails += test_parser();
-  num_fails += test_quote();
-  num_fails += test_car_cdr();
-  num_fails += test_atom();
-  num_fails += test_eq();
-  num_fails += test_cons();
-  num_fails += test_cond();
-  num_fails += test_set();
-  num_fails += test_math();
-  num_fails += test_lambda();
-  num_fails += test_closure();
-  num_fails += test_recursion();
-  num_fails += test_Y_combinator();
+  int num_fails = 0, num_tests = 0;
+
+  int nf, nt;
+  RUN_TEST(parser);
+  RUN_TEST(quote);
+  RUN_TEST(car_cdr);
+  RUN_TEST(atom);
+  RUN_TEST(eq);
+  RUN_TEST(cons);
+  RUN_TEST(cond);
+  RUN_TEST(set);
+  RUN_TEST(math);
+  RUN_TEST(lambda);
+  RUN_TEST(closure);
+  RUN_TEST(recursion);
+  RUN_TEST(Y_combinator);
+
   return num_fails;
 }
 

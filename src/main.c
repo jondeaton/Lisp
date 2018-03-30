@@ -114,6 +114,7 @@ static void parse_command_line_args(int argc, char* argv[]) {
  * Prints the version information for the Lisp interpreter.
  */
 static void print_version_information() {
-  printf("Lisp Interpreter 1.0\n"
-           "Author: Jon Deaton, August 2017 - March 2018\n");
+  printf("Lisp Interpreter 1.0, STD %ld\n"
+           "Author: Jon Deaton, %s %s\n",
+         __STDC_VERSION__, __DATE__, __TIME__);
 }

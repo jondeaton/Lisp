@@ -5,6 +5,7 @@
 #ifndef LISP_TEST_H
 #define LISP_TEST_H
 
+#include <stdio.h>
 #include <stdbool.h>
 
 // Terminal colors
@@ -21,9 +22,16 @@
 #define PASS "\x1B[32mPASS\033[0m"
 #define FAIL "\x1B[31mFAIL\033[0m"
 
-#define TESTING(x) printf(KMAG "\nTesting %s...\n" RESET, x); int num_fails = 0, num_tests = 0
-#define TEST_ITEM(f, ...) num_fails += f(__VA_ARGS__)  ? 0 : 1; num_tests++
-#define REPORT(x, nf) printf("Test %s: %s\n", x, (nf) == 0 ? PASS : FAIL); return num_fails
+#define _PREFIX test_
+#define _TEST_NAME ((char*)__func__ + 7)
+
+#define TEST_INIT() printf(KMAG "\nTesting %s...\n" RESET, _TEST_NAME); *num_tests = 0, *num_fails = 0
+#define TEST_ITEM(f, ...) num_fails += f(__VA_ARGS__) ? 0 : 1; (*num_tests)++
+#define TEST_REPORT() printf("%s: %d/%d %s\n", _TEST_NAME, (*num_tests - *num_fails), *num_tests, *(num_fails) == 0 ? PASS : FAIL);
+
+// Define and run a new test
+#define DEF_TEST(name) void _PREFIX ## name(int *num_tests, int *num_fails)
+#define RUN_TEST(name) _PREFIX ## name(&nt, &nf); num_fails += nf; num_tests += nt
 
 extern bool verbose;
 

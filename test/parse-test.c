@@ -24,8 +24,8 @@ bool test_single_parse(const_expression expr, const_expression expected) {
   return test_result;
 }
 
-int test_parser() {
-  TESTING("parsing");
+DEF_TEST(parser) {
+  TEST_INIT();
 
   TEST_PARSE("atom!", "atom!");
   TEST_PARSE("()", "()");
@@ -47,5 +47,5 @@ int test_parser() {
   TEST_PARSE("(car '(a b c))", "(car (quote (a b c)))");
   TEST_PARSE("(atom 'a)", "(atom (quote a))");
 
-  REPORT("parsing", num_fails);
+  TEST_REPORT();
 }

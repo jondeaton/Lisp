@@ -3,6 +3,8 @@
 #define LISP_EVAL_TEST_H
 
 #include <interpreter.h>
+#include "test.h"
+
 
 /**
  * Function: test_single_eval
@@ -34,7 +36,7 @@ bool test_multi_eval(const_expression before[],
  * Tests if the quote language feature works correctly
  * @return: True if all the tests pass, false otherwise
  */
-int test_quote();
+DEF_TEST(quote);
 
 /**
  * Function: test_car_cdr
@@ -42,7 +44,7 @@ int test_quote();
  * Tests for proper functionality of car and cdr, printing results to standard output
  * @return: True if all the tests passed, false otherwise
  */
-int test_car_cdr();
+DEF_TEST(car_cdr);
 
 /**
  * Function: test_atom
@@ -50,7 +52,7 @@ int test_car_cdr();
  * Tests the functionality of the atom primitive.
  * @return: True if all atom tests pass, false otherwise
  */
-int test_atom();
+DEF_TEST(atom);
 
 /**
  * Function: test_eq
@@ -58,7 +60,7 @@ int test_atom();
  * Tests the functionality of the eq primitive
  * @return: The number of tests that were failed
  */
-int test_eq();
+DEF_TEST(eq);
 
 /**
  * Function: test_cons
@@ -66,7 +68,7 @@ int test_eq();
  * Tests the functionality of the cons primitive
  * @return: The number of cons tests that failed
  */
-int test_cons();
+DEF_TEST(cons);
 
 /**
  * Function: test_cond
@@ -74,7 +76,7 @@ int test_cons();
  * Tests the functionality of the cond primitive
  * @return: The number of cond tests that
  */
-int test_cond();
+DEF_TEST(cond);
 
 /**
  * Function: test_set
@@ -82,7 +84,7 @@ int test_cond();
  * Tests whether something can be set correctly in the environment
  * @return: The number of tests that were failed
  */
-int test_set();
+DEF_TEST(set);
 
 /**
  * Function: test_math
@@ -90,7 +92,7 @@ int test_set();
  * Tests if arithmetic works correctly
  * @return: The number of tests that failed
  */
-int test_math();
+DEF_TEST(math);
 
 /**
  * Function: test_lambda
@@ -98,7 +100,7 @@ int test_math();
  * Tests the functionality of the lambda function language feature
  * @return: The number of tests that failed
  */
-int test_lambda();
+DEF_TEST(lambda);
 
 /**
  * Function: test_closure
@@ -106,7 +108,7 @@ int test_lambda();
  * Tests the functionality of creating closures with lambda functions
  * @return: The number of tests that failed
  */
-int test_closure();
+DEF_TEST(closure);
 
 /**
  * Function: test_recursion
@@ -114,7 +116,7 @@ int test_closure();
  * Tests the functionality of using recursion with set and lambda functions
  * @return: The number of tests that failed
  */
-int test_recursion();
+DEF_TEST(recursion);
 
 /**
  * Function: test_Y_combinator
@@ -122,6 +124,6 @@ int test_recursion();
  * Tests the functionality of purely functional recursion in the lisp interpreter
  * @return: The number of tests that failed
  */
-int test_Y_combinator();
+DEF_TEST(Y_combinator);
 
 #endif //LISP_EVAL_TEST_H

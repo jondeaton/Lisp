@@ -5,9 +5,17 @@
 #ifndef LISP_PARSE_TEST_H
 #define LISP_PARSE_TEST_H
 
+#include "test.h"
 #include <interpreter.h>
 #include <stdbool.h>
 
+/**
+ * Function: parser_test
+ * ---------------------
+ * Tests the functionality of the parser and un-parser.
+ * @return: The number of tests that failed
+ */
+DEF_TEST(parser);
 
 /**
  * Function: test_single_parse
@@ -19,13 +27,5 @@
  * to the expected expression
  */
 bool test_single_parse(const_expression expr, const_expression expected);
-
-/**
- * Function: parser_test
- * ---------------------
- * Tests the functionality of the parser and un-parser.
- * @return: The number of tests that failed
- */
-int test_parser();
 
 #endif //LISP_PARSE_TEST_H
