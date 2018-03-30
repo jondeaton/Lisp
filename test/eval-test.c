@@ -277,7 +277,6 @@ DEF_TEST(lambda) {
     "(set 'add-5 (make-adder 5)",
     NULL,
   };
-
   TEST_EVALS(before3, "(add-5 7)", "12");
 
   const_expression before4[] = {
@@ -292,7 +291,6 @@ DEF_TEST(lambda) {
     "(f)",
     NULL
   };
-
   TEST_EVALS(before5, "(f)", "4");
 
   const_expression before6[] = {
@@ -300,7 +298,6 @@ DEF_TEST(lambda) {
     "(f)",
     NULL
   };
-
   TEST_EVALS(before6, "(f)", "11");
 
   TEST_REPORT();
