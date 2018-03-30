@@ -16,7 +16,7 @@
   for (obj* (_el) = _l ? list_of(_l)->car : NULL; \
   _l != NULL; \
   _l = list_of(_l)->cdr, (_el) = _l ? list_of(_l)->car : NULL)
-
+    
 /**
  * Function: new_list_set
  * ----------------------

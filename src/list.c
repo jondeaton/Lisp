@@ -109,7 +109,8 @@ int list_length(const obj* o) {
   if (o == NULL) return 0;
   if (!is_list(o)) return 1;
   int i = 0;
-  FOR_LIST(o, x) i++;
+  for (const obj* l = o; l != NULL; l = list_of(l)->cdr)
+    i++;
   return i;
 }
 
