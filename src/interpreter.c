@@ -90,7 +90,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
 expression interpret_expression(LispInterpreter *interpreter, const_expression expr) {
   if (expr == NULL) return NULL;
 
-  obj* o = parse_expression(expr, NULL);
+  obj* o = PARSE(expr);
   if (o == NULL) return NULL;
   obj* result_obj = eval(o, &(interpreter->env), interpreter->gc);
   expression result = unparse(result_obj);
@@ -118,7 +118,7 @@ static obj *read_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error
   expression next_expr = get_expression(fd, prompt, eof, syntax_error);
   if (next_expr == NULL) return NULL;
   if (prompt) add_history(next_expr);
-  obj* o = parse_expression(next_expr, NULL);
+  obj* o = PARSE(next_expr);
   free(next_expr);
   return o;
 }

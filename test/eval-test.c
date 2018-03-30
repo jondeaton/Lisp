@@ -8,25 +8,17 @@
 #define TEST_EVALS(pre, e, expected) TEST_ITEM(test_multi_eval, pre, e, expected)
 #define TEST_ERROR(e) TEST_EVAL(e, NULL)
 
+#define SERIES(name, ...) const_expression name[] = {__VA_ARGS__, NULL}
+
 bool test_single_eval(const_expression expr, const_expression expected) {
   LispInterpreter* interpreter = interpreter_init();
-  expression result_exp = interpret_expression(interpreter, expr);
+  expression result = interpret_expression(interpreter, expr);
   interpreter_dispose(interpreter);
 
-  bool test_result;
-  if (result_exp == NULL)
-    test_result = expected == NULL;
-  else
-    test_result = result_exp && strcmp(result_exp, expected) == 0;
+  bool test_result = get_test_result(expected, result);
+  print_single_result("Evaluation", expr, expected, result, test_result);
 
-  if (verbose)
-    printf("%s Evaluation:\t%s\n", test_result ? PASS : FAIL, expr);
-
-  if (!test_result) {
-    printf(KRED "\tExpecting:\t%s\n", expected);
-    printf("\tResult:\t\t%s\n" RESET, result_exp);
-  }
-  free(result_exp);
+  free(result);
   return test_result;
 }
 
@@ -38,14 +30,9 @@ bool test_multi_eval(const_expression before[],
   expression result_exp = interpret_expression(interpreter, expr);
   interpreter_dispose(interpreter);
 
-  bool test_result = result_exp && strcmp(result_exp, expected) == 0;
+  bool test_result = get_test_result(expected, result_exp);
+  print_single_result("Series", expr, expected, result_exp, test_result);
 
-  if (verbose)
-    printf("%s Multi eval:\t%s\n", test_result ? PASS : FAIL, expr);
-  if (!test_result) {
-    printf(KRED "\tExpecting:\t%s\n", expected);
-    printf("\tResult:\t\t%s\n" RESET, result_exp);
-  }
   free(result_exp);
   return test_result;
 }
@@ -138,7 +125,7 @@ DEF_TEST(cond) {
   TEST_EVAL("(cond)", "()");
   TEST_EVAL("(cond (t 'a) (t 'b))", "a");
   TEST_EVAL("(cond ('t 1) (t 2))", "1");
-  TEST_EVAL("(cond (() 'a) (t 'b))", "a");
+  TEST_EVAL("(cond (() 'a) (t 'b))", "b");
   TEST_EVAL("(cond ('() 1) (t 2))", "2");
   TEST_EVAL("(cond ('() 1) (() 2))", "()");
   TEST_EVAL("(cond (t 'b) ())", "b"); // yeah this is kinda weird
@@ -147,8 +134,7 @@ DEF_TEST(cond) {
   TEST_EVAL("(cond ((eq 'a 'b) 'first) ((atom '(a)) 'second) ((eq (car (cdr '(a b c))) 'b) (cdr '(x y z !))))", "(y z !)");
 
   TEST_ERROR("(cond ())"); // needs to have list of length two
-  TEST_ERROR("(cond t)");
-  TEST_ERROR("(cond ())");
+  TEST_ERROR("(cond t)"); // not a list
   TEST_ERROR("(cond (t))");
   TEST_ERROR("(cond (()) ())");
   TEST_ERROR("(cond (() a) ())");
@@ -182,11 +168,16 @@ DEF_TEST(set) {
   TEST_EVALS(set_x_eval, "(cond (x '5) ('() '6))", "5");
 
   TEST_ERROR("(set x)");
-  TEST_ERROR("(set x y z");
+  TEST_ERROR("(set x y z)");
   TEST_ERROR("(set 1 4)"); // This shouldn't work...
-  TEST_ERROR("(set t 4)"); // This shouldn't work...
+  TEST_ERROR("(set t 4)");
+  TEST_ERROR("(set 't 4)");
   TEST_ERROR("(set () 4)"); // This shouldn't work...
   TEST_ERROR("(set '() 4)"); // This shouldn't work...
+  TEST_ERROR("(set 5 6)");
+  TEST_ERROR("(set '(a) 4)");
+  TEST_ERROR("(set '(a b c) 6)");
+  TEST_ERROR("(set (lambda (x) x) 'e)");
 
   TEST_REPORT();
 }
@@ -205,17 +196,12 @@ DEF_TEST(math) {
   TEST_EVAL("(/ 42 6)", "7");
   TEST_EVAL("(/ 42 100)", "0");
 
-  const_expression set_x[] = {
-    "(set 'x 5)",
-    NULL
-  };
-  TEST_EVALS(set_x, "(+ x 5)", "10");
+  SERIES(setx, "(set 'x 5)");
+  TEST_EVALS(setx, "(+ x 5)", "10");
 
-  const_expression set_xy[] = {
-    "(set 'x 7)",
-    "(set 'y 13)",
-    NULL
-  };
+  SERIES(set_xy,
+         "(set 'x 7)",
+         "(set 'y 13)");
   TEST_EVALS(set_xy, "(+ x y)", "20");
   TEST_EVALS(set_xy, "(- x y)", "-6");
   TEST_EVALS(set_xy, "(* x y)", "91");
@@ -254,56 +240,47 @@ DEF_TEST(lambda) {
   TEST_EVAL("((lambda (x y) (cons x (cdr y))) 'a '(z b c))", "(a b c)");
   TEST_EVAL("((lambda (x) (cons 'z x)) '(a b c))", "(z a b c)");
 
-  const_expression before0[] = {
-    "(set 'y '(a b c))",
-    "(set 'f  (lambda (x) (cons x y)))",
-    NULL,
-  };
-  TEST_EVALS(before0, "(f '(1 2 3))", "((1 2 3) a b c)");
+  SERIES(zero,
+         "(set 'y '(a b c))",
+         "(set 'f  (lambda (x) (cons x y)))");
+  TEST_EVALS(zero, "(f '(1 2 3))", "((1 2 3) a b c)");
 
-  const_expression before1[] = {
-    "(set 'y '(a b c))",
-    "(set 'y '(4 5 6))",
-    "(set 'f    (lambda (x) (cons x y)))",
-    NULL,
-  };
-  TEST_EVALS(before1, "(f '(1 2 3))", "((1 2 3) 4 5 6)");
+  SERIES(one,
+         "(set 'y '(a b c))",
+         "(set 'y '(4 5 6))",
+         "(set 'f    (lambda (x) (cons x y)))");
+  TEST_EVALS(one, "(f '(1 2 3))", "((1 2 3) 4 5 6)");
 
-  const_expression before2[] = {
+  SERIES(two,
     "(set 'caar (lambda (x) (car (car x))))",
     "(set 'f    (lambda (x) (cons 'z x)))",
-    "(set 'g    (lambda (x) (f (caar x))))",
-    NULL,
-  };
-  TEST_EVALS(before2,"(g '(((a b) c) d) )", "(z a b)");
+    "(set 'g    (lambda (x) (f (caar x))))");
+  TEST_EVALS(two,"(g '(((a b) c) d) )", "(z a b)");
 
-  const_expression before3[] = {
-    "(set 'make-adder (lambda (x) (lambda (y) (+ x y))))",
-    "(set 'add-5 (make-adder 5)",
-    NULL,
-  };
-  TEST_EVALS(before3, "(add-5 7)", "12");
+  SERIES(three,
+         "(set 'make-adder (lambda (x) (lambda (y) (+ x y))))",
+         "(set 'add-5 (make-adder 5)");
+  TEST_EVALS(three, "(add-5 7)", "12");
 
-  const_expression before4[] = {
-    "(set 'make-prepender (lambda (x) (lambda (y) (cons x y))))",
-    "(set 'prepend-z (make-prepender 'z))",
-    NULL,
-  };
-  TEST_EVALS(before4, "(prepend-z '(a b c))", "(z a b c)");
+  SERIES(four,
+         "(set 'make-prepender (lambda (x) (lambda (y) (cons x y))))",
+         "(set 'prepend-z (make-prepender 'z))");
+  TEST_EVALS(four, "(prepend-z '(a b c))", "(z a b c)");
 
-  const_expression before5[] = {
-    "(set 'f (lambda () 4))",
-    "(f)",
-    NULL
-  };
-  TEST_EVALS(before5, "(f)", "4");
+  SERIES(five,
+         "(set 'f (lambda () 4))",
+         "(f)");
+  TEST_EVALS(five, "(f)", "4");
 
-  const_expression before6[] = {
-    "(set 'f (lambda () (+ 5 6)))",
-    "(f)",
-    NULL
-  };
-  TEST_EVALS(before6, "(f)", "11");
+  SERIES(six,
+         "(set 'f (lambda () (+ 5 6)))",
+         "(f)");
+  TEST_EVALS(six, "(f)", "11");
+
+  TEST_ERROR("(lambda)");
+  TEST_ERROR("(lambda 1)");
+  TEST_ERROR("(lambda one two three four)");
+  TEST_ERROR("(lambda t)");
 
   TEST_REPORT();
 }
@@ -311,12 +288,10 @@ DEF_TEST(lambda) {
 DEF_TEST(closure) {
   TEST_INIT();
 
-  const_expression before[] = {
-    "(set 'f (lambda (x y) (+ x y)))",
-    "(set 'add-5 (f 5)",
-    NULL
-  };
-  TEST_EVALS(before, "(add-5 100)", "105");
+  SERIES(one,
+         "(set 'f (lambda (x y) (+ x y)))",
+         "(set 'add-5 (f 5)");
+  TEST_EVALS(one, "(add-5 100)", "105");
 
   TEST_REPORT();
 }
@@ -324,31 +299,28 @@ DEF_TEST(closure) {
 DEF_TEST(recursion) {
   TEST_INIT();
 
-  // 5!
-  const_expression five[] = {
-    "(set 'factorial (lambda (x)  (cond ((= x 0) 1) ((= 1 1) (* x (factorial (- x 1)))))))",
-    NULL,
-  };
-  TEST_EVALS(five, "(factorial 5)", "120");
-
-  // 8!
-  const_expression eight[] = {
-    "(set 'factorial (lambda (x)  (cond ((= x 0) 1) (t (* x (factorial (- x 1)))))))",
-    NULL,
-  };
-  TEST_EVALS(eight, "(factorial 8)", "40320");
+  SERIES(factorial,
+         "(set 'factorial (lambda (x) "
+           "(cond "
+           "((= x 0) 1) "
+           "(t (* x (factorial (- x 1)))))))");
+  TEST_EVALS(factorial, "(factorial 5)", "120");
+  TEST_EVALS(factorial, "(factorial 8)", "40320");
+  TEST_EVALS(factorial, "(factorial 0)", "0");
 
   // ith element
-  const_expression end[] = {
-    "(set 'ith (lambda (x i) (cond ((= i 0) (car x)) ((= 1 1) (ith (cdr x) (- i 1))))))",
-    NULL,
-  };
-  TEST_EVALS(end, "(ith '(1 2 3 4 5) 2)", "3");
+  SERIES(ith,
+         "(set 'ith (lambda (x i)"
+           "(cond"
+           "((= i 0) (car x))"
+           "(t (ith (cdr x) (- i 1))))))");
+  TEST_EVALS(ith, "(ith '(1 2 3 4 5) 2)", "3");
 
-  const_expression repeat[] = {
-    "(set 'repeat (lambda (item n) (cond ((= n 1) item) (t (cons (car item) (repeat item (- n 1)))))))",
-    NULL,
-  };
+  SERIES(repeat,
+         "(set 'repeat (lambda (item n)"
+           "(cond"
+           "((= n 1) item)"
+           "(t (cons (car item) (repeat item (- n 1)))))))");
   TEST_EVALS(repeat, "(repeat '(3) 7)", "(3 3 3 3 3 3 3)");
 
   TEST_REPORT();

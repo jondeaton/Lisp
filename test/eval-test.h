@@ -11,11 +11,11 @@
  * --------------------------
  * Tests if a certain expression evaluated to the correct thing. Will print the
  * results to stdout
- * @param expr: The expression to evaluate
+ * @param expression: The expression to evaluate
  * @param expected: The expected result of evaluating the expression
  * @return: True if the expression evaluated to the expected thing, false otherwise
  */
-bool test_single_eval(const_expression expr, const_expression expected);
+bool test_single_eval(const_expression expression, const_expression expected);
 
 /**
  * Function: test_multi_eval

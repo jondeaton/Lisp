@@ -9,18 +9,14 @@
 #define TEST_PARSE(a, b) TEST_ITEM(test_single_parse, a, b)
 
 bool test_single_parse(const_expression expr, const_expression expected) {
-  obj* o = parse_expression(expr, NULL);
-  expression result_exp = unparse(o);
+  obj* o = PARSE(expr);
+  expression result = unparse(o);
   dispose_recursive(o);
-  bool test_result = strcmp(result_exp, expected) == 0;
 
-  if (verbose)
-    printf("%s Parsing:\t%s\n", test_result ? PASS : FAIL, expr);
-  if (!test_result) {
-    printf(KRED "\tExpecting:\t%s\n", expected);
-    printf("\tResult:\t\t%s\n" RESET, result_exp);
-  }
-  free(result_exp);
+  bool test_result = get_test_result(expected, result);
+  print_single_result("Parse", expr, expected, result, test_result);
+
+  free(result);
   return test_result;
 }
 

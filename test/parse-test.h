@@ -21,11 +21,11 @@ DEF_TEST(parser);
  * Function: test_single_parse
  * ---------------------------
  * Tests to see if a single parsing works correctly
- * @param expr: The expression to parse and then unparse
+ * @param expression: The expression to parse and then unparse
  * @param expected: The expected result of parsing and then un-parsing the expression
  * @return: True if the result of parsing and un-parsing the expression is equal
  * to the expected expression
  */
-bool test_single_parse(const_expression expr, const_expression expected);
+bool test_single_parse(const_expression expression, const_expression expected);
 
 #endif //LISP_PARSE_TEST_H

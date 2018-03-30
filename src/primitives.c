@@ -120,6 +120,9 @@ obj *cond(const obj *o, obj **envp, GarbageCollector *gc) {
 
   obj* pair = list_of(o)->car;
   if (!is_list(pair)) return LOG_ERROR("Conditional pair clause is not a list");
+  if (is_empty(pair)) return LOG_ERROR("Empty Conditional pair.");
+  if (list_length(pair) != 2)
+    return LOG_ERROR("Conditional pair length was %d, not 2.", list_length(pair));
 
   obj* predicate = eval(list_of(pair)->car, envp, gc);
   if (is_t(predicate)) {
@@ -127,7 +130,7 @@ obj *cond(const obj *o, obj **envp, GarbageCollector *gc) {
     if (e == NULL) return LOG_ERROR("Predicate has no associated value");
     return eval(e, envp, gc);
   } else {
-    if (list_of(pair)->cdr == NULL) return empty(NULL); // nothing evaluated to true
+    if (list_of(pair)->cdr == NULL) return empty(gc); // nothing evaluated to true
     return cond(list_of(o)->cdr, envp, gc); // recurse on the rest of the list
   }
 }
@@ -136,6 +139,9 @@ obj *set(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* var_name = ith_arg_value(args, envp, 0, gc);
+  if (is_empty(var_name)) return LOG_ERROR("Cannot set empty list");
+  if (is_t(var_name)) return LOG_ERROR("Cannot set truth atom");
+  if (!is_atom(var_name)) return LOG_ERROR("Can only set atom types");
   obj* value = ith_arg_value(args, envp, 1, gc);
 
   obj** prev_value_p = lookup_entry(var_name, *envp); // previously bound value
