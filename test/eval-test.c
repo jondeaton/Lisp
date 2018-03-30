@@ -7,7 +7,10 @@
 #define TEST_EVAL(e, expected) TEST_ITEM(test_single_eval, e, expected)
 #define TEST_EVALS(pre, e, expected) TEST_ITEM(test_multi_eval, pre, e, expected)
 #define TEST_ERROR(e) TEST_EVAL(e, NULL)
+#define TEST_TRUE(e) TEST_EVAL(e, "t")
+#define TEST_FALSE(e) TEST_EVAL(e, "()")
 
+// Macro for easy creation of a series of expressions to evaluate
 #define SERIES(name, ...) const_expression name[] = {__VA_ARGS__, NULL}
 
 bool test_single_eval(const_expression expr, const_expression expected) {
@@ -147,24 +150,19 @@ DEF_TEST(cond) {
 DEF_TEST(set) {
   TEST_INIT();
 
-  const_expression set_x[] = { // Testing that you can set something
-    "(set 'x 5)",
-    NULL,
-  };
-  TEST_EVALS(set_x, "x", "5");
+  // Testing that you can set something
+  SERIES(setx, "(set 'x 5)");
+  TEST_EVALS(setx, "x", "5");
 
-  const_expression set_y[] = {
-    "(set 'y 5)",
-    "(set 'y 10)",
-    NULL,
-  };
+  // Testing that you can over-write something
+  SERIES(set_y,
+         "(set 'y 5)",
+         "(set 'y 10)");
   TEST_EVALS(set_y, "y", "10");
 
   // Test that you can set something as the evaluation of another expression
-  const_expression set_x_eval[] = {
-    "(set 'x (eq (car '(a b c)) 'a))",
-    NULL
-  };
+  SERIES(set_x_eval,
+         "(set 'x (eq (car '(a b c)) 'a))");
   TEST_EVALS(set_x_eval, "(cond (x '5) ('() '6))", "5");
 
   TEST_ERROR("(set x)");
@@ -195,6 +193,22 @@ DEF_TEST(math) {
   TEST_EVAL("(* 6 7)", "42");
   TEST_EVAL("(/ 42 6)", "7");
   TEST_EVAL("(/ 42 100)", "0");
+  TEST_EVAL("-5", "-5");
+
+  TEST_TRUE("(> 5 0)");
+  TEST_TRUE("(> (+ 4 1) 4)");
+  TEST_FALSE("(> -5 0)");
+  TEST_FALSE("(> 78 78)");
+  TEST_TRUE("(>= 4 4)");
+  TEST_TRUE("(>= 123 -123)");
+  TEST_FALSE("(>= 0 5)");
+
+  TEST_TRUE("(< 5 6)");
+  TEST_TRUE("(< -1234 7)");
+  TEST_FALSE("(< 9 9)");
+  TEST_TRUE("(<= 4 4)");
+  TEST_TRUE("(<= -123 123)");
+  TEST_FALSE("(<= 5 0)");
 
   SERIES(setx, "(set 'x 5)");
   TEST_EVALS(setx, "(+ x 5)", "10");
@@ -209,9 +223,8 @@ DEF_TEST(math) {
   TEST_EVALS(set_xy, "(% y x)", "6");
 
   // weird ways to use these things
-  TEST_EVAL("(+ 1 2 3 4)", "10");
-  TEST_EVAL("(- 5)", "-5");
-  TEST_EVAL("(* 1 2 3 4)", "24");
+  // TEST_EVAL("(+ 1 2 3 4)", "10"); // just kidding, we will use the standard
+  // TEST_EVAL("(* 1 2 3 4)", "24"); // library to implement this functionality
 
   // Too few arguments
   TEST_ERROR("(+)");
@@ -306,7 +319,7 @@ DEF_TEST(recursion) {
            "(t (* x (factorial (- x 1)))))))");
   TEST_EVALS(factorial, "(factorial 5)", "120");
   TEST_EVALS(factorial, "(factorial 8)", "40320");
-  TEST_EVALS(factorial, "(factorial 0)", "0");
+  TEST_EVALS(factorial, "(factorial 0)", "1");
 
   // ith element
   SERIES(ith,

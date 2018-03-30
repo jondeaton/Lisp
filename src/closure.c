@@ -4,20 +4,31 @@
  * Implements closure related functionality
  */
 
-#include <lisp-objects.h>
 #include <closure.h>
+#include <lisp-objects.h>
 #include <garbage-collector.h>
 #include <list.h>
 #include <environment.h>
 #include <evaluator.h>
+#include <stack-trace.h>
+
 #include <stdlib.h>
 
 // Static function declarations
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
 obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc) {
+  if (!CHECK_NARGS_MIN(get_lambda_parameters(lambda), 1)) return NULL;
+  if (!CHECK_NARGS_MAX(get_lambda_parameters(lambda), 2)) return NULL;
 
   obj* params = copy_recursive(get_lambda_parameters(lambda));
+  if (!is_list(params)) return LOG_ERROR("Lambda parameters are not a list");
+  FOR_LIST(params, var) {
+    if (is_t(var)) return LOG_ERROR("Truth atom can't be parameter");
+    if (is_empty(var)) return LOG_ERROR("Empty list can't be a parameter");
+    if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
+  }
+
   obj* procedure = copy_recursive(get_lambda_body(lambda));
 
   obj* captured = NULL;

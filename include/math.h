@@ -11,7 +11,7 @@
 #include "garbage-collector.h"
 
 /**
- * Function: add_math_library
+ * Function: get_math_library
  * --------------------------
  * Get the math library environment
  * @return: The math library environment
@@ -19,34 +19,34 @@
 obj* get_math_library();
 
 /**
- * Primitive: plus
+ * Primitive: add
  * ---------------
  * Primitive function for adding two numbers
  * @param args: The unevaluated arguments to add
  * @param envp: The environment to evaluate the addition
  * @return: A newly allocated number/float object containing the result of the addition
  */
-obj *plus(const obj *args, obj **envp, GarbageCollector *gc);
+obj *add(const obj *args, obj **envp, GarbageCollector *gc);
 
 /**
- * Primitive: subtract
+ * Primitive: sub
  * -------------------
  * Primitive function for subtracting two numbers
  * @param o: The unevaluated arguments to subtract
  * @param env: The environment to evaluate the subtraction
  * @return: A newly allocated number/float object containing the result of the subtraction
  */
-obj *subtract(const obj *o, obj **env, GarbageCollector *gc);
+obj *sub(const obj *o, obj **env, GarbageCollector *gc);
 
 /**
- * Primitive: multiply
+ * Primitive: mul
  * -------------------
  * Primitive function for multiplying two numbers
  * @param o: The unevaluated arguments to multiply
  * @param env: The environment to evaluate the multiplication
  * @return: A newly allocated number/float object containing the result of the multiplication
  */
-obj *multiply(const obj *o, obj **env, GarbageCollector *gc);
+obj *mul(const obj *o, obj **env, GarbageCollector *gc);
 
 /**
  * Primitive: divide
@@ -67,5 +67,60 @@ obj *divide(const obj *o, obj **env, GarbageCollector *gc);
  * @return: A newly allocated number/float object containing the result of the modulus
  */
 obj *mod(const obj *o, obj **env, GarbageCollector *gc);
+
+/**
+ * Primitive: equal
+ * ----------------
+ *  Test Equality
+ * @param o
+ * @param env
+ * @param gc
+ * @return
+ */
+obj *equal(const obj *o, obj **env, GarbageCollector *gc);
+
+/**
+ * Primitive: gt
+ * -------------
+ * Greater than
+ * @param o
+ * @param env
+ * @param gc
+ * @return
+ */
+obj *gt(const obj *o, obj **env, GarbageCollector *gc);
+
+/**
+ * Primitive: gte
+ * --------------
+ * Greater than or equals
+ * @param o
+ * @param env
+ * @param gc
+ * @return
+ */
+obj *gte(const obj *o, obj **env, GarbageCollector *gc);
+
+/**
+ * Primitive: lt
+ * -------------
+ * Less than
+ * @param o
+ * @param env
+ * @param gc
+ * @return
+ */
+obj *lt(const obj *o, obj **env, GarbageCollector *gc);
+
+/**
+ * Primitive: lte
+ * --------------
+ * Less than or equal to
+ * @param o
+ * @param env
+ * @param gc
+ * @return
+ */
+obj *lte(const obj *o, obj **env, GarbageCollector *gc);
 
 #endif // _LISP_MATH_H_INCLUDED

@@ -1,8 +1,7 @@
-/*
- * File: math.c
- * ------------
- * Presents the implementation of the math library
- * Full disclosure, this file is honestly not that great.
+/**
+ * @file math.c
+ * @brief Implementation of the math library
+ * @details Full disclosure, this file is honestly not that great.
  */
 
 #include <math.h>
