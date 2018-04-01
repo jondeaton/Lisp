@@ -16,7 +16,7 @@ obj* new_atom(atom_t name) {
   obj* o = malloc(sizeof(obj) + name_size + 1);
   MALLOC_CHECK(o);
   o->objtype = atom_obj;
-  strcpy((char*) atom_of(o), name);
+  strcpy((char*) ATOM(o), name);
   return o;
 }
 
@@ -24,8 +24,8 @@ obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
   MALLOC_CHECK(o);
   o->objtype = list_obj;
-  list_of(o)->car = NULL;
-  list_of(o)->cdr = NULL;
+  CAR(o) = NULL;
+  CDR(o) = NULL;
   return o;
 }
 
@@ -37,13 +37,13 @@ obj* new_closure() {
 }
 
 obj* copy_atom(const obj* o) {
-  if (!is_atom(o)) return NULL;
-  return new_atom(atom_of(o));
+  if (!ATOM(o)) return NULL;
+  return new_atom(ATOM(o));
 }
 
 obj* copy_list(const obj *o) {
   obj* list_copy = new_list();
-  memcpy(list_of(list_copy), list_of(o), sizeof(list_obj));
+  memcpy(LIST(list_copy), LIST(o), sizeof(list_obj));
   return list_copy;
 }
 
@@ -53,14 +53,14 @@ bool compare(const obj* a, const obj* b) {
   if (is_int(a)) return get_int(a) == get_int(b);
   if (is_float(a)) return get_float(a) == get_float(b);
 
-  if (is_primitive(a))
-    return *primitive_of(a) == *primitive_of(b);
-  if (is_list(a))
-    return memcmp(list_of(a), list_of(b), sizeof(list_t)) == 0;
-  if (is_atom(a))
-    return strcmp(atom_of(a), atom_of(b)) == 0;
-  if (is_closure(a))
-    return memcmp(closure_of(a), closure_of(b), sizeof(closure_t)) == 0;
+  if (PRIMITIVE(a))
+    return *PRIMITIVE(a) == *PRIMITIVE(b);
+  if (LIST(a))
+    return memcmp(LIST(a), LIST(b), sizeof(list_t)) == 0;
+  if (ATOM(a))
+    return strcmp(ATOM(a), ATOM(b)) == 0;
+  if (CLOSURE(a))
+    return memcmp(CLOSURE(a), CLOSURE(b), sizeof(closure_t)) == 0;
   return false;
 }
 
@@ -68,28 +68,11 @@ void dispose(obj* o) {
   free(o);
 }
 
-list_t* list_of(const obj *o) {
-  return (list_t*) get_contents(o);
-}
-
-atom_t atom_of(const obj *o) {
-  return (atom_t) get_contents(o);
-}
-
-closure_t* closure_of(const obj* o) {
-  return (closure_t*) get_contents(o);
-}
-
-void* get_contents(const obj *o) {
-  if (o == NULL) return NULL;
-  return (void*) ((char*) o + sizeof(obj));
-}
-
 obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
   MALLOC_CHECK(o);
-  o->objtype = integer_obj;
-  int* contents = (int*) get_contents(o);
+  o->objtype = int_obj;
+  int* contents = (int*) CONTENTS(o);
   *contents = value;
   return o;
 }
@@ -98,34 +81,14 @@ obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
   MALLOC_CHECK(o);
   o->objtype = float_obj;
-  float* contents = (float*) get_contents(o);
+  float* contents = (float*) CONTENTS(o);
   *contents = value;
   return o;
 }
 
-bool is_atom(const obj* o) {
-  if (o == NULL) return false;
-  return o->objtype == atom_obj;
-}
-
-bool is_primitive(const obj* o) {
-  if (o == NULL) return false;
-  return o->objtype == primitive_obj;
-}
-
-bool is_list(const obj* o) {
-  if (o == NULL) return false;
-  return o->objtype == list_obj;
-}
-
-bool is_closure(const obj* o) {
-  if (o == NULL) return false;
-  return o->objtype == closure_obj;
-}
-
 bool is_int(const obj* o) {
   if (o == NULL) return false;
-  return o->objtype == integer_obj;
+  return o->objtype == int_obj;
 }
 
 bool is_float(const obj* o) {
@@ -140,8 +103,8 @@ bool is_number(const obj* o) {
 
 bool is_t(const obj* o) {
   if (o == NULL) return false;
-  if (!is_atom(o)) return false;
-  return strcmp(atom_of(o), "t") == 0 || strcmp(atom_of(o), "true") == 0;
+  if (!ATOM(o)) return false;
+  return strcmp(ATOM(o), "t") == 0 || strcmp(ATOM(o), "true") == 0;
 }
 
 float get_float(const obj* o) {

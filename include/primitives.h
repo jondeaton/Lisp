@@ -28,7 +28,7 @@ obj* new_primitive(primitive_t primitive);
  * @param o: Pointer to a lisp data structure
  * @return: Function pointer to primitive function
  */
-primitive_t* primitive_of(const obj *o);
+//primitive_t* PRIMITIVE(const obj *o);
 
 /**
  * Function: get_primitive_env

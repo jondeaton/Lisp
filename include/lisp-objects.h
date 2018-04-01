@@ -15,7 +15,7 @@ enum type {
     list_obj,
     primitive_obj,
     closure_obj,
-    integer_obj,
+    int_obj,
     float_obj
 };
 
@@ -37,6 +37,29 @@ typedef struct {
   int nargs;
 } closure_t;
 
+// Macro for generating other macros ?!
+//#define IS_(NAME, name) #define IS_ ## NAME(o) (o ? o->objtype == name ## _obj : false)
+//IS_(ATOM, atom)
+
+#define TYPE_CHECK(o, type) ((o) ? (o)->objtype == (type) : false)
+#define IS_ATOM(o)      TYPE_CHECK(o,      atom_obj)
+#define IS_LIST(o)      TYPE_CHECK(o,      list_obj)
+#define IS_PRIMITIVE(o) TYPE_CHECK(o, primitive_obj)
+#define IS_CLOSURE(o)   TYPE_CHECK(o,   closure_obj)
+#define IS_FLOAT(o)     TYPE_CHECK(o,     float_obj)
+#define IS_INT(o)       TYPE_CHECK(o,       int_obj)
+
+#define CONTENTS(o) ((o) ? (void*) ((char*) (o) + sizeof(obj)) : NULL)
+#define ATOM(o)       (IS_ATOM(o)      ? (atom_t)       CONTENTS(o) : NULL)
+#define LIST(o)       (IS_LIST(o)      ? (list_t*)      CONTENTS(o) : NULL)
+#define PRIMITIVE(o)  (IS_PRIMITIVE(o) ? (primitive_t*) CONTENTS(o) : NULL)
+#define CLOSURE(o)    (IS_CLOSURE(o)   ? (closure_t*)   CONTENTS(o) : NULL)
+
+#define CAR(o) LIST(o)->car
+#define CDR(o) LIST(o)->cdr
+#define PARAMETERS(o) CLOSURE(o)->parameters
+#define PROCEDURE(o)  CLOSURE(o)->procedure
+#define CAPTURED(o)   CLOSURE(o)->captured
 
 /**
  * Function: new_atom
@@ -63,33 +86,6 @@ obj* new_list();
  * @return: A newly created closure object
  */
 obj* new_closure();
-
-/**
- * Function: get_list
- * ------------------
- * Gets a pointer to the list
- * @param o: Pointer to a lisp data structure
- * @return: A pointer to that list data structure's list
- */
-list_t* list_of(const obj *o);
-
-/**
- * Function: get_atom
- * ------------------
- * Gets a pointer to the atom
- * @param o: Pointer to a lisp data structure
- * @return: A pointer to the atom in the object
- */
-atom_t atom_of(const obj *o);
-
-/**
- * Function: closure_of
- * --------------------
- * Get the closure object stored in the given object
- * @param o: The object (should be a closure object, but this won't be checked)
- * @return: Pointer to the closure struct stored in the object
- */
-closure_t* closure_of(const obj* o);
 
 /**
  * Function: new_int
@@ -139,42 +135,6 @@ obj* copy_list(const obj *o);
  * @return: True if both objects are the same, false otherwise
  */
 bool compare(const obj* a, const obj* b);
-
-/**
- * Function: is_atom
- * -----------------
- * Determines if an object is of the atom type
- * @param o: The object to check if it is an atom
- * @return: True if the object type is atom, false otherwise
- */
-bool is_atom(const obj* o);
-
-/**
- * Function: is_primitive
- * ----------------------
- * Determines if an object is of the primitive type
- * @param o: The object to check whether it is primitive
- * @return: True if the object type is a primitive, false otherwise
- */
-bool is_primitive(const obj* o);
-
-/**
- * Function: is_list
- * -----------------
- * Determines if an object is of the list type
- * @param o: The object to check whether it is list
- * @return: True if the object type is a list, false otherwise
- */
-bool is_list(const obj* o);
-
-/**
- * Function: is_closure
- * ----------------------
- * Determines if an object is of the closure type
- * @param o: The object to check whether it is closure
- * @return: True if the object type is a closure, false otherwise
- */
-bool is_closure(const obj* o);
 
 /**
  * Function: is_int
@@ -238,7 +198,7 @@ float get_float(const obj* o);
  * @param o: Object to get the contents of
  * @return: Pointer to the memory containing the contents of the object
  */
-void* get_contents(const obj *o);
+//void* CONTENTS(const obj *o);
 
 /**
  * Function: dispose

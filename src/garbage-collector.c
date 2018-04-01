@@ -28,13 +28,13 @@ void gc_add(GarbageCollector *gc, const obj *o) {
 
 void gc_add_recursive(GarbageCollector *gc, const obj *root) {
   if (root == NULL) return;
-  if (is_list(root)) {
-    gc_add_recursive(gc, list_of(root)->car);
-    gc_add_recursive(gc, list_of(root)->cdr);
-  } else if (is_closure(root)) {
-    gc_add_recursive(gc, closure_of(root)->parameters);
-    gc_add_recursive(gc, closure_of(root)->procedure);
-    gc_add_recursive(gc, closure_of(root)->captured);
+  if (LIST(root)) {
+    gc_add_recursive(gc, LIST(root)->car);
+    gc_add_recursive(gc, LIST(root)->cdr);
+  } else if (CLOSURE(root)) {
+    gc_add_recursive(gc, CLOSURE(root)->parameters);
+    gc_add_recursive(gc, CLOSURE(root)->procedure);
+    gc_add_recursive(gc, CLOSURE(root)->captured);
   }
   gc_add(gc, root);
 }

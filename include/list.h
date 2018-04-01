@@ -13,9 +13,9 @@
 
 // For loop for iterating through elements of a list
 #define FOR_LIST(_list, _el) const obj* _l = _list; \
-  for (obj* (_el) = _l ? list_of(_l)->car : NULL; \
+  for (obj* (_el) = _l ? CAR(_l) : NULL; \
   _l != NULL; \
-  _l = list_of(_l)->cdr, (_el) = _l ? list_of(_l)->car : NULL)
+  _l = CDR(_l), (_el) = _l ? CAR(_l) : NULL)
     
 /**
  * Function: new_list_set

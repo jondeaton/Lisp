@@ -352,12 +352,16 @@ DEF_TEST(Y_combinator) {
   TEST_INIT();
 
   // Testing Y combinator with factorial function definition
-//  const_expression before[] = {
-//    "(set 'Y (lambda (H) ((lambda (x) (H (x x))) (lambda (x) (H (x x))))))",
-//    "(set 'F (lambda (G) (lambda (x)  (cond ((= x 0) 1) ((= 1 1) (* x (G (- x 1))))))))",
-//    NULL,
-//  };
-//  TEST_EVALS(before, "((Y F) 5)", "120");
+  SERIES(yc,
+          "(set 'Y (lambda (H) "
+              "((lambda (x) (H (x x))) (lambda (x) (H (x x))))))",
+
+          "(set 'F (lambda (G) (lambda (x) "
+              "(cond "
+                  "((= x 0) 1)"
+                  "(t (* x (G (- x 1))))))))");
+  (void) yc;
+  TEST_EVALS(yc, "((Y F) 5)", "120");
 
   TEST_REPORT();
 }

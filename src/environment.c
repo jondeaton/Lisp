@@ -50,16 +50,16 @@ obj* lookup(const obj* o, const obj* env) {
 obj** lookup_entry(const obj* key, const obj* env) {
   obj* pair = lookup_pair(key, env);
   if (pair == NULL) return NULL;
-  return &list_of(list_of(pair)->cdr)->car;
+  return &LIST(LIST(pair)->cdr)->car;
 }
 
 obj* lookup_pair(const obj* key, const obj* env) {
   if (key == NULL || env == NULL) return NULL;
-  if (!is_list(env) || !is_atom(key))  return NULL;  // Environment should be a list, key should be atom
+  if (!LIST(env) || !ATOM(key))  return NULL;  // Environment should be a list, key should be atom
 
-  obj* pair = list_of(env)->car;
+  obj* pair = LIST(env)->car;
   if (pair_matches_key(pair, key)) return pair;
-  return lookup_pair(key, list_of(env)->cdr);
+  return lookup_pair(key, LIST(env)->cdr);
 }
 
 /**

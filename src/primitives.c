@@ -31,13 +31,13 @@ obj* new_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
   MALLOC_CHECK(o);
   o->objtype = primitive_obj;
-  memcpy(primitive_of(o), &primitive, sizeof(primitive));
+  memcpy(PRIMITIVE(o), &primitive, sizeof(primitive));
   return o;
 }
 
-primitive_t* primitive_of(const obj *o) {
-  return (primitive_t*) get_contents(o);
-}
+//primitive_t* PRIMITIVE(const obj *o) {
+//  return (primitive_t*) CONTENTS(o);
+//}
 
 // Allocate new truth atom
 obj *t(GarbageCollector *gc) {
@@ -57,14 +57,14 @@ obj *quote(const obj *args, obj **envp, GarbageCollector *gc) {
   (void) envp;
   (void) gc;
   if (!CHECK_NARGS(args, 1)) return NULL;
-  return list_of(args)->car;
+  return CAR(args);
 }
 
 obj *atom(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* result = eval(list_of(args)->car, envp, gc);
-  if (is_list(result)) return is_empty(result) ? t(gc) : empty(gc);
-  return is_atom(result) || is_number(result) ? t(gc) : empty(gc);
+  obj* result = eval(CAR(args), envp, gc);
+  if (LIST(result)) return is_empty(result) ? t(gc) : empty(gc);
+  return ATOM(result) || is_number(result) ? t(gc) : empty(gc);
 }
 
 obj *eq(const obj *args, obj **envp, GarbageCollector *gc) {
@@ -72,9 +72,9 @@ obj *eq(const obj *args, obj **envp, GarbageCollector *gc) {
   //
 
   obj* first = ith_arg_value(args, envp, 0, gc);
-  if (first == NULL) return NULL;
+  if (!first) return NULL;
   obj* second = ith_arg_value(args, envp, 1, gc);
-  if (second == NULL) return NULL;
+  if (!second) return NULL;
 
   bool same = compare(first, second);
   return same ? t(gc) : empty(gc);
@@ -82,33 +82,33 @@ obj *eq(const obj *args, obj **envp, GarbageCollector *gc) {
 
 obj *car(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* arg_value = eval(list_of(args)->car, envp, gc);
-  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
-  return list_of(arg_value)->car;
+  obj* arg_value = eval(CAR(args), envp, gc);
+  if (!LIST(arg_value)) return LOG_ERROR("Argument is not a list");
+  return CAR(arg_value);
 }
 
 obj *cdr(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* arg_value = eval(list_of(args)->car, envp, gc);
-  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
-  return list_of(arg_value)->cdr;
+  obj* arg_value = eval(CAR(args), envp, gc);
+  if (!LIST(arg_value)) return LOG_ERROR("Argument is not a list");
+  return CDR(arg_value);
 }
 
 obj *cons(const obj *args, obj **envp, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* x = list_of(args)->car;
+  obj* x = CAR(args);
   obj* y = ith(args, 1);
 
   obj* new_cdr = eval(y, envp, gc);
-  if (!is_list(new_cdr)) // no dot notation (yet) means second arg must be list
+  if (!LIST(new_cdr)) // no dot notation (yet) means second arg must be list
     return LOG_ERROR("Second argument is not list.");
 
   obj* new_obj = new_list();
   if (new_obj == NULL) return NULL;
   gc_add(gc, new_obj); // Record allocation
-  list_of(new_obj)->car = eval(x, envp, gc);
-  list_of(new_obj)->cdr = new_cdr;
+  CAR(new_obj) = eval(x, envp, gc);
+  CDR(new_obj) = new_cdr;
 
   return new_obj;
 }
@@ -116,22 +116,22 @@ obj *cons(const obj *args, obj **envp, GarbageCollector *gc) {
 obj *cond(const obj *o, obj **envp, GarbageCollector *gc) {
   if (o == NULL) return empty(gc);
 
-  if (!is_list(o)) return LOG_ERROR("Arguments are not a list of pairs");
+  if (!LIST(o)) return LOG_ERROR("Arguments are not a list of pairs");
 
-  obj* pair = list_of(o)->car;
-  if (!is_list(pair)) return LOG_ERROR("Conditional pair clause is not a list");
+  obj* pair = CAR(o);
+  if (!LIST(pair)) return LOG_ERROR("Conditional pair clause is not a list");
   if (is_empty(pair)) return LOG_ERROR("Empty Conditional pair.");
   if (list_length(pair) != 2)
     return LOG_ERROR("Conditional pair length was %d, not 2.", list_length(pair));
 
-  obj* predicate = eval(list_of(pair)->car, envp, gc);
+  obj* predicate = eval(CAR(pair), envp, gc);
   if (is_t(predicate)) {
     obj* e = ith(pair, 1);
-    if (e == NULL) return LOG_ERROR("Predicate has no associated value");
+    if (!e) return LOG_ERROR("Predicate has no associated value");
     return eval(e, envp, gc);
   } else {
-    if (list_of(pair)->cdr == NULL) return empty(gc); // nothing evaluated to true
-    return cond(list_of(o)->cdr, envp, gc); // recurse on the rest of the list
+    if (!CDR(pair)) return empty(gc); // nothing evaluated to true
+    return cond(CDR(o), envp, gc); // recurse on the rest of the list
   }
 }
 
@@ -141,7 +141,7 @@ obj *set(const obj *args, obj **envp, GarbageCollector *gc) {
   obj* var_name = ith_arg_value(args, envp, 0, gc);
   if (is_empty(var_name)) return LOG_ERROR("Cannot set empty list");
   if (is_t(var_name)) return LOG_ERROR("Cannot set truth atom");
-  if (!is_atom(var_name)) return LOG_ERROR("Can only set atom types");
+  if (!ATOM(var_name)) return LOG_ERROR("Can only set atom types");
   obj* value = ith_arg_value(args, envp, 1, gc);
 
   obj** prev_value_p = lookup_entry(var_name, *envp); // previously bound value
