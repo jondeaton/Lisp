@@ -37,29 +37,19 @@ typedef struct {
   int nargs;
 } closure_t;
 
-// Macro for generating other macros ?!
-//#define IS_(NAME, name) #define IS_ ## NAME(o) (o ? o->objtype == name ## _obj : false)
-//IS_(ATOM, atom)
+#define CONTENTS(o)   ((void*) ((char*) (o) + sizeof(obj)))
+#define ATOM(o)       ((atom_t)  CONTENTS(o))
+#define LIST(o)       ((list_t*) CONTENTS(o))
+#define PRIMITIVE(o)  ((primitive_t*) CONTENTS(o))
+#define CLOSURE(o)    ((closure_t*)   CONTENTS(o))
 
-#define TYPE_CHECK(o, type) ((o) ? (o)->objtype == (type) : false)
-#define IS_ATOM(o)      TYPE_CHECK(o,      atom_obj)
-#define IS_LIST(o)      TYPE_CHECK(o,      list_obj)
-#define IS_PRIMITIVE(o) TYPE_CHECK(o, primitive_obj)
-#define IS_CLOSURE(o)   TYPE_CHECK(o,   closure_obj)
-#define IS_FLOAT(o)     TYPE_CHECK(o,     float_obj)
-#define IS_INT(o)       TYPE_CHECK(o,       int_obj)
-
-#define CONTENTS(o) ((o) ? (void*) ((char*) (o) + sizeof(obj)) : NULL)
-#define ATOM(o)       (IS_ATOM(o)      ? (atom_t)       CONTENTS(o) : NULL)
-#define LIST(o)       (IS_LIST(o)      ? (list_t*)      CONTENTS(o) : NULL)
-#define PRIMITIVE(o)  (IS_PRIMITIVE(o) ? (primitive_t*) CONTENTS(o) : NULL)
-#define CLOSURE(o)    (IS_CLOSURE(o)   ? (closure_t*)   CONTENTS(o) : NULL)
-
+// Useful for extracting elements from the lisp object
 #define CAR(o) LIST(o)->car
 #define CDR(o) LIST(o)->cdr
 #define PARAMETERS(o) CLOSURE(o)->parameters
 #define PROCEDURE(o)  CLOSURE(o)->procedure
 #define CAPTURED(o)   CLOSURE(o)->captured
+#define NARGS(o)      CLOSURE(o)->nargs
 
 /**
  * Function: new_atom
@@ -77,7 +67,6 @@ obj* new_atom(atom_t name);
  * @return: A pointer to a new list object in dynamically allocated memory
  */
 obj* new_list();
-
 
 /**
  * Function: new_closure
@@ -135,6 +124,42 @@ obj* copy_list(const obj *o);
  * @return: True if both objects are the same, false otherwise
  */
 bool compare(const obj* a, const obj* b);
+
+/**
+ * Function: is_atom
+ * -----------------
+ * Determines if an object is of the atom type
+ * @param o: The object to check if it is an atom
+ * @return: True if the object type is atom, false otherwise
+ */
+bool is_atom(const obj* o);
+
+/**
+ * Function: is_primitive
+ * ----------------------
+ * Determines if an object is of the primitive type
+ * @param o: The object to check whether it is primitive
+ * @return: True if the object type is a primitive, false otherwise
+ */
+bool is_primitive(const obj* o);
+
+/**
+ * Function: is_list
+ * -----------------
+ * Determines if an object is of the list type
+ * @param o: The object to check whether it is list
+ * @return: True if the object type is a list, false otherwise
+ */
+bool is_list(const obj* o);
+
+/**
+ * Function: is_closure
+ * ----------------------
+ * Determines if an object is of the closure type
+ * @param o: The object to check whether it is closure
+ * @return: True if the object type is a closure, false otherwise
+ */
+bool is_closure(const obj* o);
 
 /**
  * Function: is_int

@@ -21,14 +21,14 @@ obj* init_env() {
   return env;
 }
 
-obj* make_environment(atom_t const primitive_names[], const primitive_t primitive_list[]) {
+obj* create_environment(atom_t const *primitive_names, primitive_t const *primitive_list) {
   if (primitive_names[0] == NULL || primitive_list[0] == NULL) return NULL;
 
   obj* key = new_atom(primitive_names[0]);
   obj* value = new_primitive(primitive_list[0]);
   obj* pair = make_pair(key, value, false);
 
-  obj* cdr = make_environment(primitive_names + 1, primitive_list + 1);
+  obj* cdr = create_environment(primitive_names + 1, primitive_list + 1);
   return new_list_set(pair, cdr);
 }
 
@@ -50,16 +50,16 @@ obj* lookup(const obj* o, const obj* env) {
 obj** lookup_entry(const obj* key, const obj* env) {
   obj* pair = lookup_pair(key, env);
   if (pair == NULL) return NULL;
-  return &LIST(LIST(pair)->cdr)->car;
+  return & CAR(CDR(pair));
 }
 
 obj* lookup_pair(const obj* key, const obj* env) {
   if (key == NULL || env == NULL) return NULL;
-  if (!LIST(env) || !ATOM(key))  return NULL;  // Environment should be a list, key should be atom
+  if (!is_list(env) || !is_atom(key))  return NULL;  // Environment should be a list, key should be atom
 
-  obj* pair = LIST(env)->car;
+  obj* pair = CAR(env);
   if (pair_matches_key(pair, key)) return pair;
-  return lookup_pair(key, LIST(env)->cdr);
+  return lookup_pair(key, CDR(env));
 }
 
 /**

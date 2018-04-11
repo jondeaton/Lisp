@@ -25,7 +25,7 @@ obj* init_env();
  * @param primitive_list: Array of corresponding primitive functions
  * @return: An environment object made form pairing the names with the primitive functions
  */
-obj* make_environment(atom_t const primitive_names[], const primitive_t primitive_list[]);
+obj* create_environment(atom_t const *primitive_names, primitive_t const *primitive_list);
 
 /**
  * Function: lookup

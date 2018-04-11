@@ -14,17 +14,29 @@
 #include <string.h>
 #include <stdlib.h>
 
+// forward declarations of primitives
+static def_primitive(quote);
+static def_primitive(atom);
+static def_primitive(eq);
+static def_primitive(car);
+static def_primitive(cdr);
+static def_primitive(cons);
+static def_primitive(cond);
+static def_primitive(set);
+static def_primitive(env);
+static def_primitive(defmacro);
+
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "defmacro", NULL };
 
 static const primitive_t primitive_functions[] = {&quote, &atom, &eq, &car, &cdr, &cons,
-                                                  &cond, &set, &env_prim, &defmacro,  NULL };
+                                                  &cond, &set, &env, &defmacro,  NULL };
 
 // Static function declarations
 static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *gc);
 
 obj* get_primitive_library() {
-  return make_environment(primitive_reserved_names, primitive_functions);
+  return create_environment(primitive_reserved_names, primitive_functions);
 }
 
 obj* new_primitive(primitive_t primitive) {
@@ -34,10 +46,6 @@ obj* new_primitive(primitive_t primitive) {
   memcpy(PRIMITIVE(o), &primitive, sizeof(primitive));
   return o;
 }
-
-//primitive_t* PRIMITIVE(const obj *o) {
-//  return (primitive_t*) CONTENTS(o);
-//}
 
 // Allocate new truth atom
 obj *t(GarbageCollector *gc) {
@@ -53,23 +61,41 @@ obj *empty(GarbageCollector *gc) {
   return list;
 }
 
-obj *quote(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: quote
+ * ----------------
+ * Returns the unevaluated version of the object
+ * @param args: The object to quote
+ * @param envp: The environment to evaluate this primitive in
+ * @return: Pointer to the lisp object without evaluating it
+ */
+static def_primitive(quote) {
   (void) envp;
   (void) gc;
   if (!CHECK_NARGS(args, 1)) return NULL;
   return CAR(args);
 }
 
-obj *atom(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: atom
+ * ---------------
+ * Checks if an object is an atom
+ */
+static def_primitive(atom) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* result = eval(CAR(args), envp, gc);
-  if (LIST(result)) return is_empty(result) ? t(gc) : empty(gc);
-  return ATOM(result) || is_number(result) ? t(gc) : empty(gc);
+  if (is_list(result)) return is_empty(result) ? t(gc) : empty(gc);
+  if (is_atom(result)) return t(gc);
+  return is_number(result) ? t(gc) : empty(gc);
 }
 
-obj *eq(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: eq
+ * -------------
+ * Test for equality of two objects
+ */
+static def_primitive(eq) {
   if (!CHECK_NARGS(args, 2)) return NULL;
-  //
 
   obj* first = ith_arg_value(args, envp, 0, gc);
   if (!first) return NULL;
@@ -80,46 +106,69 @@ obj *eq(const obj *args, obj **envp, GarbageCollector *gc) {
   return same ? t(gc) : empty(gc);
 }
 
-obj *car(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: car
+ * -------------
+ * Expects the value of l to be a list and returns it's first element
+ */
+static def_primitive(car) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), envp, gc);
-  if (!LIST(arg_value)) return LOG_ERROR("Argument is not a list");
+  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
   return CAR(arg_value);
 }
 
-obj *cdr(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: cdr
+ * -------------
+ * Expects the value of l to be a list and returns everything after the first element
+ */
+static def_primitive(cdr) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), envp, gc);
-  if (!LIST(arg_value)) return LOG_ERROR("Argument is not a list");
+  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
   return CDR(arg_value);
 }
 
-obj *cons(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: cons
+ * ---------------
+ * Expects the value of y to be a list and returns a list containing the value
+ * of x followed by the elements of the value of y
+ */
+static def_primitive(cons) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* x = CAR(args);
   obj* y = ith(args, 1);
 
   obj* new_cdr = eval(y, envp, gc);
-  if (!LIST(new_cdr)) // no dot notation (yet) means second arg must be list
+  if (!is_list(new_cdr)) // no dot notation (yet) means second arg must be list
     return LOG_ERROR("Second argument is not list.");
 
   obj* new_obj = new_list();
   if (new_obj == NULL) return NULL;
   gc_add(gc, new_obj); // Record allocation
-  CAR(new_obj) = eval(x, envp, gc);
+  CAR(new_obj) = eval(CAR(args), envp, gc);
   CDR(new_obj) = new_cdr;
 
   return new_obj;
 }
 
-obj *cond(const obj *o, obj **envp, GarbageCollector *gc) {
-  if (o == NULL) return empty(gc);
+/**
+ * Primitive: cond
+ * ---------------
+ * (cond (p1 e1) ... (pn en))
+ * The p expressions are evaluated in order until one returns t
+ * When one is found  the value of the corresponding e expression
+ * is returned as the expression
+ */
+static def_primitive(cond) {
+  if (args == NULL) return empty(gc);
 
-  if (!LIST(o)) return LOG_ERROR("Arguments are not a list of pairs");
+  if (!is_list(args)) return LOG_ERROR("Arguments are not a list of pairs");
 
-  obj* pair = CAR(o);
-  if (!LIST(pair)) return LOG_ERROR("Conditional pair clause is not a list");
+  obj* pair = CAR(args);
+  if (!is_list(pair)) return LOG_ERROR("Conditional pair clause is not a list");
   if (is_empty(pair)) return LOG_ERROR("Empty Conditional pair.");
   if (list_length(pair) != 2)
     return LOG_ERROR("Conditional pair length was %d, not 2.", list_length(pair));
@@ -131,17 +180,24 @@ obj *cond(const obj *o, obj **envp, GarbageCollector *gc) {
     return eval(e, envp, gc);
   } else {
     if (!CDR(pair)) return empty(gc); // nothing evaluated to true
-    return cond(CDR(o), envp, gc); // recurse on the rest of the list
+    return cond(CDR(args), envp, gc); // recurse on the rest of the list
   }
 }
 
-obj *set(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: set
+ * --------------
+ * Primitive function for setting a value in the environment that the
+ * primitive is evaluated in
+ * Usage: (set 'foo 42)
+ */
+static def_primitive(set) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* var_name = ith_arg_value(args, envp, 0, gc);
   if (is_empty(var_name)) return LOG_ERROR("Cannot set empty list");
   if (is_t(var_name)) return LOG_ERROR("Cannot set truth atom");
-  if (!ATOM(var_name)) return LOG_ERROR("Can only set atom types");
+  if (!is_atom(var_name)) return LOG_ERROR("Can only set atom types");
   obj* value = ith_arg_value(args, envp, 1, gc);
 
   obj** prev_value_p = lookup_entry(var_name, *envp); // previously bound value
@@ -158,7 +214,12 @@ obj *set(const obj *args, obj **envp, GarbageCollector *gc) {
   return value;
 }
 
-obj *env_prim(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: env
+ * --------------
+ * Simply returns the environment
+ */
+static def_primitive(env) {
   (void) args; // to avoid "unused argument" warnings
   (void) envp;
   (void) gc;
@@ -166,7 +227,12 @@ obj *env_prim(const obj *args, obj **envp, GarbageCollector *gc) {
   return *envp;
 }
 
-obj *defmacro(const obj *args, obj **envp, GarbageCollector *gc) {
+/**
+ * Primitive: defmacro
+ * -------------------
+ * Defines a lisp macro
+ */
+static def_primitive(defmacro) {
   (void) args;
   (void) envp;
   (void) gc;

@@ -21,10 +21,10 @@ static obj *bind(obj *params, const obj *args, obj **envp, GarbageCollector *gc)
 static bool is_lambda(const obj* o);
 
 obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
-  if (!o) return NULL;
+  if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
-  if (ATOM(o)) {
+  if (is_atom(o)) {
     if (is_t(o)) return (obj*) o;
     obj* value = lookup(o, *envp);
     if (value) return value;
@@ -32,13 +32,13 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
   }
 
   // Numbers, primitives and closures evaluate to themselves
-  if (is_number(o) || PRIMITIVE(o) || CLOSURE(o)) return (obj*) o;
+  if (is_number(o) || is_primitive(o) || is_closure(o)) return (obj*) o;
 
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
-  if (LIST(o)) {
+  if (is_list(o)) {
     if (is_lambda(o)) return make_closure(o, *envp, gc);  // Lambda function's value is itself
-    if (is_empty(o)) return (obj*) o;                 // Empty list evaluates to itself
+    if (is_empty(o)) return (obj*) o;                     // Empty list evaluates to itself
 
     obj* operator = eval(CAR(o), envp, gc);
     return apply(operator, CDR(o), envp, gc);
@@ -47,18 +47,18 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
 }
 
 obj *apply(const obj *operator, const obj *args, obj **envp, GarbageCollector *gc) {
-  if (!operator) return NULL;
+  if (operator == NULL) return NULL;
 
-  if (PRIMITIVE(operator)) {
+  if (is_primitive(operator)) {
     primitive_t f = *PRIMITIVE(operator);
     return f(args, envp, gc);
   }
 
-  if (CLOSURE(operator)) {
-    if (!CHECK_NARGS_MAX(args, CLOSURE(operator)->nargs)) return NULL;
+  if (is_closure(operator)) {
+    if (!CHECK_NARGS_MAX(args, NARGS(operator))) return NULL;
 
     // Partial closure application
-    if (list_length(args) < CLOSURE(operator)->nargs)
+    if (list_length(args) < NARGS(operator))
       return closure_partial_application(operator, args, envp, gc);
 
     // The result of a closure application is the evaluation of the body of the closure in an environment
@@ -75,7 +75,7 @@ obj *apply(const obj *operator, const obj *args, obj **envp, GarbageCollector *g
     return result;
   }
 
-  if (ATOM(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", ATOM(operator));
+  if (is_atom(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", ATOM(operator));
   return LOG_ERROR("Non-procedure cannot be applied");
 }
 
@@ -116,8 +116,8 @@ static obj *bind(obj *params, const obj *args, obj **envp, GarbageCollector *gc)
  * @return: True if the object is a lambda function, false otherwise
  */
 static bool is_lambda(const obj* o) {
-  if (!LIST(o)) return false;
+  if (!is_list(o)) return false;
   obj* lambda_atom = CAR(o);
-  if (!ATOM(lambda_atom)) return false;
+  if (!is_atom(lambda_atom)) return false;
   return strcmp(ATOM(lambda_atom), LAMBDA_RESV) == 0;
 }

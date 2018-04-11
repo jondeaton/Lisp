@@ -37,7 +37,7 @@ obj* new_closure() {
 }
 
 obj* copy_atom(const obj* o) {
-  if (!ATOM(o)) return NULL;
+  if (!is_atom(o)) return NULL;
   return new_atom(ATOM(o));
 }
 
@@ -53,13 +53,13 @@ bool compare(const obj* a, const obj* b) {
   if (is_int(a)) return get_int(a) == get_int(b);
   if (is_float(a)) return get_float(a) == get_float(b);
 
-  if (PRIMITIVE(a))
+  if (is_primitive(a))
     return *PRIMITIVE(a) == *PRIMITIVE(b);
-  if (LIST(a))
+  if (is_list(a))
     return memcmp(LIST(a), LIST(b), sizeof(list_t)) == 0;
-  if (ATOM(a))
+  if (is_atom(a))
     return strcmp(ATOM(a), ATOM(b)) == 0;
-  if (CLOSURE(a))
+  if (is_closure(a))
     return memcmp(CLOSURE(a), CLOSURE(b), sizeof(closure_t)) == 0;
   return false;
 }
@@ -86,6 +86,26 @@ obj* new_float(float value) {
   return o;
 }
 
+bool is_atom(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == atom_obj;
+}
+
+bool is_primitive(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == primitive_obj;
+}
+
+bool is_list(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == list_obj;
+}
+
+bool is_closure(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == closure_obj;
+}
+
 bool is_int(const obj* o) {
   if (o == NULL) return false;
   return o->objtype == int_obj;
@@ -103,7 +123,7 @@ bool is_number(const obj* o) {
 
 bool is_t(const obj* o) {
   if (o == NULL) return false;
-  if (!ATOM(o)) return false;
+  if (!is_atom(o)) return false;
   return strcmp(ATOM(o), "t") == 0 || strcmp(ATOM(o), "true") == 0;
 }
 

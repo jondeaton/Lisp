@@ -30,21 +30,21 @@ obj* copy_recursive(const obj *o) {
   if (!o) return NULL;
 
   // Different kind of copying for each object type
-  if (ATOM(o))       return copy_atom(o);
-  if (PRIMITIVE(o))  return copy_primitive(o);
-  if (LIST(o))       return copy_list_recursive(o);
-  if (IS_INT(o))        return new_int(get_int(o));
-  if (IS_FLOAT(o))      return new_float(get_float(o));
-  if (CLOSURE(o))    return copy_closure_recursive(o);
+  if (is_atom(o))       return copy_atom(o);
+  if (is_primitive(o))  return copy_primitive(o);
+  if (is_list(o))       return copy_list_recursive(o);
+  if (is_int(o))        return new_int(get_int(o));
+  if (is_float(o))      return new_float(get_float(o));
+  if (is_closure(o))    return copy_closure_recursive(o);
   return NULL;
 }
 
 void dispose_recursive(obj *o) {
-  if (!o) return;
-  if (LIST(o)) { // Recursive disposal of lists and closures
+  if (o == NULL) return;
+  if (is_list(o)) { // Recursive disposal of lists and closures
     dispose_recursive(CAR(o));
     dispose_recursive(CDR(o));
-  } else if (CLOSURE(o)) {
+  } else if (is_closure(o)) {
     dispose_recursive(PARAMETERS(o));
     dispose_recursive(PROCEDURE(o));
     dispose_recursive(CAPTURED(o));  }
@@ -52,25 +52,25 @@ void dispose_recursive(obj *o) {
 }
 
 bool is_empty(const obj* o) {
-  if (!o) return false;
-  if (!LIST(o)) return false;
+  if (o == NULL) return false;
+  if (!is_list(o)) return false;
   return !CAR(o) && !CDR(o);
 }
 
 bool compare_recursive(const obj *x, const obj *y) {
-  if (!x) return y == NULL;
+  if (x == NULL) return y == NULL;
   if (x->objtype != y->objtype) return false;
-  if (ATOM(x)) return strcmp(ATOM(x), ATOM(y)) == 0;
-  if (PRIMITIVE(x)) return PRIMITIVE(x) == PRIMITIVE(y);
+  if (is_atom(x)) return strcmp(ATOM(x), ATOM(y)) == 0;
+  if (is_primitive(x)) return PRIMITIVE(x) == PRIMITIVE(y);
 
   // List: cars must match and cdrs must match
-  if (LIST(x))
+  if (is_list(x))
     return compare_recursive(CAR(x), CAR(y)) && compare_recursive(CDR(x), CDR(y));
   else return x == y;
 }
 
 obj* ith(const obj* o, int i) {
-  if (!o || i < 0 || !LIST(o)) return NULL;
+  if (o == NULL || i < 0 || !is_list(o)) return NULL;
   FOR_LIST(o, x) {
     if (i == 0) return x;
     i--;
@@ -79,7 +79,7 @@ obj* ith(const obj* o, int i) {
 }
 
 obj* sublist(const obj* o, int i) {
-  if (!LIST(o)) return NULL;
+  if (!is_list(o)) return NULL;
   if (i == 0) return (obj*) o;
   return sublist(CDR(o), i - 1);
 }
@@ -103,8 +103,8 @@ bool split_lists(obj *to_split, obj *second_list) {
 }
 
 int list_length(const obj* o) {
-  if (!o) return 0;
-  if (!LIST(o)) return 1;
+  if (o == NULL) return 0;
+  if (!is_list(o)) return 1;
   int i = 0;
   for (const obj* l = o; l != NULL; l = CDR(l))
     i++;

@@ -49,7 +49,7 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
     o = get_quote_list();
     obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
     expr_size += 1; // for the quote character
-    LIST(o)->cdr = new_list_set(quoted, NULL);
+    CDR(o) = new_list_set(quoted, NULL);
 
   } else if (expr_start[0] == '(')  { // Expression starts with opening paren
     o = parse_list((char *) expr_start + 1, &expr_size);
@@ -67,12 +67,12 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
 expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
-  if (ATOM(o) || is_number(o)) return unparse_atom(o);
-  if (PRIMITIVE(o)) return unparse_primitive(o);
+  if (is_atom(o) || is_number(o)) return unparse_atom(o);
+  if (is_primitive(o)) return unparse_primitive(o);
 
-  if (CLOSURE(o)) return unparse_closure(o);
+  if (is_closure(o)) return unparse_closure(o);
 
-  if (LIST(o)) {
+  if (is_list(o)) {
     expression list_expr = unparse_list(o);
     if (list_expr == NULL) return strdup("()");
 
@@ -127,9 +127,9 @@ static expression unparse_list(const obj *o) {
 
   expression e;
 
-  expression car_expr = unparse(LIST(o)->car);
+  expression car_expr = unparse(CAR(o));
   if (car_expr == NULL) return NULL;
-  expression cdr_exp = unparse_list(LIST(o)->cdr);
+  expression cdr_exp = unparse_list(CDR(o));
 
   size_t car_size = strlen(car_expr);
   if (cdr_exp == NULL) {
@@ -159,7 +159,7 @@ static expression unparse_list(const obj *o) {
  * @return: The serialization of the closure in a string
  */
 static expression unparse_closure(const obj* o) {
-  if (!CLOSURE(o)) return NULL;
+  if (!is_closure(o)) return NULL;
 
   closure_t* closure = CLOSURE(o);
   expression para = unparse(closure->parameters);
@@ -182,7 +182,7 @@ static expression unparse_closure(const obj* o) {
 static expression unparse_atom(const obj *o) {
   if (o == NULL) return NULL;
 
-  if (ATOM(o)) {
+  if (is_atom(o)) {
     atom_t atm = ATOM(o);
     expression e = malloc(strlen(atm) + 1); // Cant use "new_atom"
     MALLOC_CHECK(e);
@@ -280,7 +280,7 @@ static obj* parse_list(const_expression e, size_t *num_parsed_p) {
 
   size_t restSize;
   expression restOfList = (char*) exprStart + exprSize;
-  LIST(o)->cdr = parse_list(restOfList, &restSize);
+  CDR(o) = parse_list(restOfList, &restSize);
 
   *num_parsed_p = start + exprSize + restSize;
   return o;

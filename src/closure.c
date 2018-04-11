@@ -18,16 +18,16 @@
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
 obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc) {
-  if (!CHECK_NARGS_MIN(LIST(lambda)->cdr, 1)) return NULL;
-  if (!CHECK_NARGS_MAX(LIST(lambda)->cdr, 2)) return NULL;
+  if (!CHECK_NARGS_MIN(CDR(lambda), 1)) return NULL;
+  if (!CHECK_NARGS_MAX(CDR(lambda), 2)) return NULL;
 
   obj* params = ith(lambda, 1);
-  if (!LIST(params)) return LOG_ERROR("Lambda parameters are not a list");
+  if (!is_list(params)) return LOG_ERROR("Lambda parameters are not a list");
   FOR_LIST(params, var) {
     if (var == NULL) continue;
     if (is_t(var)) return LOG_ERROR("Truth atom can't be parameter");
     if (is_empty(var)) return LOG_ERROR("Empty list can't be a parameter");
-    if (!ATOM(var)) return LOG_ERROR("Parameter was not an atom");
+    if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
   }
 
   params = copy_recursive(params); // Params are well-formed, make a copy for saving.
@@ -46,11 +46,11 @@ obj *closure_partial_application(const obj *closure, const obj *args, obj **envp
 
   int nargs = list_length(args);
 
-  obj* params = copy_recursive(sublist(CLOSURE(closure)->parameters, nargs));
-  obj* procedure = copy_recursive(CLOSURE(closure)->procedure);
+  obj* params = copy_recursive(sublist(PARAMETERS(closure), nargs));
+  obj* procedure = copy_recursive(PROCEDURE(closure));
 
-  obj* new_bindings = associate(CLOSURE(closure)->parameters, args, envp, gc);
-  obj* captured = join_lists(new_bindings, copy_recursive(CLOSURE(closure)->captured));
+  obj* new_bindings = associate(PARAMETERS(closure), args, envp, gc);
+  obj* captured = join_lists(new_bindings, copy_recursive(CAPTURED(closure)));
 
   obj* new_closure = new_closure_set(params, procedure, captured);
   gc_add_recursive(gc, new_closure);
@@ -59,27 +59,26 @@ obj *closure_partial_application(const obj *closure, const obj *args, obj **envp
 
 obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
   obj* o = new_closure();
-  CLOSURE(o)->parameters = params;
-  CLOSURE(o)->procedure = procedure;
-  CLOSURE(o)->captured = captured;
-  CLOSURE(o)->nargs = is_empty(params) ? 0 : list_length(params);
+  PARAMETERS(o) = params;
+  PROCEDURE(o)  = procedure;
+  CAPTURED(o)   = captured;
+  NARGS(o)      = is_empty(params) ? 0 : list_length(params);
   return o;
 }
 
 obj* copy_closure_recursive(const obj* closure) {
-  closure_t* c = CLOSURE(closure);
-  obj* params = copy_recursive(c->parameters);
-  obj* proc = copy_recursive(c->procedure);
-  obj* capt = copy_recursive(c->captured);
+  obj* params = copy_recursive(PARAMETERS(closure));
+  obj* proc = copy_recursive(PROCEDURE(closure));
+  obj* capt = copy_recursive(CAPTURED(closure));
   return new_closure_set(params, proc, capt);
 }
 
 obj *associate(obj *names, const obj *args, obj **envp, GarbageCollector *gc) {
-  if (!LIST(names) || !LIST(args)) return NULL;
+  if (!is_list(names) || !is_list(args)) return NULL;
 
-  obj* value = eval(LIST(args)->car, envp, gc);
-  obj* pair = make_pair(LIST(names)->car, value, true);
-  obj* cdr = associate(LIST(names)->cdr, LIST(args)->cdr, envp, gc);
+  obj* value = eval(CAR(args), envp, gc);
+  obj* pair = make_pair(CAR(names), value, true);
+  obj* cdr = associate(CDR(names), CDR(args), envp, gc);
   return new_list_set(pair, cdr);
 }
 
@@ -97,11 +96,11 @@ obj *associate(obj *names, const obj *args, obj **envp, GarbageCollector *gc) {
 static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env) {
   if (procedure == NULL) return;
 
-  if (LIST(procedure)) { // depth-first search
-    get_captured_vars(capturedp, params, LIST(procedure)->car, env);
-    get_captured_vars(capturedp, params, LIST(procedure)->cdr, env);
+  if (is_list(procedure)) { // depth-first search
+    get_captured_vars(capturedp, params, CAR(procedure), env);
+    get_captured_vars(capturedp, params, CDR(procedure), env);
 
-  } else if (ATOM(procedure)) {
+  } else if (is_atom(procedure)) {
     if (lookup_pair(procedure, *capturedp)) return; // Already captured
     if (list_contains(params, procedure)) return; // Don't capture parameters (those get bound at apply-time)
 

@@ -32,7 +32,7 @@ static const primitive_t math_primitives[]= {&add, &sub, &mul, &divide, &mod,
                                              &equal, &gt, &gte, &lt, &lte, NULL };
 
 obj* get_math_library() {
-  return make_environment(math_reserved_atoms, math_primitives);
+  return create_environment(math_reserved_atoms, math_primitives);
 }
 
 /**
@@ -70,7 +70,7 @@ DEF_OPERATOR(mul)
 DEF_OPERATOR(divide)
 DEF_OPERATOR(mod)
 
-#define DEF_CMP(name, op) obj* name(const obj *args, obj **envp, GarbageCollector *gc) { \
+#define DEF_CMP(name, op) def_primitive(name) { \
   if (!CHECK_NARGS(args, 2)) return NULL; \
   obj* first = eval(ith(args, 0), envp, gc); \
   obj* second = eval(ith(args, 1), envp, gc); \
