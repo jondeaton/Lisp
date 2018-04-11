@@ -291,11 +291,11 @@ DEF_TEST(lambda) {
          "(f)");
   TEST_EVALS(six, "(f)", "11");
 
-  TEST_ERROR("(lambda)");
-  TEST_ERROR("(lambda 1)");
-  TEST_ERROR("(lambda one two three four)");
-  TEST_ERROR("(lambda t)");
-  TEST_ERROR("(lambda (t) 99)");
+  TEST_ERROR("(lambda)"); // no params or body
+  TEST_ERROR("(lambda 1)"); // no params
+  TEST_ERROR("(lambda one two three four)"); // too many arguments
+  TEST_ERROR("(lambda t)"); // t can't be an argument
+  TEST_ERROR("(lambda (t) 99)"); // t can't be an argument
   TEST_ERROR("(lambda (5) 99)");
   TEST_ERROR("(lambda (a t) 99)");
   TEST_ERROR("(lambda (a b d c t) 99)");

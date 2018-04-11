@@ -25,11 +25,11 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc);
  * Function: apply
  * ---------------
  * Applies a lisp function to an argument list
- * @param operator: A lisp function object
+ * @param oper: A lisp function object
  * @param args: List of arguments
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the application of the function to the arguments
  */
-obj *apply(const obj *operator, const obj *args, obj **envp, GarbageCollector *gc);
+obj *apply(const obj *oper, const obj *args, obj **envp, GarbageCollector *gc);
 
 #endif // _EVALUATOR_H_INCLUDED

@@ -18,7 +18,6 @@
 // Static function declarations
 static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, GarbageCollector *gc);
 static obj *bind(obj *params, const obj *args, obj **envp, GarbageCollector *gc);
-static bool is_lambda(const obj* o);
 
 obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
   if (o == NULL) return NULL;
@@ -27,7 +26,7 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
   if (is_atom(o)) {
     if (is_t(o)) return (obj*) o;
     obj* value = lookup(o, *envp);
-    if (value) return value;
+    if (value != NULL) return value;
     return LOG_ERROR("Variable: \"%s\" not found in environment", ATOM(o));
   }
 
@@ -37,37 +36,36 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
   if (is_list(o)) {
-    if (is_lambda(o)) return make_closure(o, *envp, gc);  // Lambda function's value is itself
     if (is_empty(o)) return (obj*) o;                     // Empty list evaluates to itself
 
-    obj* operator = eval(CAR(o), envp, gc);
-    return apply(operator, CDR(o), envp, gc);
+    obj* oper = eval(CAR(o), envp, gc);
+    return apply(oper, CDR(o), envp, gc);
   }
   return LOG_ERROR("Object of unknown type");
 }
 
-obj *apply(const obj *operator, const obj *args, obj **envp, GarbageCollector *gc) {
-  if (operator == NULL) return NULL;
+obj *apply(const obj *oper, const obj *args, obj **envp, GarbageCollector *gc) {
+  if (oper == NULL) return NULL;
 
-  if (is_primitive(operator)) {
-    primitive_t f = *PRIMITIVE(operator);
+  if (is_primitive(oper)) {
+    primitive_t f = *PRIMITIVE(oper);
     return f(args, envp, gc);
   }
 
-  if (is_closure(operator)) {
-    if (!CHECK_NARGS_MAX(args, NARGS(operator))) return NULL;
+  if (is_closure(oper)) {
+    if (!CHECK_NARGS_MAX(args, NARGS(oper))) return NULL;
 
     // Partial closure application
-    if (list_length(args) < NARGS(operator))
-      return closure_partial_application(operator, args, envp, gc);
+    if (list_length(args) < NARGS(oper))
+      return closure_partial_application(oper, args, envp, gc);
 
     // The result of a closure application is the evaluation of the body of the closure in an environment
     // containing the captured variables from the closure, along with the values of the arguments
     // bound to the parameters of the closure.
 
-    obj* new_env = bind_args_and_captured(operator, args, envp, gc); // Append bound args, and captured vars
+    obj* new_env = bind_args_and_captured(oper, args, envp, gc); // Append bound args, and captured vars
     obj* old_env = *envp; // gotta keep one around in case points is modified in eval
-    obj* result = eval(PROCEDURE(operator), &new_env, gc); // Evaluate body in prepended environment
+    obj* result = eval(PROCEDURE(oper), &new_env, gc); // Evaluate body in prepended environment
 
     bool split = split_lists(new_env, old_env);
     if (split) gc_add_recursive(gc, new_env); // Mark the bound elements for cleanup
@@ -75,7 +73,7 @@ obj *apply(const obj *operator, const obj *args, obj **envp, GarbageCollector *g
     return result;
   }
 
-  if (is_atom(operator)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", ATOM(operator));
+  if (is_atom(oper)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", ATOM(oper));
   return LOG_ERROR("Non-procedure cannot be applied");
 }
 
@@ -106,18 +104,4 @@ static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **e
 static obj *bind(obj *params, const obj *args, obj **envp, GarbageCollector *gc) {
   obj* frame = associate(params, args, envp, gc);
   return join_lists(frame, *envp);
-}
-
-/**
- * Function: is_lambda
- * -------------------
- * Determines if a list object is a lambda function
- * @param o: The object to determine if it is a lambda
- * @return: True if the object is a lambda function, false otherwise
- */
-static bool is_lambda(const obj* o) {
-  if (!is_list(o)) return false;
-  obj* lambda_atom = CAR(o);
-  if (!is_atom(lambda_atom)) return false;
-  return strcmp(ATOM(lambda_atom), LAMBDA_RESV) == 0;
 }

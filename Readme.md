@@ -77,7 +77,7 @@ and can be run with the `test-lisp` executable.
 - ~~Exit on error during program execution~~
 - ~~Tests for proper error behavior~~
 - ~~Greater than and less than primitives~~
-- lambda primitive instead of special case
+- ~~lambda primitive instead of special case~~
 - Y combinator tests
 - `defmacro`
 - Strings

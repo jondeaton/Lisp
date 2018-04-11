@@ -9,18 +9,6 @@
 #include "garbage-collector.h"
 
 /**
- * Function: make_closure
- * ----------------------
- * Promote a lambda function to a closure by capturing variables from the environment
- * @param lambda: A lambda expression to promote to a closure
- * @param: env: The environment to use in the creation of the closure, from which
- * variables in the body of the lambda expression will be captured for storage
- * in the resulting closure
- * @return: A closure object made from the lambda
- */
-obj *make_closure(const obj *lambda, obj *env, GarbageCollector *gc);
-
-/**
  * Function: closure_partial_application
  * -------------------------------------
  * Partially applies the arguments

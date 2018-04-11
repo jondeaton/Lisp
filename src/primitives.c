@@ -13,6 +13,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <closure.h>
 
 // forward declarations of primitives
 static def_primitive(quote);
@@ -24,16 +25,19 @@ static def_primitive(cons);
 static def_primitive(cond);
 static def_primitive(set);
 static def_primitive(env);
+static def_primitive(lambda);
 static def_primitive(defmacro);
 
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
-                                             "cond", "set", "env", "defmacro", NULL };
+                                             "cond", "set", "env", "lambda", "defmacro", NULL };
 
 static const primitive_t primitive_functions[] = {&quote, &atom, &eq, &car, &cdr, &cons,
-                                                  &cond, &set, &env, &defmacro,  NULL };
+                                                  &cond, &set, &env, &lambda, &defmacro,  NULL };
 
 // Static function declarations
 static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *gc);
+static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
+
 
 obj* get_primitive_library() {
   return create_environment(primitive_reserved_names, primitive_functions);
@@ -228,6 +232,35 @@ static def_primitive(env) {
 }
 
 /**
+ * Primitive: lambda
+ * -----------------
+ * Define a non-primitive procedure
+ */
+static def_primitive(lambda) {
+  if (!CHECK_NARGS_MIN(args, 1)) return NULL;
+  if (!CHECK_NARGS_MAX(args, 2)) return NULL;
+
+  obj* params = ith(args, 0);
+  if (!is_list(params)) return LOG_ERROR("Lambda parameters are not a list");
+  FOR_LIST(params, var) {
+    if (var == NULL) continue;
+    if (is_t(var))     return LOG_ERROR("Truth atom can't be parameter");
+    if (is_empty(var)) return LOG_ERROR("Empty list can't be a parameter");
+    if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
+  }
+  params = copy_recursive(params); // Params are well-formed, make a copy for saving.
+
+  obj* procedure = copy_recursive(ith(args, 1));
+
+  obj* captured = NULL; // Will store the captured variables
+  get_captured_vars(&captured, args, procedure, *envp);
+
+  obj* o = new_closure_set(params, procedure, captured);
+  gc_add_recursive(gc, o);
+  return o;
+}
+
+/**
  * Primitive: defmacro
  * -------------------
  * Defines a lisp macro
@@ -250,4 +283,32 @@ static def_primitive(defmacro) {
  */
 static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *gc) {
   return eval(ith(args, i), envp, gc);
+}
+
+/**
+ * Function: get_captured_vars
+ * ---------------------------
+ * Creates a captured variable list by searching for variable names that exist in both the procedure
+ * and the environment. Creates a list of key-value pairs extracted (copied) from the environment.
+ * Variable names in the parameter list will not be captured.
+ * @param capturedp: Pointer to where the captured list reference should be stored
+ * @param params: Parameters to the lambda function (these will not be captured
+ * @param procedure: Procedure body of the lambda function to search for variables to bind in
+ * @param env: Environment to search for values to capture
+ */
+static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env) {
+  if (procedure == NULL) return;
+
+  if (is_list(procedure)) { // depth-first search
+    get_captured_vars(capturedp, params, CAR(procedure), env);
+    get_captured_vars(capturedp, params, CDR(procedure), env);
+
+  } else if (is_atom(procedure)) {
+    if (lookup_pair(procedure, *capturedp)) return; // Already captured
+    if (list_contains(params, procedure)) return; // Don't capture parameters (those get bound at apply-time)
+
+    obj* matching_pair = lookup_pair(procedure, env);
+    if (!matching_pair) return; // No value to be captured
+    *capturedp = new_list_set(copy_recursive(matching_pair), *capturedp); // Prepend to capture list
+  }
 }
