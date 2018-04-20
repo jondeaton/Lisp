@@ -18,7 +18,7 @@ typedef int (*intArithmeticFuncPtr)(int, int);
 typedef float (*floatArithmeticFuncPtr)(float, float);
 
 // Static declarations
-static obj *apply_arithmetic(const obj *args, obj **env,
+static obj *apply_arithmetic(const obj *args, obj **envp,
                              intArithmeticFuncPtr int_op,
                              floatArithmeticFuncPtr float_op,
                              GarbageCollector *gc);
@@ -35,76 +35,83 @@ obj* get_math_library() {
   return create_environment(math_reserved_atoms, math_primitives);
 }
 
-/**
- * The following preprocessor definitions allow for the easy creation of operators
- */
-#define DEF_OP(name, T, op) static inline T name ## _ ## T ##s (T x, T y) { return x op y; }
-#define DEF_OPS(name, op) DEF_OP(name, int, op) DEF_OP(name, float, op)
-DEF_OPS(add, +)
-DEF_OPS(sub, -)
-DEF_OPS(mul, *)
-DEF_OPS(divide, /)
-DEF_OP(mod, int, %)
-static float mod_floats(float x, float y) { // This one kinda needs it's own special definition
+// Define basic functions for arithmetic operations on two numbers
+#define def_single_op(name, T, op) static inline T name ## _ ## T ##s (T x, T y) { return x op y; }
+#define def_two_ops(name, op) def_single_op(name, int, op) def_single_op(name, float, op)
+def_two_ops(add, +)
+def_two_ops(sub, -)
+def_two_ops(mul, *)
+def_two_ops(divide, /)
+def_single_op(mod, int, %)
+static float mod_floats(float x, float y) { // This one needs it's own special definition
   x = x > 0 ? x : -x;
   y = y > 0 ? y : -y;
   while (x >= y) x -= y;
   return x;
 }
 
-// I really don't like typing things
-#define DEF_ALLOC(T) static obj* allocate_ ## T (T value, GarbageCollector* gc) {\
+// Function definitions for integer and floating point allocators
+#define def_number_allocator(T) static obj* allocate_ ## T (T value, GarbageCollector* gc) {\
   obj* o = new_int(value); \
   gc_add(gc, o); \
   return o; }
-DEF_ALLOC(int)
-DEF_ALLOC(float)
+def_number_allocator(int)
+def_number_allocator(float)
 
-// I super hate typing things
-#define DEF_OPERATOR(name) obj* name(const obj *args, obj **envp, GarbageCollector *gc) { \
+// macro for defining a the primitive operator
+#define def_math_op_primitive(name) def_primitive(name) { \
   return apply_arithmetic(args, envp, &(name ## _ints), &(name ## _floats), gc); \
 }
-DEF_OPERATOR(add)
-DEF_OPERATOR(sub)
-DEF_OPERATOR(mul)
-DEF_OPERATOR(divide)
-DEF_OPERATOR(mod)
+def_math_op_primitive(add)
+def_math_op_primitive(sub)
+def_math_op_primitive(mul)
+def_math_op_primitive(divide)
+def_math_op_primitive(mod)
 
-#define DEF_CMP(name, op) def_primitive(name) { \
+// Define a mathematical comparison primitive
+#define def_math_compare_primitive(name, op) def_primitive(name) { \
   if (!CHECK_NARGS(args, 2)) return NULL; \
   obj* first = eval(ith(args, 0), envp, gc); \
+  if (first == NULL) return NULL; \
+  if (!is_number(first)) \
+    return LOG_ERROR("First argument did not evaluate to a number."); \
   obj* second = eval(ith(args, 1), envp, gc); \
-  if (!is_number(first) || !is_number(second)) return empty(gc); \
+  if (second == NULL) return NULL; \
+  if (!is_number(second)) \
+    return LOG_ERROR("Second argument did not evaluate to a number."); \
   if (is_int(first) && is_int(second)) \
     return get_int(first) op get_int(second) ? t(gc) : empty(gc); \
   return get_float(first) op get_float(second) ? t(gc) : empty(gc); \
 }
-DEF_CMP(equal, ==)
-DEF_CMP(gt, >)
-DEF_CMP(gte, >=)
-DEF_CMP(lt, <)
-DEF_CMP(lte, <=)
+def_math_compare_primitive(equal, ==)
+def_math_compare_primitive(gt, >)
+def_math_compare_primitive(gte, >=)
+def_math_compare_primitive(lt, <)
+def_math_compare_primitive(lte, <=)
 
 /**
  * Function: apply_arithmetic
  * --------------------------
- * Apply an arithmetic operation
+ * Apply an arithmetic operation, the core of all operators
  * @param args: The lisp object containing the argument list
- * @param env: The environment to apply the operation in
+ * @param envp: The environment to apply the operation in
  * @param int_op: The operation corresponding to applying to integers
  * @param float_op: The operation corresponding to applying to floating point numbers
  * @return: The result of applying the arithmetic operation to the values of the arguments
  */
-static obj *apply_arithmetic(const obj *args, obj **env,
-                             intArithmeticFuncPtr int_op,
-                             floatArithmeticFuncPtr float_op,
-                             GarbageCollector *gc) {
+static obj *apply_arithmetic(const obj *args, obj **envp, intArithmeticFuncPtr int_op,
+                             floatArithmeticFuncPtr float_op, GarbageCollector *gc) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first = eval(ith(args, 0), env, gc);
-  if (!first) return NULL;
-  obj* second = eval(ith(args, 1), env, gc);
-  if (!second) return NULL;
+  obj* first = eval(ith(args, 0), envp, gc);
+  if (first == NULL) return NULL;
+  if (!is_number(first))
+    return LOG_ERROR("First argument did not evaluate to a number.");
+
+  obj* second = eval(ith(args, 1), envp, gc);
+  if (second == NULL) return NULL;
+  if (!is_number(second))
+    return LOG_ERROR("Second argument did not evaluate to a number.");
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = float_op(get_float(first), get_float(second));
@@ -114,4 +121,3 @@ static obj *apply_arithmetic(const obj *args, obj **env,
     return allocate_int(value, gc);
   }
 }
-

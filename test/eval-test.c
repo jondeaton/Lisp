@@ -226,6 +226,17 @@ DEF_TEST(math) {
   // TEST_EVAL("(+ 1 2 3 4)", "10"); // just kidding, we will use the standard
   // TEST_EVAL("(* 1 2 3 4)", "24"); // library to implement this functionality
 
+  // Data type errors
+  TEST_ERROR("(+ 5 z)");
+  TEST_ERROR("(+ 5 ())");
+  TEST_ERROR("(+ 4 (lambda (x) (+ 2 x)))");
+  TEST_ERROR("(/ t t)");
+  TEST_ERROR("(/ 5 t)");
+  TEST_ERROR("(+ + +)");
+  TEST_ERROR("(/ / /)");
+
+  TEST_ERROR("(>= e 4)");
+
   // Too few arguments
   TEST_ERROR("(+)");
   TEST_ERROR("(-)");
