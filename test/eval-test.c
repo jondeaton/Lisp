@@ -114,6 +114,12 @@ DEF_TEST(cons) {
   TEST_EVAL("(cons 'a (cons 'b (cons 'c '())))", "(a b c)");
   TEST_EVAL("(car (cons 'a '(b c)))", "a");
   TEST_EVAL("(cdr (cons 'a '(b c)))", "(b c)");
+  
+  TEST_EVAL("(cons 'a ())", "(a)");
+  TEST_EVAL("(cons () ())", "(())");
+
+  TEST_EVAL("(cons 'a (cdr '(a)))", "(a)");
+
   TEST_ERROR("(cons)"); // no arguments
   TEST_ERROR("(cons one)"); // one argument
   TEST_ERROR("(cons 'x '(a b c) three)"); // too many arguments

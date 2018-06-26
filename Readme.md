@@ -78,7 +78,9 @@ and can be run with the `test-lisp` executable.
 - ~~Tests for proper error behavior~~
 - ~~Greater than and less than primitives~~
 - ~~lambda primitive instead of special case~~
+- Variadic functions?
 - Y combinator tests
-- `defmacro`
+- `defmacro
+- Lisp standard library
 - Strings
 - Dot notation
