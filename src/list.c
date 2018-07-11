@@ -69,13 +69,10 @@ bool compare_recursive(const obj *x, const obj *y) {
   else return x == y;
 }
 
-obj* ith(const obj* o, int i) {
-  if (o == NULL || i < 0 || !is_list(o)) return NULL;
-  FOR_LIST(o, x) {
-    if (i == 0) return x;
-    i--;
-  }
-  return NULL;
+obj* ith(const obj* o, int i) {   
+    if (o == NULL || i < 0 || !is_list(o)) return NULL;
+    if (i == 0) return CAR(o);
+    return ith(CDR(o), i - 1); // tail recursion will be optimzied
 }
 
 obj* sublist(const obj* o, int i) {
@@ -112,11 +109,9 @@ int list_length(const obj* o) {
 }
 
 bool list_contains(const obj* list, const obj* query) {
-  if (!query || !list) return false;
-  FOR_LIST(list, el) {
-    if (compare_recursive(el, query)) return true;
-  }
-  return false;
+  if (list == NULL || query == NULL) return false;
+  if (compare_recursive(CAR(list), query)) return true;
+  return list_contains(CDR(list), query);
 }
 
 /**
