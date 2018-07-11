@@ -78,6 +78,13 @@ and can be run with the `test-lisp` executable.
 - ~~Tests for proper error behavior~~
 - ~~Greater than and less than primitives~~
 - ~~lambda primitive instead of special case~~
+- Use tail recursion instead of loops where possible
+- Fix the way that errors are reported (no return LOG_ERROR)
+- Fix the way that unused variables are handled
+- Rename the garbage collector to memory manager
+- Next structs inside one another where possible (GC)
+- Use CVector instead of CList
+- Use a single truth and empty list tuple.
 - Variadic functions?
 - Y combinator tests
 - `defmacro
