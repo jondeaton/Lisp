@@ -120,6 +120,11 @@ DEF_TEST(cons) {
 
   TEST_EVAL("(cons 'a (cdr '(a)))", "(a)");
 
+  SERIES(one,
+          "(set 'x '(1 2 3)",
+          "(set 'x (cons x x))");
+  TEST_EVALS(one, "x", "(1 2 3)");
+
   TEST_ERROR("(cons)"); // no arguments
   TEST_ERROR("(cons one)"); // one argument
   TEST_ERROR("(cons 'x '(a b c) three)"); // too many arguments
@@ -170,6 +175,14 @@ DEF_TEST(set) {
   SERIES(set_x_eval,
          "(set 'x (eq (car '(a b c)) 'a))");
   TEST_EVALS(set_x_eval, "(cond (x '5) ('() '6))", "5");
+
+  // Testing that you can change the value of something
+  SERIES(consy,
+          "(set 'x '(1 2 3)",
+          "(set 'x (cons x x))");
+  TEST_EVALS(consy, "x", "(1 2 3)");
+
+
 
   TEST_ERROR("(set x)");
   TEST_ERROR("(set x y z)");
@@ -331,6 +344,12 @@ DEF_TEST(closure) {
          "(set 'f (lambda (x y) (+ x y)))",
          "(set 'add-5 (f 5)");
   TEST_EVALS(one, "(add-5 100)", "105");
+
+
+  SERIES(two,
+          "(set 'x 8)",
+          "(set 'double (lambda (x) (+ x x)))");
+  TEST_EVALS(two, "(double 7)", "14");
 
   TEST_REPORT();
 }
