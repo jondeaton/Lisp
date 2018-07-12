@@ -1,7 +1,7 @@
 /*
  * File: garbage-collector.c
  * -------------------------
- * Presents the implementation of
+ * Presents the implementation of the Lisp garbage collector.
  */
 
 #include <garbage-collector.h>

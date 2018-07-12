@@ -31,7 +31,7 @@
 typedef struct GarbageCollectorImpl GarbageCollector;
 
 /**
- * Function: init_allocated
+ * Function: gc_init
  * ------------------------
  * Initializes a dynamic list of allocated object references. Call this before any calls
  * to eval are made. Calling eval without first calling this method results in
@@ -40,7 +40,7 @@ typedef struct GarbageCollectorImpl GarbageCollector;
 GarbageCollector * gc_init();
 
 /**
- *  Function: add_allocated
+ *  Function: gc_add
  * -----------------------
  * Add an object to the list of objects that need to be freed at the end
  * of expression evaluation. This method should be called by any function
@@ -50,7 +50,7 @@ GarbageCollector * gc_init();
 void gc_add(GarbageCollector *gc, const obj *o);
 
 /**
- * Function: add_allocated_recursive
+ * Function: gc_add_recursive
  * ---------------------------------
  * Add an object to the list of objects that need to be freed at the end
  * of expression evaluation, including all of the objects that is references
@@ -60,7 +60,7 @@ void gc_add(GarbageCollector *gc, const obj *o);
 void gc_add_recursive(GarbageCollector *gc, const obj *root);
 
 /**
- * Function: clear_allocated
+ * Function: gc_clear
  * -------------------------
  * Frees all of the allocated lisp objects in the allocated list. Suggested usage is to
  * call this function after each call to repl_eval, after the object returned from
@@ -69,7 +69,7 @@ void gc_add_recursive(GarbageCollector *gc, const obj *root);
 void gc_clear(GarbageCollector *gc);
 
 /**
- * Function: dispose_allocated
+ * Function: gc_dispose
  * ---------------------------
  * Disposes of the CVector of allocated objects. Call this method after
  * all calls to eval are completed to free the memory used to store the

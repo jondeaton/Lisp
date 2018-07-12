@@ -179,7 +179,7 @@ static inline void delete_node(CList* cl, Node* node) {
 
 static inline Node* new_node(const CList* cl, const void* source) {
   Node* node = malloc(sizeof(Node) + cl->elemsz);
-  assert(node);
+  assert(node != NULL);
   node->next = NULL;
   node->previous = NULL;
   memcpy(data_of(node), source, cl->elemsz);

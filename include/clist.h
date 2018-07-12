@@ -1,7 +1,7 @@
 /**
  * File: clist.h
  * -------------
- * Singly linked list data structure interface.
+ * Generic, doubly linked list data structure interface.
  */
 
 #ifndef _CLIST_H_INCLUDED
