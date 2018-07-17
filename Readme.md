@@ -81,13 +81,16 @@ and can be run with the `test-lisp` executable.
 - Use tail recursion instead of loops where possible
 - Fix the way that errors are reported (no return LOG_ERROR)
 - Fix the way that unused variables are handled
+  - `#define UNUSED __attribute__ ((unused))`
+- Change the error logger to use `snptintf` instead of `sprintf`
 - Rename the garbage collector to memory manager
-- Next structs inside one another where possible (GC)
+- Nest structs inside one another where possible (GC)
 - Use CVector instead of CList
+- Use flexble array member in lisp objects
 - Use a single truth and empty list tuple.
 - Variadic functions?
 - Y combinator tests
-- `defmacro
+- `defmacro`
 - Lisp standard library
 - Strings
 - Dot notation
