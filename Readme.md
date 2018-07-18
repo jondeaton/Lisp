@@ -12,9 +12,9 @@ If you would like to run this Lisp interpreter from the command line, you will h
 build it from source using the CMake build system. To do so, you will need to have a C99 compile
 and CMake installed, then issue the following two commands from with in the top-level directory
 
-    `cmake`
+    cmake
 
-    `make`
+    make
 
 
 To run the REPL (read-eval-print loop) with the `lisp` executable for an interactive prompt.
