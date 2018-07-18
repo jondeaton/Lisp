@@ -29,13 +29,16 @@
 #define HISTORY_FILE_LENGTH 128
 #define DEFAULT_HISTORY_FILE ".lisp-history"
 
+/**
+ * @struct InterpreterConfig holds command line options for Lisp interpreter.
+ */
 struct InterpreterConfig {
-    char const *bootstrap_path;
-    char const *program_path;
-    bool run_repl;
-    bool verbose;
-    char history_buffer[HISTORY_FILE_LENGTH]; 
-    char *history_file;
+  char const *bootstrap_path;
+  char const *program_path;
+  bool run_repl;
+  bool verbose;
+  char history_buffer[HISTORY_FILE_LENGTH];
+  char *history_file;
 };
 
 static void parse_command_line_args(int argc, char* argv[], struct InterpreterConfig *config);
@@ -70,7 +73,7 @@ int main(int argc, char* argv[]) {
   parse_command_line_args(argc, argv, &config);
   set_history_file(&config);
   return run_lisp(config.bootstrap_path, config.program_path,
-          config.run_repl, config.history_file, config.verbose);
+                  config.run_repl, config.history_file, config.verbose);
 }
 
 /**
@@ -82,17 +85,17 @@ int main(int argc, char* argv[]) {
  * @param config configuration struct
  */
 static void parse_command_line_args(int argc, char* argv[],
-        struct InterpreterConfig *config) {
+                                    struct InterpreterConfig *config) {
 
 //set defaults
-    config->bootstrap_path = NULL;
-    config->program_path = NULL;
-    config->run_repl = true;
-    config->verbose = false;
- config->history_file = NULL;  
-  
- 
- bool repl_flag = false;
+  config->bootstrap_path = NULL;
+  config->program_path = NULL;
+  config->run_repl = true;
+  config->verbose = false;
+  config->history_file = NULL;
+
+
+  bool repl_flag = false;
   while (optind < argc) {
     int c;
     if ((c = getopt(argc, argv, optstring)) != -1) {
@@ -136,6 +139,6 @@ static void parse_command_line_args(int argc, char* argv[],
  */
 static void print_version_information() {
   printf("Lisp Interpreter 1.0, STD %ld\n"
-           "Author: Jon Deaton, %s %s\n",
+         "Author: Jon Deaton, %s %s\n",
          __STDC_VERSION__, __DATE__, __TIME__);
 }
