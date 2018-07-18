@@ -32,12 +32,12 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
   interpreter = interpreter_init();
 
   signal(SIGINT, int_handler); // install signal handler
-  if (bootstrap_path) {
+  if (bootstrap_path != NULL) {
     if (verbose) LOG_MSG("Interpreting library: %s", bootstrap_path);
     interpret_program(interpreter, bootstrap_path, verbose);
   }
 
-  if (program_file) {
+  if (program_file != NULL) {
     if (verbose) LOG_MSG("Running script: %s", program_file);
     interpret_program(interpreter, program_file, verbose);
   }
@@ -46,7 +46,7 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
     if (verbose) LOG_MSG("Running interactive interpreter.");
     if (verbose) LOG_MSG("History: %s", history_file);
 
-    if (history_file) {
+    if (history_file != NULL) {
       int err = read_history(history_file);
       if (err) {
         if (err == ENOENT && verbose) LOG_MSG("History file not found");

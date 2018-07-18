@@ -78,6 +78,7 @@ and can be run with the `test-lisp` executable.
 - ~~Tests for proper error behavior~~
 - ~~Greater than and less than primitives~~
 - ~~lambda primitive instead of special case~~
+- Fix the help/version printout 
 - Use tail recursion instead of loops where possible
 - Fix the way that errors are reported (no return LOG_ERROR)
 - Fix the way that unused variables are handled
