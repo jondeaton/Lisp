@@ -42,7 +42,7 @@ struct InterpreterConfig {
 };
 
 static void parse_command_line_args(int argc, char* argv[], struct InterpreterConfig *config);
-static void peint_version_information();
+static void print_version_information();
 
 const char *const optstring = ":rb:t:vh";
 
