@@ -8,16 +8,9 @@
 
 typedef struct CListNode Node;
 
-
 /**
- * @struct CListNode. A single element of a linked
+ * @struct CListImplementation: Linked list meta-data
  */
-struct CListNode {
-  Node* next;
-  Node* previous;
-  char data[];
-};
-
 struct CListImplementation {
   Node* front;
   Node* back;
@@ -26,6 +19,16 @@ struct CListImplementation {
   CleanupElemFn cleanup;
 };
 
+/**
+ * @struct CListNode: a single link of the linked list
+ */
+struct CListNode {
+  Node* next;
+  Node* previous;
+  char data[];
+};
+
+// Static function declarations
 static Node* node_at(const CList* cl, int i);
 static inline Node *new_node(const void *data, size_t elem_size);
 static inline void delete_node(CList* cl, Node* node);
