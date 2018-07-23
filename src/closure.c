@@ -37,7 +37,7 @@ obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
   PARAMETERS(o) = params;
   PROCEDURE(o)  = procedure;
   CAPTURED(o)   = captured;
-  NARGS(o)      = is_empty(params) ? 0 : list_length(params);
+  NARGS(o)      = is_nil(params) ? 0 : list_length(params);
   return o;
 }
 

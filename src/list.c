@@ -47,11 +47,12 @@ void dispose_recursive(obj *o) {
   } else if (is_closure(o)) {
     dispose_recursive(PARAMETERS(o));
     dispose_recursive(PROCEDURE(o));
-    dispose_recursive(CAPTURED(o));  }
+    dispose_recursive(CAPTURED(o));
+  }
   dispose(o);
 }
 
-bool is_empty(const obj* o) {
+bool is_nil(const obj *o) {
   if (o == NULL) return false;
   if (!is_list(o)) return false;
   return !CAR(o) && !CDR(o);

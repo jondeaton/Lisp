@@ -56,13 +56,13 @@ obj* new_primitive(primitive_t primitive);
 obj *t(GarbageCollector *gc);
 
 /**
- * Function: empty
+ * Function: nil
  * ---------------
  * Get an empty list. This is defined to be a lisp object of type lisp with
  * NULL for both car and cdr. This object will be in newly dynamically allocated
  * memory and must be freed
  * @return: A pointer to the a new empty list in dynamically allocated memory
  */
-obj *empty(GarbageCollector *gc);
+obj *nil(GarbageCollector *gc);
 
 #endif // _LISP_PRIMITIVES_H_INCLUDED

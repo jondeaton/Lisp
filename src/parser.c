@@ -15,6 +15,8 @@
 #define RESET "\033[0m"
 #define BUFFSIZE 128
 
+#define NIL_STR_REP "nil"
+
 static obj* parse_atom(const_expression e, size_t *num_parsed_p);
 static obj* parse_list(const_expression e, size_t *num_parsed_p);
 static obj* get_quote_list();
@@ -74,7 +76,8 @@ expression unparse(const obj* o) {
 
   if (is_list(o)) {
     expression list_expr = unparse_list(o);
-    if (list_expr == NULL) return strdup("()");
+    if (list_expr == NULL)
+      return strdup(NIL_STR_REP);
 
     expression e = malloc(1 + strlen(list_expr) + 2); // open, close, null
     MALLOC_CHECK(e);

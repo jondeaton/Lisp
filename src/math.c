@@ -80,8 +80,8 @@ def_math_op_primitive(mod)
   if (!is_number(second)) \
     return LOG_ERROR("Second argument did not evaluate to a number."); \
   if (is_int(first) && is_int(second)) \
-    return get_int(first) op get_int(second) ? t(gc) : empty(gc); \
-  return get_float(first) op get_float(second) ? t(gc) : empty(gc); \
+    return get_int(first) op get_int(second) ? t(gc) : nil(gc); \
+  return get_float(first) op get_float(second) ? t(gc) : nil(gc); \
 }
 def_math_compare_primitive(equal, ==)
 def_math_compare_primitive(gt, >)

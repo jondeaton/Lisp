@@ -51,7 +51,7 @@ void dispose_recursive(obj *o);
  * @param o: A lisp object to determine if it is the empty list
  * @return: True if the object is the empty list, false otherwise
  */
-bool is_empty(const obj* o);
+bool is_nil(const obj *o);
 
 /**
  * Function: compare_recursive

@@ -36,7 +36,7 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
   if (is_list(o)) {
-    if (is_empty(o)) return (obj*) o;                     // Empty list evaluates to itself
+    if (is_nil(o)) return (obj*) o;                     // Empty list evaluates to itself
 
     obj* oper = eval(CAR(o), envp, gc);
     return apply(oper, CDR(o), envp, gc);

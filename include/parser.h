@@ -10,6 +10,8 @@
 #include "primitives.h"
 #include <stdlib.h>
 
+// The string representation of nil/empty list/false
+#define NIL_STR "nil"
 #define PARSE(e) parse_expression(e, NULL)
 
 typedef char* expression;
