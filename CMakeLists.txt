@@ -25,14 +25,15 @@ endif()
 include_directories(include src)
 set(COMMON_SRC
         include/lisp-objects.h      src/lisp-objects.c
-        include/evaluator.h         src/list.c
+        include/evaluator.h         src/evaluator.c
         include/primitives.h        src/primitives.c
         include/closure.h           src/closure.c
         include/interpreter.h       src/interpreter.c
         include/parser.h            src/parser.c
-        include/list.h              src/evaluator.c
-        include/garbage-collector.h src/garbage-collector.c
+        include/list.h              src/list.c
+        include/memory-manager.h    src/memory-manager.c
         include/environment.h       src/environment.c
+        include/cvector.h           src/cvector.c
         include/clist.h             src/clist.c
         include/math.h              src/math.c
         include/repl.h              src/repl.c

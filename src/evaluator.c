@@ -11,15 +11,15 @@
 #include <string.h>
 #include <lisp-objects.h>
 #include <closure.h>
-#include <garbage-collector.h>
+#include <memory-manager.h>
 
 #define LAMBDA_RESV "lambda"
 
 // Static function declarations
-static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, GarbageCollector *gc);
-static obj *bind(obj *params, const obj *args, obj **envp, GarbageCollector *gc);
+static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, MemoryManager *gc);
+static obj *bind(obj *params, const obj *args, obj **envp, MemoryManager *gc);
 
-obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
+obj *eval(const obj *o, obj **envp, MemoryManager *gc) {
   if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
@@ -44,7 +44,7 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc) {
   return LOG_ERROR("Object of unknown type");
 }
 
-obj *apply(const obj *oper, const obj *args, obj **envp, GarbageCollector *gc) {
+obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc) {
   if (oper == NULL) return NULL;
 
   if (is_primitive(oper)) {
@@ -68,7 +68,7 @@ obj *apply(const obj *oper, const obj *args, obj **envp, GarbageCollector *gc) {
     obj* result = eval(PROCEDURE(oper), &new_env, gc); // Evaluate body in prepended environment
 
     bool split = split_lists(new_env, old_env);
-    if (split) gc_add_recursive(gc, new_env); // Mark the bound elements for cleanup
+    if (split) mm_add_recursive(gc, new_env); // Mark the bound elements for cleanup
 
     return result;
   }
@@ -86,7 +86,7 @@ obj *apply(const obj *oper, const obj *args, obj **envp, GarbageCollector *gc) {
  * @param envp: Pointer to the environment to prepend the bound arguments to
  * @return: The new environment
  */
-static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, GarbageCollector *gc) {
+static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, MemoryManager *gc) {
   obj* new_env = bind(PARAMETERS(operator), args, envp, gc); // Bind the parameters to the arguments
   obj* capture_copy = copy_recursive(CAPTURED(operator));
   return join_lists(capture_copy, new_env); // Prepend the captured list to the environment
@@ -101,7 +101,7 @@ static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **e
  * @param envp: Environment to prepend the bound arguments to
  * @return: Environment now with bound arguments appended
  */
-static obj *bind(obj *params, const obj *args, obj **envp, GarbageCollector *gc) {
+static obj *bind(obj *params, const obj *args, obj **envp, MemoryManager *gc) {
   obj* frame = associate(params, args, envp, gc);
   return join_lists(frame, *envp);
 }

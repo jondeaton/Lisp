@@ -3,21 +3,9 @@
 #include <string.h>
 #include <stddef.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #define ASSERT_NOT_NULL(x) assert((x) != NULL);
-
-typedef struct CListNode Node;
-
-/**
- * @struct CListImplementation: Linked list meta-data
- */
-struct CListImplementation {
-  Node* front;
-  Node* back;
-  int nelems;
-  size_t elem_size;
-  CleanupElemFn cleanup;
-};
 
 /**
  * @struct CListNode: a single link of the linked list
@@ -35,16 +23,25 @@ static inline void delete_node(CList* cl, Node* node);
 static void *data_of(const Node *node);
 static void *data_to_node(const void *data);
 
-CList* clist_create(size_t elem_size, CleanupElemFn cleanupFn) {
+CList *new_clist(size_t elem_size, CleanupElemFn cleanupFn) {
   CList* cl = malloc(sizeof(CList));
-  if (cl == NULL)
+  if (cl == NULL) return NULL;
+  bool success = clist_init(cl, elem_size, cleanupFn);
+  if (!success) {
+    free(cl);
     return NULL;
+  }
+  return cl;
+}
+
+bool clist_init(CList *cl, size_t elem_size, CleanupElemFn cleanupFn) {
+  assert(cl != NULL);
   cl->front = NULL;
   cl->back = NULL;
   cl->nelems = 0;
   cl->elem_size = elem_size;
   cl->cleanup = cleanupFn;
-  return cl;
+  return true;
 }
 
 void clist_clear(CList* cl) {
@@ -55,7 +52,6 @@ void clist_clear(CList* cl) {
 void clist_dispose(CList* cl) {
   ASSERT_NOT_NULL(cl);
   clist_clear(cl);
-  free(cl);
 }
 
 int clist_count(const CList* cl) {

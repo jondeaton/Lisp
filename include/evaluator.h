@@ -8,7 +8,7 @@
 #define _EVALUATOR_H_INCLUDED
 
 #include "lisp-objects.h"
-#include "garbage-collector.h"
+#include "memory-manager.h"
 
 /**
  * Function: eval
@@ -19,7 +19,7 @@
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the evaluation of the object
  */
-obj *eval(const obj *o, obj **envp, GarbageCollector *gc);
+obj *eval(const obj *o, obj **envp, MemoryManager *gc);
 
 /**
  * Function: apply
@@ -30,6 +30,6 @@ obj *eval(const obj *o, obj **envp, GarbageCollector *gc);
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the application of the function to the arguments
  */
-obj *apply(const obj *oper, const obj *args, obj **envp, GarbageCollector *gc);
+obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc);
 
 #endif // _EVALUATOR_H_INCLUDED

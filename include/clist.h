@@ -7,20 +7,40 @@
 #ifndef _CLIST_H_INCLUDED
 #define _CLIST_H_INCLUDED
 
+#include <stdbool.h>
 #include "stdlib.h"
 
-typedef struct CListImplementation CList;
+typedef struct CListNode Node;
 typedef void (*CleanupElemFn)(void *element);
 
 /**
- * Function: clist_create
+* @struct CListImplementation: Linked list meta-data
+*/
+typedef struct CList {
+  Node* front;              // First node in the list
+  Node* back;               // Second node in the list
+  int nelems;               // Number of elements in the list
+  size_t elem_size;         // Size of each element
+  CleanupElemFn cleanup;    // Cleanup function for elements
+} CList;
+
+/**
+ * Function: new_clist
+ * -------------------
+ * Creates a new clist.
+ */
+CList *new_clist(size_t elem_size, CleanupElemFn cleanupFn);
+
+/**
+ * Function: clist_init
  * ----------------------
- * Constructs a linked list
+ * Initialize a new linked list
+ * @param cl Pointe to a clist ot initialize
  * @param elem_size The size of each element in the linked list
  * @param cleanupFn Cleanup function
  * @return Pointer to linked list data structure
  */
-CList* clist_create(size_t elem_size, CleanupElemFn cleanupFn);
+bool clist_init(CList *cl, size_t elem_size, CleanupElemFn cleanupFn);
 
 /**
  * Function: clist_dispose
