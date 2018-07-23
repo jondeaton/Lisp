@@ -26,6 +26,7 @@ DEF_TEST(parser);
  * @return: True if the result of parsing and un-parsing the expression is equal
  * to the expected expression
  */
-bool test_single_parse(const_expression expression, const_expression expected);
+bool test_single_parse(const_expression expression, const_expression expected,
+                       const char *test_name_format, ...);
 
 #endif //LISP_PARSE_TEST_H

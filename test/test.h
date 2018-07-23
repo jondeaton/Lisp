@@ -52,11 +52,14 @@ bool get_test_result(const char* expected, const char* result);
  * @param expected: The expected result of the test
  * @param result: The expression that was the result
  * @param test_result: True if the test succeeded, false if failure.
+ * @param test_name_format printf style format
+ * @param ... Variable arguments for test name
  */
 void print_single_result(const char* test_type,
                          const char* expression,
                          const char* expected,
                          const char* result,
-                         bool test_result);
+                         bool test_result,
+                         const char *test_name_format, ...);
 
 #endif //LISP_TEST_H

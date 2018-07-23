@@ -70,8 +70,10 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Tests for proper error behavior~~
 - ~~Greater than and less than primitives~~
 - ~~lambda primitive instead of special case~~
-- ~~fix the help/version printout~~
-- Use tail recursion instead of loops where possible
+- ~~Fix the help/version printout~~
+- ~~Use tail recursion instead of loops where possible~~
+- ~~Fix bug with `car` and `cdr` of empty list, or end of list~~
+- ~~Enable testing framework to report which test is failing~~
 - Fix the way that errors are reported (no return LOG_ERROR)
 - Fix the way that unused variables are handled
   - `#define UNUSED __attribute__ ((unused))`
@@ -79,7 +81,7 @@ as things which I have not yet accomplished. Please cross one off!
 - Rename the garbage collector to memory manager
 - Nest structs inside one another where possible (GC, allocated CList)
 - Use CVector instead of CList
-- Use flexble array member in lisp objects
+- Use flexible array member in lisp objects
 - Use a single truth and empty list tuple.
 - Variadic functions?
 - Y combinator tests
