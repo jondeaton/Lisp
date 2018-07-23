@@ -19,7 +19,7 @@ typedef struct LispInterpreterImpl LispInterpreter;
  * the global environment and the vector of allocated
  * objects.
  */
-LispInterpreter * interpreter_init();
+LispInterpreter *interpreter_init();
 
 /**
  * Function: repl_run_program

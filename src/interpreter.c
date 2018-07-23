@@ -5,7 +5,7 @@
  */
 
 #include <interpreter.h>
-#include <garbage-collector.h>
+#include <memory-manager.h>
 #include <environment.h>
 #include <evaluator.h>
 #include <stack-trace.h>
@@ -36,15 +36,25 @@ static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
 struct LispInterpreterImpl {
-  obj* env;  // Interpreter environment
-  GarbageCollector* gc;
+  obj* env;                             // Interpreter environment
+  MemoryManager mm;                     // Memory Manager
 };
 
-LispInterpreter* interpreter_init() {
-  LispInterpreter* interp = malloc(sizeof(LispInterpreter));
-  interp->env = init_env();
-  interp->gc = gc_init();
-  return interp;
+LispInterpreter *interpreter_init() {
+  LispInterpreter *interpreter = malloc(sizeof(LispInterpreter));
+  if (interpreter == NULL) return NULL;
+
+  interpreter->env = init_env();
+  if (interpreter->env == NULL) {
+    free(interpreter);
+    return NULL;
+  }
+  bool success = mm_init(&interpreter->mm);
+  if (!success) {
+    free(interpreter);
+    return NULL;
+  }
+  return interpreter;
 }
 
 void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose) {
@@ -60,13 +70,13 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
       break;
     }
     if (o == NULL) continue;
-    obj* result = eval(o, &interpreter->env, interpreter->gc);
+    obj* result = eval(o, &interpreter->env, &interpreter->mm);
     if (result == NULL) {
       if (verbose) LOG_MSG("NULL");
       break;
     }
     if (verbose) print_object(stdout, result);
-    gc_clear(interpreter->gc); // collect garbage
+    mm_clear(&interpreter->mm); // collect garbage
   }
   fclose(fd);
 }
@@ -80,10 +90,10 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
       LOG_ERROR("Invalid expression");
       continue;
     }
-    obj* result = eval(o, &(interpreter->env), interpreter->gc);
+    obj* result = eval(o, &(interpreter->env), &interpreter->mm);
     if (result == NULL && verbose) LOG_MSG("NULL");
     print_object(fd_out, result);
-    gc_clear(interpreter->gc);
+    mm_clear(&interpreter->mm);
   }
 }
 
@@ -92,15 +102,15 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
 
   obj* o = PARSE(expr);
   if (o == NULL) return NULL;
-  obj* result_obj = eval(o, &(interpreter->env), interpreter->gc);
+  obj* result_obj = eval(o, &(interpreter->env), &interpreter->mm);
   expression result = unparse(result_obj);
-  gc_clear(interpreter->gc); // frees the objects in result_obj that were allocated during eval
+  mm_clear(&interpreter->mm); // frees the objects in result_obj that were allocated during eval
   dispose_recursive(o);
   return result;
 }
 
 void interpreter_dispose(LispInterpreter *interpreter) {
-  gc_dispose(interpreter->gc);
+  mm_dispose(&interpreter->mm);
   dispose_recursive(interpreter->env);
   free(interpreter);
 }

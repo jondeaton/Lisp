@@ -25,7 +25,7 @@
  * @param cdr: The value to set in the cdr of the new list
  * @return: The new list with the specified values set
  */
-obj* new_list_set(obj* car, obj* cdr);
+obj* new_list_set(const obj *car, const obj *cdr);
 
 /**
  * Function: copy_recursive
@@ -51,7 +51,7 @@ void dispose_recursive(obj *o);
  * @param o: A lisp object to determine if it is the empty list
  * @return: True if the object is the empty list, false otherwise
  */
-bool is_empty(const obj* o);
+bool is_nil(const obj *o);
 
 /**
  * Function: compare_recursive

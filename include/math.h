@@ -8,7 +8,7 @@
 #define _LISP_MATH_H_INCLUDED
 
 #include "list.h"
-#include "garbage-collector.h"
+#include "memory-manager.h"
 
 /**
  * Function: get_math_library
@@ -26,7 +26,7 @@ obj* get_math_library();
  * @param envp: The environment to evaluate the addition
  * @return: A newly allocated number/float object containing the result of the addition
  */
-obj *add(const obj *args, obj **envp, GarbageCollector *gc);
+obj *add(const obj *args, obj **envp, MemoryManager *gc);
 
 /**
  * Primitive: sub
@@ -36,7 +36,7 @@ obj *add(const obj *args, obj **envp, GarbageCollector *gc);
  * @param env: The environment to evaluate the subtraction
  * @return: A newly allocated number/float object containing the result of the subtraction
  */
-obj *sub(const obj *o, obj **env, GarbageCollector *gc);
+obj *sub(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: mul
@@ -46,7 +46,7 @@ obj *sub(const obj *o, obj **env, GarbageCollector *gc);
  * @param env: The environment to evaluate the multiplication
  * @return: A newly allocated number/float object containing the result of the multiplication
  */
-obj *mul(const obj *o, obj **env, GarbageCollector *gc);
+obj *mul(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: divide
@@ -56,7 +56,7 @@ obj *mul(const obj *o, obj **env, GarbageCollector *gc);
  * @param env: The environment to evaluate the division
  * @return: A newly allocated number/float object containing the result of the division
  */
-obj *divide(const obj *o, obj **env, GarbageCollector *gc);
+obj *divide(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: mod
@@ -66,7 +66,7 @@ obj *divide(const obj *o, obj **env, GarbageCollector *gc);
  * @param env: The environment to evaluate the modulus
  * @return: A newly allocated number/float object containing the result of the modulus
  */
-obj *mod(const obj *o, obj **env, GarbageCollector *gc);
+obj *mod(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: equal
@@ -77,7 +77,7 @@ obj *mod(const obj *o, obj **env, GarbageCollector *gc);
  * @param gc
  * @return
  */
-obj *equal(const obj *o, obj **env, GarbageCollector *gc);
+obj *equal(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: gt
@@ -88,7 +88,7 @@ obj *equal(const obj *o, obj **env, GarbageCollector *gc);
  * @param gc
  * @return
  */
-obj *gt(const obj *o, obj **env, GarbageCollector *gc);
+obj *gt(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: gte
@@ -99,7 +99,7 @@ obj *gt(const obj *o, obj **env, GarbageCollector *gc);
  * @param gc
  * @return
  */
-obj *gte(const obj *o, obj **env, GarbageCollector *gc);
+obj *gte(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: lt
@@ -110,7 +110,7 @@ obj *gte(const obj *o, obj **env, GarbageCollector *gc);
  * @param gc
  * @return
  */
-obj *lt(const obj *o, obj **env, GarbageCollector *gc);
+obj *lt(const obj *o, obj **env, MemoryManager *gc);
 
 /**
  * Primitive: lte
@@ -121,6 +121,6 @@ obj *lt(const obj *o, obj **env, GarbageCollector *gc);
  * @param gc
  * @return
  */
-obj *lte(const obj *o, obj **env, GarbageCollector *gc);
+obj *lte(const obj *o, obj **env, MemoryManager *gc);
 
 #endif // _LISP_MATH_H_INCLUDED

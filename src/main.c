@@ -1,7 +1,7 @@
 /*
  * File: main.c
  * ------------
- * Exports the entry point to Lisp
+ * Exports the entry point to Lisp Interpreter
  *
  * Command line usage
  *
@@ -18,28 +18,50 @@
  *  ./lisp -b my-bootstrap.lisp
  */
 
-#include <repl.h>
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>
 #include <string.h>
 
-static void parse_command_line_args(int argc, char* argv[]);
-static void print_version_information();
-
-const char *const optstring = ":rb:t:v";
-char const* bootstrap_path = NULL;
-char const* program_path = NULL;
-bool run_repl = true;
-bool verbose = false;
+#include <repl.h>
 
 #define HISTORY_FILE_LENGTH 128
-char history_buffer[HISTORY_FILE_LENGTH];
 #define DEFAULT_HISTORY_FILE ".lisp-history"
 
-const char* history_file = NULL;
+/**
+ * @struct InterpreterConfig holds command line options for Lisp interpreter.
+ */
+struct InterpreterConfig {
+  char const *bootstrap_path;
+  char const *program_path;
+  bool run_repl;
+  bool verbose;
+  char history_buffer[HISTORY_FILE_LENGTH];
+  char *history_file;
+};
+
+static void parse_command_line_args(int argc, char* argv[], struct InterpreterConfig *config);
+static void print_version_information();
+
+const char *const optstring = ":rb:t:vh";
+
+// If not history file was specified on CLI, then get it from home directory
+static void set_history_file(struct InterpreterConfig *config) {
+  if (config->history_file == NULL) {
+    const char* home_dir = getpwuid(getuid())->pw_dir;
+
+    int num_written = snprintf(config->history_buffer, 
+        sizeof(config->history_buffer),
+        "%s/%s", home_dir, DEFAULT_HISTORY_FILE);
+
+    if (num_written < 0) {
+      config->history_file = NULL;
+      printf("Default history file not found. Interpreter history disabled.");
+    }
+    else config->history_file = config->history_buffer;
+  }
+}
 
 /**
  * Entry Point: main
@@ -52,28 +74,36 @@ const char* history_file = NULL;
  * @return: Exit status
  */
 int main(int argc, char* argv[]) {
-  parse_command_line_args(argc, argv);
-  if (!history_file) {
-    const char* home_dir = getpwuid(getuid())->pw_dir;
-    strcpy(history_buffer, home_dir);
-    strcat(history_buffer, "/");
-    strcat(history_buffer, DEFAULT_HISTORY_FILE);
-    history_file = history_buffer;
-  }
-  return run_lisp(bootstrap_path, program_path, run_repl, history_file, verbose);
+  
+  struct InterpreterConfig config;
+  parse_command_line_args(argc, argv, &config);
+  set_history_file(&config);
+  
+  return run_lisp(config.bootstrap_path, config.program_path,
+                  config.run_repl, config.history_file, config.verbose);
 }
 
 /**
  * Function: parse_command_line_args
  * ---------------------------------
- * Parses the command line arguments and sets the relevant global variables
- * @param argc; Argument count
- * @param argv: Argument array
+ * Parses the command line arguments and sets the relevant config variabless
+ * @param argc Argument count
+ * @param argv Argument array
+ * @param config configuration struct
  */
-static void parse_command_line_args(int argc, char* argv[]) {
+static void parse_command_line_args(int argc, char* argv[],
+                                    struct InterpreterConfig *config) {
+
+  // set defaults
+  config->bootstrap_path = NULL;
+  config->program_path = NULL;
+  config->run_repl = true;
+  config->verbose = false;
+  config->history_file = NULL;
+
   bool repl_flag = false;
   while (optind < argc) {
-    int c;
+    char c;
     if ((c = getopt(argc, argv, optstring)) != -1) {
       switch(c) {
         case 'r': {
@@ -81,15 +111,15 @@ static void parse_command_line_args(int argc, char* argv[]) {
           break;
         }
         case 'b': {
-          bootstrap_path = optarg;
+          config->bootstrap_path = optarg;
           break;
         }
         case 't': {
-          history_file = optarg;
+          config->history_file = optarg;
           break;
         }
         case 'v': {
-          verbose = true;
+          config->verbose = true;
           break;
         }
         case 'h': {
@@ -100,8 +130,8 @@ static void parse_command_line_args(int argc, char* argv[]) {
       }
     } else {
       if (optind < argc) {
-        program_path = argv[optind];
-        run_repl = repl_flag;
+        config->program_path = argv[optind];
+        config->run_repl = repl_flag;
       }
       break;
     }
@@ -115,6 +145,6 @@ static void parse_command_line_args(int argc, char* argv[]) {
  */
 static void print_version_information() {
   printf("Lisp Interpreter 1.0, STD %ld\n"
-           "Author: Jon Deaton, %s %s\n",
-         __STDC_VERSION__, __DATE__, __TIME__);
+         "Author: Jon Deaton, %s %s\n%s\n",
+         __STDC_VERSION__, __DATE__, __TIME__, __VERSION__);
 }

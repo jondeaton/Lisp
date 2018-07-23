@@ -5,7 +5,7 @@
  */
 
 #include <math.h>
-#include <garbage-collector.h>
+#include <memory-manager.h>
 #include <parser.h>
 #include <list.h>
 #include "environment.h"
@@ -21,7 +21,7 @@ typedef float (*floatArithmeticFuncPtr)(float, float);
 static obj *apply_arithmetic(const obj *args, obj **envp,
                              intArithmeticFuncPtr int_op,
                              floatArithmeticFuncPtr float_op,
-                             GarbageCollector *gc);
+                             MemoryManager *mm);
 
 // List of reserved words in the lisp language
 static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%",
@@ -51,16 +51,18 @@ static float mod_floats(float x, float y) { // This one needs it's own special d
 }
 
 // Function definitions for integer and floating point allocators
-#define def_number_allocator(T) static obj* allocate_ ## T (T value, GarbageCollector* gc) {\
+#define def_number_allocator(T) static obj* allocate_ ## T (T value, MemoryManager* mm) {\
   obj* o = new_int(value); \
-  gc_add(gc, o); \
+  mm_add(mm, o); \
   return o; }
+
 def_number_allocator(int)
+
 def_number_allocator(float)
 
 // macro for defining a the primitive operator
 #define def_math_op_primitive(name) def_primitive(name) { \
-  return apply_arithmetic(args, envp, &(name ## _ints), &(name ## _floats), gc); \
+  return apply_arithmetic(args, envp, &(name ## _ints), &(name ## _floats), mm); \
 }
 def_math_op_primitive(add)
 def_math_op_primitive(sub)
@@ -71,17 +73,17 @@ def_math_op_primitive(mod)
 // Define a mathematical comparison primitive
 #define def_math_compare_primitive(name, op) def_primitive(name) { \
   if (!CHECK_NARGS(args, 2)) return NULL; \
-  obj* first = eval(ith(args, 0), envp, gc); \
+  obj* first = eval(ith(args, 0), envp, mm); \
   if (first == NULL) return NULL; \
   if (!is_number(first)) \
     return LOG_ERROR("First argument did not evaluate to a number."); \
-  obj* second = eval(ith(args, 1), envp, gc); \
+  obj* second = eval(ith(args, 1), envp, mm); \
   if (second == NULL) return NULL; \
   if (!is_number(second)) \
     return LOG_ERROR("Second argument did not evaluate to a number."); \
   if (is_int(first) && is_int(second)) \
-    return get_int(first) op get_int(second) ? t(gc) : empty(gc); \
-  return get_float(first) op get_float(second) ? t(gc) : empty(gc); \
+    return get_int(first) op get_int(second) ? t(mm) : nil(mm); \
+  return get_float(first) op get_float(second) ? t(mm) : nil(mm); \
 }
 def_math_compare_primitive(equal, ==)
 def_math_compare_primitive(gt, >)
@@ -100,24 +102,24 @@ def_math_compare_primitive(lte, <=)
  * @return: The result of applying the arithmetic operation to the values of the arguments
  */
 static obj *apply_arithmetic(const obj *args, obj **envp, intArithmeticFuncPtr int_op,
-                             floatArithmeticFuncPtr float_op, GarbageCollector *gc) {
+                             floatArithmeticFuncPtr float_op, MemoryManager *mm) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first = eval(ith(args, 0), envp, gc);
+  obj* first = eval(ith(args, 0), envp, mm);
   if (first == NULL) return NULL;
   if (!is_number(first))
     return LOG_ERROR("First argument did not evaluate to a number.");
 
-  obj* second = eval(ith(args, 1), envp, gc);
+  obj* second = eval(ith(args, 1), envp, mm);
   if (second == NULL) return NULL;
   if (!is_number(second))
     return LOG_ERROR("Second argument did not evaluate to a number.");
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = float_op(get_float(first), get_float(second));
-    return allocate_float(value, gc);
+    return allocate_float(value, mm);
   } else {
     int value = int_op(get_int(first), get_int(second));
-    return allocate_int(value, gc);
+    return allocate_int(value, mm);
   }
 }

@@ -15,7 +15,8 @@
  * @param expected: The expected result of evaluating the expression
  * @return: True if the expression evaluated to the expected thing, false otherwise
  */
-bool test_single_eval(const_expression expression, const_expression expected);
+bool test_single_eval(const_expression expression, const_expression expected,
+                      const char *test_name_format, ...);
 
 /**
  * Function: test_multi_eval
@@ -28,7 +29,8 @@ bool test_single_eval(const_expression expression, const_expression expected);
  * @return: True if expr evaluates to expected, and false otherwise
  */
 bool test_multi_eval(const_expression before[],
-                     const_expression expr, const_expression expected);
+                     const_expression expr, const_expression expected,
+                     const char *test_name_format, ...);
 
 /**
  * Function: test_quote

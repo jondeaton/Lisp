@@ -11,12 +11,12 @@
 
 // The different types of lists
 enum type {
-    atom_obj,
-    list_obj,
-    primitive_obj,
-    closure_obj,
-    int_obj,
-    float_obj
+    atom_obj,             // Atom object
+    list_obj,             // List object
+    primitive_obj,        // Primitive function object
+    closure_obj,          // Closure/procedure object
+    int_obj,              // Integer object
+    float_obj             // Floating point number object
 };
 
 typedef const char* atom_t;
@@ -37,11 +37,11 @@ typedef struct {
   int nargs;
 } closure_t;
 
-#define CONTENTS(o)   ((void*) ((char*) (o) + sizeof(obj)))
-#define ATOM(o)       ((atom_t)  CONTENTS(o))
-#define LIST(o)       ((list_t*) CONTENTS(o))
-#define PRIMITIVE(o)  ((primitive_t*) CONTENTS(o))
-#define CLOSURE(o)    ((closure_t*)   CONTENTS(o))
+#define CONTENTS(o)   ((void*) ((char *) (o) + sizeof(obj)))
+#define ATOM(o)       ((atom_t)   CONTENTS(o))
+#define LIST(o)       ((list_t *) CONTENTS(o))
+#define PRIMITIVE(o)  ((primitive_t *) CONTENTS(o))
+#define CLOSURE(o)    ((closure_t *)   CONTENTS(o))
 
 // Useful for extracting elements from the lisp object
 #define CAR(o) LIST(o)->car
@@ -214,16 +214,6 @@ int get_int(const obj* o);
  * @return: A copy of the value stored in the object as a floating point
  */
 float get_float(const obj* o);
-
-/**
- * Function: get_contents
- * ----------------------
- * Utility function for getting the contents of the object that exists just to the right of
- * the object type enum.
- * @param o: Object to get the contents of
- * @return: Pointer to the memory containing the contents of the object
- */
-//void* CONTENTS(const obj *o);
 
 /**
  * Function: dispose

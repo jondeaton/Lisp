@@ -28,6 +28,9 @@ static def_primitive(env);
 static def_primitive(lambda);
 static def_primitive(defmacro);
 
+const obj lisp_NIL; // The empty list / NIL value within lisp.
+const obj lisp_T;   // The true atom.
+
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "lambda", "defmacro", NULL };
 
@@ -35,8 +38,8 @@ static const primitive_t primitive_functions[] = {&quote, &atom, &eq, &car, &cdr
                                                   &cond, &set, &env, &lambda, &defmacro,  NULL };
 
 // Static function declarations
-static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *gc);
-static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
+static obj *ith_arg_value(const obj *args, obj **envp, int i, MemoryManager *mm);
+static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
 
 obj* get_primitive_library() {
@@ -52,16 +55,16 @@ obj* new_primitive(primitive_t primitive) {
 }
 
 // Allocate new truth atom
-obj *t(GarbageCollector *gc) {
+obj *t(MemoryManager *mm) {
   obj* t = new_atom("t");
-  gc_add(gc, t);
+  mm_add(mm, t);
   return t;
 }
 
 // Allocate new empty list
-obj *empty(GarbageCollector *gc) {
+obj *nil(MemoryManager *mm) {
   obj* list = new_list_set(NULL, NULL);
-  gc_add(gc, list);
+  mm_add(mm, list);
   return list;
 }
 
@@ -74,8 +77,6 @@ obj *empty(GarbageCollector *gc) {
  * @return: Pointer to the lisp object without evaluating it
  */
 static def_primitive(quote) {
-  (void) envp;
-  (void) gc;
   if (!CHECK_NARGS(args, 1)) return NULL;
   return CAR(args);
 }
@@ -87,10 +88,10 @@ static def_primitive(quote) {
  */
 static def_primitive(atom) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* result = eval(CAR(args), envp, gc);
-  if (is_list(result)) return is_empty(result) ? t(gc) : empty(gc);
-  if (is_atom(result)) return t(gc);
-  return is_number(result) ? t(gc) : empty(gc);
+  obj* result = eval(CAR(args), envp, mm);
+  if (is_list(result)) return is_nil(result) ? t(mm) : nil(mm);
+  if (is_atom(result)) return t(mm);
+  return is_number(result) ? t(mm) : nil(mm);
 }
 
 /**
@@ -101,13 +102,13 @@ static def_primitive(atom) {
 static def_primitive(eq) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first = ith_arg_value(args, envp, 0, gc);
-  if (!first) return NULL;
-  obj* second = ith_arg_value(args, envp, 1, gc);
-  if (!second) return NULL;
+  obj* first = ith_arg_value(args, envp, 0, mm);
+  if (first == NULL) return NULL;
+  obj* second = ith_arg_value(args, envp, 1, mm);
+  if (second == NULL) return NULL;
 
   bool same = compare(first, second);
-  return same ? t(gc) : empty(gc);
+  return same ? t(mm) : nil(mm);
 }
 
 /**
@@ -117,8 +118,9 @@ static def_primitive(eq) {
  */
 static def_primitive(car) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* arg_value = eval(CAR(args), envp, gc);
+  obj* arg_value = eval(CAR(args), envp, mm);
   if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
+  if (is_nil(arg_value)) return nil(mm);
   return CAR(arg_value);
 }
 
@@ -129,14 +131,19 @@ static def_primitive(car) {
  */
 static def_primitive(cdr) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* arg_value = eval(CAR(args), envp, gc);
+  obj* arg_value = eval(CAR(args), envp, mm);
   if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
+  if (is_nil(arg_value)) return nil(mm);
+  if (CDR(arg_value) == NULL) return nil(mm);
   return CDR(arg_value);
 }
 
 /**
  * Primitive: cons
  * ---------------
+ * Usage (cons 'x '(a b c)) --> (x a b c)
+ *
+ * (cons x y)
  * Expects the value of y to be a list and returns a list containing the value
  * of x followed by the elements of the value of y
  */
@@ -144,15 +151,17 @@ static def_primitive(cons) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* y = ith(args, 1);
-
-  obj* new_cdr = eval(y, envp, gc);
+  obj* new_cdr = eval(y, envp, mm);
+  if (new_cdr == NULL) return NULL; // todo: log error?
   if (!is_list(new_cdr)) // no dot notation (yet) means second arg must be list
     return LOG_ERROR("Second argument is not list.");
 
+  // Allocate new slot to hold x in result list
   obj* new_obj = new_list();
   if (new_obj == NULL) return NULL;
-  gc_add(gc, new_obj); // Record allocation
-  CAR(new_obj) = eval(CAR(args), envp, gc);
+  mm_add(mm, new_obj); // Record allocation
+
+  CAR(new_obj) = eval(CAR(args), envp, mm);
   CDR(new_obj) = new_cdr;
 
   return new_obj;
@@ -167,25 +176,37 @@ static def_primitive(cons) {
  * is returned as the expression
  */
 static def_primitive(cond) {
-  if (args == NULL) return empty(gc);
+  if (args == NULL) return nil(mm);
 
   if (!is_list(args)) return LOG_ERROR("Arguments are not a list of pairs");
 
   obj* pair = CAR(args);
   if (!is_list(pair)) return LOG_ERROR("Conditional pair clause is not a list");
-  if (is_empty(pair)) return LOG_ERROR("Empty Conditional pair.");
+  if (is_nil(pair)) return LOG_ERROR("Empty Conditional pair.");
   if (list_length(pair) != 2)
     return LOG_ERROR("Conditional pair length was %d, not 2.", list_length(pair));
 
-  obj* predicate = eval(CAR(pair), envp, gc);
-  if (is_t(predicate)) {
-    obj* e = ith(pair, 1);
-    if (!e) return LOG_ERROR("Predicate has no associated value");
-    return eval(e, envp, gc);
-  } else {
-    if (!CDR(pair)) return empty(gc); // nothing evaluated to true
-    return cond(CDR(args), envp, gc); // recurse on the rest of the list
+  obj* predicate = eval(CAR(pair), envp, mm);
+  if (is_primitive(predicate)) {
+    LOG_ERROR("Cannot cast primitive function as bool.");
+    return NULL;
   }
+
+  if (is_t(predicate)) {
+    // recursive base case: predicate evaluated to true
+    obj* e = ith(pair, 1); // get it's associated value
+    if (e == NULL) {
+      LOG_ERROR("Predicate has no associated value");
+      return NULL;
+    }
+    return eval(e, envp, mm);
+  }
+
+  // recursive base case: no predicates evaluated to true
+  if (CDR(pair) == NULL) return nil(mm);
+
+  // tail recursion on the remaining predicate-expression pairs
+  return cond(CDR(args), envp, mm);
 }
 
 /**
@@ -198,22 +219,51 @@ static def_primitive(cond) {
 static def_primitive(set) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* var_name = ith_arg_value(args, envp, 0, gc);
-  if (is_empty(var_name)) return LOG_ERROR("Cannot set empty list");
+  obj* var_name = ith_arg_value(args, envp, 0, mm);
+  if (is_nil(var_name)) return LOG_ERROR("Cannot set empty list");
   if (is_t(var_name)) return LOG_ERROR("Cannot set truth atom");
   if (!is_atom(var_name)) return LOG_ERROR("Can only set atom types");
-  obj* value = ith_arg_value(args, envp, 1, gc);
+  obj* value = ith_arg_value(args, envp, 1, mm);
+  if (value == NULL) {
+    LOG_ERROR("Error evaluating right-hand-side");
+    return NULL;
+  }
 
+  // Make a copy of the result
+  obj* result_cpy = copy_recursive(value);
+  if (result_cpy == NULL) {
+    LOG_ERROR("Error copying right-hand-side");
+    return NULL;
+  }
+
+  // Store the result in the environment (potentially over-writing)
   obj** prev_value_p = lookup_entry(var_name, *envp); // previously bound value
-  if (prev_value_p) {
-    dispose_recursive(*prev_value_p);  // dispose of the old value
-    *prev_value_p = copy_recursive(value); // copy the newly set value into place
+  if (prev_value_p == NULL) {
+    // no previous value found in environment
+    obj* pair_second = new_list_set(result_cpy, NULL);
+    obj *var_name_copy = copy_recursive(var_name);
+    obj *pair_first = new_list_set(var_name_copy, pair_second);
+    obj *new_link = new_list_set(pair_first, *envp);
 
-  } else { // no previous value
-    obj* pair_second = new_list_set(copy_recursive(value), NULL);
-    obj* pair_first = new_list_set(copy_recursive(var_name), pair_second);
-    obj* new_link = new_list_set(pair_first, *envp);
+    if (var_name_copy == NULL || pair_first == NULL ||
+        pair_second == NULL || new_link == NULL) {
+      LOG_ERROR("Error allocating memory to store variable in environment");
+      dispose_recursive(result_cpy);
+      dispose_recursive(var_name_copy);
+      dispose_recursive(pair_first);
+      dispose_recursive(new_link);
+      return NULL;
+    }
+
     *envp = new_link;
+  } else {
+    // Over-write previous value
+    // Note: must copy the result into a temporary value *before* disposing of the
+    // previous value because the result value may reference the previous value, as in the
+    // case of self-referential over-writing. For example: (set 'x (cdr x))
+    dispose_recursive(*prev_value_p);         // dispose of the old value
+    *prev_value_p = result_cpy;               // store new value in environment
+    value = result_cpy;
   }
   return value;
 }
@@ -224,9 +274,6 @@ static def_primitive(set) {
  * Simply returns the environment
  */
 static def_primitive(env) {
-  (void) args; // to avoid "unused argument" warnings
-  (void) envp;
-  (void) gc;
   if (!check_nargs(__func__, args, 0)) return NULL;
   return *envp;
 }
@@ -245,18 +292,39 @@ static def_primitive(lambda) {
   FOR_LIST(params, var) {
     if (var == NULL) continue;
     if (is_t(var))     return LOG_ERROR("Truth atom can't be parameter");
-    if (is_empty(var)) return LOG_ERROR("Empty list can't be a parameter");
+    if (is_nil(var)) return LOG_ERROR("Empty list can't be a parameter");
     if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
   }
   params = copy_recursive(params); // Params are well-formed, make a copy for saving.
-
   obj* procedure = copy_recursive(ith(args, 1));
 
-  obj* captured = NULL; // Will store the captured variables
-  get_captured_vars(&captured, args, procedure, *envp);
+  if (params ==  NULL || procedure == NULL) {
+    LOG_ERROR("Error copying parameters and body of lambda declaration");
+    dispose_recursive(params);
+    dispose_recursive(procedure);
+    return NULL;
+  }
 
+  // Capture variables
+  obj* captured = NULL; // Will store the captured variables
+  bool success = capture_variables(&captured, params, procedure, *envp);
+  if (!success) {
+    LOG_ERROR("Error while capturing lambda variables");
+    dispose_recursive(params);
+    dispose_recursive(procedure);
+    return NULL;
+  }
+
+  // Create new closure object
   obj* o = new_closure_set(params, procedure, captured);
-  gc_add_recursive(gc, o);
+  if (o == NULL) {
+    LOG_ERROR("Error allocating closure object");
+    dispose_recursive(params);
+    dispose_recursive(procedure);
+    return NULL;
+  }
+
+  mm_add_recursive(mm, o);
   return o;
 }
 
@@ -266,9 +334,6 @@ static def_primitive(lambda) {
  * Defines a lisp macro
  */
 static def_primitive(defmacro) {
-  (void) args;
-  (void) envp;
-  (void) gc;
   return LOG_ERROR("Macros not yet supported");
 }
 
@@ -281,12 +346,12 @@ static def_primitive(defmacro) {
  * @param i: The index (starting at 0) of the element to evaluate in o
  * @return: The evaluation of the i'th element of o in the given environment
  */
-static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *gc) {
-  return eval(ith(args, i), envp, gc);
+static obj *ith_arg_value(const obj *args, obj **envp, int i, MemoryManager *mm) {
+  return eval(ith(args, i), envp, mm);
 }
 
 /**
- * Function: get_captured_vars
+ * Function: capture_variables
  * ---------------------------
  * Creates a captured variable list by searching for variable names that exist in both the procedure
  * and the environment. Creates a list of key-value pairs extracted (copied) from the environment.
@@ -295,20 +360,34 @@ static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *
  * @param params: Parameters to the lambda function (these will not be captured
  * @param procedure: Procedure body of the lambda function to search for variables to bind in
  * @param env: Environment to search for values to capture
+ * @return true if variables were captures successfully, false otherwise
  */
-static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env) {
-  if (procedure == NULL) return;
+static bool capture_variables(obj **capturedp, const obj *params,
+                              const obj *procedure, const obj *env) {
+  if (procedure == NULL) return true;
 
-  if (is_list(procedure)) { // depth-first search
-    get_captured_vars(capturedp, params, CAR(procedure), env);
-    get_captured_vars(capturedp, params, CDR(procedure), env);
-
-  } else if (is_atom(procedure)) {
-    if (lookup_pair(procedure, *capturedp)) return; // Already captured
-    if (list_contains(params, procedure)) return; // Don't capture parameters (those get bound at apply-time)
+  if (is_atom(procedure)) {
+    if (lookup_pair(procedure, *capturedp)) return true; // Already captured
+    // Don't capture parameters (those get bound at apply-time)
+    if (list_contains(params, procedure)) return true;
 
     obj* matching_pair = lookup_pair(procedure, env);
-    if (!matching_pair) return; // No value to be captured
-    *capturedp = new_list_set(copy_recursive(matching_pair), *capturedp); // Prepend to capture list
+    if (matching_pair == NULL) return true; // No value to be captured
+
+    obj *pair_copy = copy_recursive(matching_pair);
+    if (pair_copy == NULL) return false;
+
+    obj *new_list = new_list_set(pair_copy, *capturedp); // Prepend to capture list
+    if (new_list == NULL) {
+      dispose_recursive(pair_copy);
+      return false;
+    }
+    *capturedp = new_list;
+
+  } else if (is_list(procedure)) { // depth-first search
+    bool success = capture_variables(capturedp, params, CAR(procedure), env);
+    if (!success) return false;
+    return capture_variables(capturedp, params, CDR(procedure), env); // tail recursion
   }
+  return true;
 }
