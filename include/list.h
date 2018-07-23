@@ -25,7 +25,7 @@
  * @param cdr: The value to set in the cdr of the new list
  * @return: The new list with the specified values set
  */
-obj* new_list_set(obj* car, obj* cdr);
+obj* new_list_set(const obj *car, const obj *cdr);
 
 /**
  * Function: copy_recursive

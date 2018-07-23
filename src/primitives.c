@@ -39,7 +39,7 @@ static const primitive_t primitive_functions[] = {&quote, &atom, &eq, &car, &cdr
 
 // Static function declarations
 static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *gc);
-static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
+static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
 
 obj* get_primitive_library() {
@@ -226,24 +226,46 @@ static def_primitive(set) {
   if (is_t(var_name)) return LOG_ERROR("Cannot set truth atom");
   if (!is_atom(var_name)) return LOG_ERROR("Can only set atom types");
   obj* value = ith_arg_value(args, envp, 1, gc);
+  if (value == NULL) {
+    LOG_ERROR("Error evaluating right-hand-side");
+    return NULL;
+  }
 
+  // Make a copy of the result
+  obj* result_cpy = copy_recursive(value);
+  if (result_cpy == NULL) {
+    LOG_ERROR("Error copying right-hand-side");
+    return NULL;
+  }
+
+  // Store the result in the environment (potentially over-writing)
   obj** prev_value_p = lookup_entry(var_name, *envp); // previously bound value
-  if (prev_value_p != NULL) {
-    // todo: gotta copy before disposing because what you are disposing of recursively
-    // might be part of the new value! Use a temporary pointer to accomplish this
+  if (prev_value_p == NULL) {
+    // no previous value found in environment
+    obj* pair_second = new_list_set(result_cpy, NULL);
+    obj *var_name_copy = copy_recursive(var_name);
+    obj *pair_first = new_list_set(var_name_copy, pair_second);
+    obj *new_link = new_list_set(pair_first, *envp);
 
-    // Note: You must copy the result into a temporary value *before* disposing of the
-    // previous value because the result value may reference the previous value in the
-    // case of self-referential over-writing, for example: (set 'x (cdr x))
-//    obj* result_cpy = copy_recursive(value); // copy the newly set value into place
-    dispose_recursive(*prev_value_p);  // dispose of the old value
-    *prev_value_p = copy_recursive(value); // copy the newly set value into place
+    if (var_name_copy == NULL || pair_first == NULL ||
+        pair_second == NULL || new_link == NULL) {
+      LOG_ERROR("Error allocating memory to store variable in environment");
+      dispose_recursive(result_cpy);
+      dispose_recursive(var_name_copy);
+      dispose_recursive(pair_first);
+      dispose_recursive(new_link);
+      return NULL;
+    }
 
-  } else { // no previous value
-    obj* pair_second = new_list_set(copy_recursive(value), NULL);
-    obj* pair_first = new_list_set(copy_recursive(var_name), pair_second);
-    obj* new_link = new_list_set(pair_first, *envp);
     *envp = new_link;
+  } else {
+    // Over-write previous value
+    // Note: must copy the result into a temporary value *before* disposing of the
+    // previous value because the result value may reference the previous value, as in the
+    // case of self-referential over-writing. For example: (set 'x (cdr x))
+    dispose_recursive(*prev_value_p);         // dispose of the old value
+    *prev_value_p = result_cpy;               // store new value in environment
+    value = result_cpy;
   }
   return value;
 }
@@ -279,13 +301,34 @@ static def_primitive(lambda) {
     if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
   }
   params = copy_recursive(params); // Params are well-formed, make a copy for saving.
-
   obj* procedure = copy_recursive(ith(args, 1));
 
-  obj* captured = NULL; // Will store the captured variables
-  get_captured_vars(&captured, args, procedure, *envp);
+  if (params ==  NULL || procedure == NULL) {
+    LOG_ERROR("Error copying parameters and body of lambda declaration");
+    dispose_recursive(params);
+    dispose_recursive(procedure);
+    return NULL;
+  }
 
+  // Capture variables
+  obj* captured = NULL; // Will store the captured variables
+  bool success = capture_variables(&captured, params, procedure, *envp);
+  if (!success) {
+    LOG_ERROR("Error while capturing lambda variables");
+    dispose_recursive(params);
+    dispose_recursive(procedure);
+    return NULL;
+  }
+
+  // Create new closure object
   obj* o = new_closure_set(params, procedure, captured);
+  if (o == NULL) {
+    LOG_ERROR("Error allocating closure object");
+    dispose_recursive(params);
+    dispose_recursive(procedure);
+    return NULL;
+  }
+
   gc_add_recursive(gc, o);
   return o;
 }
@@ -316,7 +359,7 @@ static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *
 }
 
 /**
- * Function: get_captured_vars
+ * Function: capture_variables
  * ---------------------------
  * Creates a captured variable list by searching for variable names that exist in both the procedure
  * and the environment. Creates a list of key-value pairs extracted (copied) from the environment.
@@ -325,20 +368,35 @@ static obj *ith_arg_value(const obj *args, obj **envp, int i, GarbageCollector *
  * @param params: Parameters to the lambda function (these will not be captured
  * @param procedure: Procedure body of the lambda function to search for variables to bind in
  * @param env: Environment to search for values to capture
+ * @return true if variables were captures successfully, valse otherwise
  */
-static void get_captured_vars(obj **capturedp, const obj *params, const obj *procedure, const obj *env) {
-  if (procedure == NULL) return;
+static bool capture_variables(obj **capturedp, const obj *params,
+                              const obj *procedure, const obj *env) {
+  if (procedure == NULL) return true;
 
-  if (is_list(procedure)) { // depth-first search
-    get_captured_vars(capturedp, params, CAR(procedure), env);
-    get_captured_vars(capturedp, params, CDR(procedure), env);
-
-  } else if (is_atom(procedure)) {
-    if (lookup_pair(procedure, *capturedp)) return; // Already captured
-    if (list_contains(params, procedure)) return; // Don't capture parameters (those get bound at apply-time)
+  if (is_atom(procedure)) {
+    if (lookup_pair(procedure, *capturedp)) return true; // Already captured
+    // Don't capture parameters (those get bound at apply-time)
+    if (list_contains(params, procedure)) return true;
 
     obj* matching_pair = lookup_pair(procedure, env);
-    if (!matching_pair) return; // No value to be captured
-    *capturedp = new_list_set(copy_recursive(matching_pair), *capturedp); // Prepend to capture list
+    if (matching_pair == NULL) return true; // No value to be captured
+
+    obj *pair_copy = copy_recursive(matching_pair);
+    if (pair_copy == NULL)
+      return false;
+    obj *new_list = new_list_set(pair_copy, *capturedp); // Prepend to capture list
+    if (new_list == NULL) {
+      dispose_recursive(pair_copy);
+      return false;
+    }
+    *capturedp = new_list;
+
+  } else if (is_list(procedure)) { // depth-first search
+    bool success = capture_variables(capturedp, params, CAR(procedure), env);
+    if (!success)
+      return false;
+    return capture_variables(capturedp, params, CDR(procedure), env); // tail recursion
   }
+  return true;
 }

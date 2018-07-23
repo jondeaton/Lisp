@@ -18,10 +18,10 @@
 static obj* copy_list_recursive(const obj *o);
 static obj* copy_primitive(const obj* o);
 
-obj* new_list_set(obj* car, obj* cdr) {
+obj* new_list_set(const obj *car, const obj *cdr) {
   obj* list = new_list();
-  CAR(list) = car;
-  CDR(list) = cdr;
+  CAR(list) = (obj *) car;
+  CDR(list) = (obj *) cdr;
   return list;
 }
 

@@ -74,6 +74,7 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Use tail recursion instead of loops where possible~~
 - ~~Fix bug with `car` and `cdr` of empty list, or end of list~~
 - ~~Enable testing framework to report which test is failing~~
+- Fix self-referential environment setting
 - Fix the way that errors are reported (no return LOG_ERROR)
 - Fix the way that unused variables are handled
   - `#define UNUSED __attribute__ ((unused))`

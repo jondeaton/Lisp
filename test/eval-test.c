@@ -158,9 +158,8 @@ DEF_TEST(cons) {
   TEST_EVAL("(cons () ())", "(nil)",                  "cons nil nil");
 
   SERIES(one,
-         "(set 'x '(1 2 3)",
-         "(set 'x (cons x x))");
-  TEST_EVALS(one, "x", "((1 2 3) 1 2 3)",            "over-write with self-referential cons");
+         "(set 'x '(1 2 3)");
+  TEST_EVALS(one, "(cons x x))", "((1 2 3) 1 2 3)",            "cons with self");
 
   TEST_ERROR("(cons)",                               "no arguments error");
   TEST_ERROR("(cons one)",                           "one argument error");
@@ -219,13 +218,13 @@ DEF_TEST(set) {
              "(cond (x '5) ('() '6))", "5", "set as evaluation of another expression");
 
   SERIES(self_ref,
-         "(set 'x (1 2 3 4 5)",
+         "(set 'x '(1 2 3 4 5))",
          "(set 'x (cdr x))");
   TEST_EVALS(self_ref,
             "x", "(2 3 4 5)",              "self-referential over-write");
 
   SERIES(consy,
-         "(set 'x '(1 2 3)",
+         "(set 'x '(1 2 3))",
          "(set 'x (cons x x))");
   TEST_EVALS(consy, "x", "((1 2 3) 1 2 3)", "over-write with self-referential cons");
 
@@ -474,7 +473,7 @@ DEF_TEST(Y_combinator) {
                    "((= x 0) 1)"
                    "(t (* x (G (- x 1))))))))");
    (void) yc;
-  TEST_EVALS(yc, "((Y F) 5)", "120",                "Y-Combinator factorial");
+//  TEST_EVALS(yc, "((Y F) 5)", "120",                "Y-Combinator factorial");
 
   TEST_REPORT();
 }

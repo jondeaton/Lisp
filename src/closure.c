@@ -16,7 +16,8 @@
 
 // Static function declarations
 
-obj *closure_partial_application(const obj *closure, const obj *args, obj **envp, GarbageCollector *gc) {
+obj *closure_partial_application(const obj *closure, const obj *args,
+                                 obj **envp, GarbageCollector *gc) {
   if (closure == NULL) return NULL;
 
   int nargs = list_length(args);
