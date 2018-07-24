@@ -463,17 +463,40 @@ DEF_TEST(recursion) {
 DEF_TEST(Y_combinator) {
   TEST_INIT();
 
-//   Testing Y combinator with factorial function definition
-   SERIES(yc,
-           "(set 'Y (lambda (H) "
-               "((lambda (x) (H (x x))) (lambda (x) (H (x x))))))",
+  // A simple tail-recursive function using Y-Combinator
+  SERIES(yc,
+         "(set 'Y "
+         " (lambda (r) "
+         "  ((lambda (f) (f f)) "
+         "   (lambda (f) (r (lambda (x) ((f f) x)))))))",
 
-           "(set 'F (lambda (G) (lambda (x) "
-               "(cond "
-                   "((= x 0) 1)"
-                   "(t (* x (G (- x 1))))))))");
-   (void) yc;
-//  TEST_EVALS(yc, "((Y F) 5)", "120",                "Y-Combinator factorial");
+         "(set 'F "
+         " (lambda (g) "
+         "  (lambda (n) "
+         "   (cond "
+         "    ((= n 0) 42) "
+         "    (t       (g (- n 1)))))))");
 
+  TEST_EVALS(yc, "((Y F) 10)", "42",                     "Simple Y-Combinator");
+
+  // The factorial functoin using the Y-Combinator
+  SERIES(yc_factorial,
+         "(set 'Y"
+         " (lambda (r)"
+         "  ((lambda (f) (f f))"
+         "   (lambda (f) (r (lambda (x) ((f f) x)))))))",
+
+         "(set 'F"
+         " (lambda (g)"
+         "  (lambda (n)"
+         "   (cond "
+         "    ((= n 0) 1)"
+         "    (t       (* n (g (- n 1))))))))");
+
+  TEST_EVALS(yc_factorial, "((Y F) 0)", "1",                   "Factorial 0 Y-Combinator");
+  TEST_EVALS(yc_factorial, "((Y F) 1)", "1",                   "Factorial 1 Y-Combinator");
+  TEST_EVALS(yc_factorial, "((Y F) 5)", "120",                 "Factorial 5 Y-Combinator");
+  
   TEST_REPORT();
 }
+
