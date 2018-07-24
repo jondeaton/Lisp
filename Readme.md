@@ -2,15 +2,16 @@
 
 This repository contains a Lisp interpreter written from scratch in pure C (c99).
 The interpreter can be used to run Lisp programs saved in files, or from an interactive shell.
-This Lisp interpreter showcases many features including variable and function declaration, arithmetic operations
+This Lisp interpreter showcases many features including
+variable and function declaration, arithmetic operations,
 first class/lambda functions, closures, recursive functions,
 a mutable global interpreter environment, lexical scoping, memory allocation
 and automatic/deterministic memory management without garbage collection.
 
 ## Usage
 If you would like to run this Lisp interpreter from the command line, you will have to
-build it from source using the CMake build system. To do so, you will need to have a C99 compile
-and CMake installed, then issue the following two commands from with in the top-level directory
+build it from source using the CMake build system. To do so, you will need to have a C99 compiler,
+and the CMake build system. To build, issue the following two commands from with in the top-level directory
 
     cmake
 
@@ -24,7 +25,7 @@ Alternatively run a Lisp script by adding it as an argument.
    `./lisp my-program.lisp`
 
 ## Dependencies
-1. `C99` compiler
+1. C99
 2. Readline
     - Ubuntu: `sudo apt-get install libreadline-dev`
     - MacOS: `brew install readline`
@@ -82,12 +83,15 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Rename the garbage collector to memory manager~~
 - ~~Nest structs inside one another where possible (GC, allocated CList)~~
 - ~~Use CVector instead of CList~~
-- Fix the way that errors are reported (no return LOG_ERROR)
+- ~~Y (U NO WORK) combinator tests~~
+- Fix the way that errors are reported (no `return LOG_ERROR(...)`)
 - Use flexible array member in lisp objects
+- Pass full interpreter to primitives
+- Write performance benchmarker
 - Use a single truth and empty list tuple.
-- Variadic functions?
-- Y combinator tests
 - `defmacro`
+- Avoid deleting large data structures during set with over-write
+- Garbage Collector
 - Lisp standard library
 - Strings
-- Dot notation
+- Dot notation / Variadic functions
