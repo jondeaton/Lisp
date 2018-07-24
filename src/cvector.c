@@ -53,6 +53,7 @@ bool cvec_init(CVector *cvec, size_t elemsz, size_t capacity_hint, CleanupElemFn
 void cvec_dispose(CVector* cv) {
   assert(cv != NULL);
   cvec_clear(cv);
+  free(cv->elems);
 }
 
 int cvec_count(const CVector *cv) {
