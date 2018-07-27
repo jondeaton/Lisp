@@ -44,18 +44,18 @@ Because of this, recursive functions may declared, such as this recursive defini
 
 recursion may even be accomplished with anonymous functions via the Y-Combinator
 
-  > (set 'Y
+    > (set 'Y
       (lambda (r)
         ((lambda (f) (f f))
          (lambda (f) (r (lambda (x) ((f f) x)))))))
-  > (set 'F
+    > (set 'F
       (lambda (g)
        (lambda (n)
         (cond 
           ((= n 0) 1)
           (t       (* n (g (- n 1))))))))
-  >((Y F) 6)
-  720
+    > ((Y F) 6)
+    720
 
 
 ## Usage
