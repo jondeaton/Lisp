@@ -5,8 +5,58 @@ The interpreter can be used to run Lisp programs saved in files, or from an inte
 This Lisp interpreter showcases many features including
 variable and function declaration, arithmetic operations,
 first class/lambda functions, closures, recursive functions,
-a mutable global interpreter environment, lexical scoping, memory allocation
-and automatic/deterministic memory management without garbage collection.
+a mutable global interpreter environment, dynamic scoping, memory allocation
+and deterministic memory management without garbage collection.
+
+#### Example
+
+The Lisp interpreter comes with a global environment which can be used to set values and then recal them later
+
+    > (set 'x 6)
+    6
+    > (set 'y 7)
+    7
+    > (* x y)
+    42
+
+
+This interpreter also supports the creation of closures from lambda functions with variable capture at declaraion time.
+
+    > (set 'make-adder 
+        (lambda (x) 
+          (lambda (n) (+ x n))))
+    <closure:(x), 2 vars captured>
+    > (set 'add-2 (make-adder 2))
+    <closure:(n), 2 vars captured>
+    > (add-2 40)
+    42
+
+In this example the `make-adder` function returns a closure with the value of `n` captured within the closure.
+Because of this, recursive functions may declared, such as this recursive definition of the factorial function:
+
+    > (set 'factorial 
+        (lambda (n)
+          (cond
+            ((= n 0) 1)
+            (t       (* n (factorial (- n 1)))))))
+    > (factorial 6)
+    720
+
+recursion may even be accomplished with anonymous functions via the Y-Combinator
+
+  > (set 'Y
+      (lambda (r)
+        ((lambda (f) (f f))
+         (lambda (f) (r (lambda (x) ((f f) x)))))))
+  > (set 'F
+      (lambda (g)
+       (lambda (n)
+        (cond 
+          ((= n 0) 1)
+          (t       (* n (g (- n 1))))))))
+  >((Y F) 6)
+  720
+
 
 ## Usage
 If you would like to run this Lisp interpreter from the command line, you will have to
@@ -17,10 +67,9 @@ and the CMake build system. To build, issue the following two commands from with
 
     make
 
-
-To run the REPL (read-eval-print loop) with the `lisp` executable for an interactive prompt.
-If you want to have matching parentheses highlighting then you can `echo "set blink-matching-paren on" >> ~/.inputrc`.
-Alternatively run a Lisp script by adding it as an argument.
+To run the interactive shell (REPL) use the `lisp` executable.
+To have matching parentheses hilighting, run `echo "set blink-matching-paren on" >> ~/.inputrc`.
+You can also run a Lisp script by adding it as an argument.
 
    `./lisp my-program.lisp`
 
@@ -88,10 +137,11 @@ as things which I have not yet accomplished. Please cross one off!
 - Use flexible array member in lisp objects
 - Pass full interpreter to primitives
 - Write performance benchmarker
-- Use a single truth and empty list tuple.
+- Use a single truth and nil tuple.
 - `defmacro`
 - Avoid deleting large data structures during set with over-write
 - Garbage Collector
 - Lisp standard library
-- Strings
 - Dot notation / Variadic functions
+- Lexical scoping
+- Strings
