@@ -45,7 +45,7 @@ Because of this, recursive functions may declared, such as this recursive defini
 recursion may even be accomplished with anonymous functions via the Y-Combinator
 
     > (set 'Y
-      (lambda (r)
+       (lambda (r)
         ((lambda (f) (f f))
          (lambda (f) (r (lambda (x) ((f f) x)))))))
     > (set 'F
@@ -63,7 +63,7 @@ If you would like to run this Lisp interpreter from the command line, you will h
 build it from source using the CMake build system. To do so, you will need to have a C99 compiler,
 and the CMake build system. To build, issue the following two commands from with in the top-level directory
 
-    cmake
+    cmake .
 
     make
 
