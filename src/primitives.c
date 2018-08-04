@@ -10,10 +10,11 @@
 #include <stack-trace.h>
 #include <lisp-objects.h>
 #include <list.h>
+#include <closure.h>
 
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <closure.h>
 
 // forward declarations of primitives
 static def_primitive(quote);
@@ -119,7 +120,10 @@ static def_primitive(eq) {
 static def_primitive(car) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), envp, mm);
-  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
+  if (!is_list(arg_value)) {
+    LOG_ERROR("Argument is not a list");
+    return NULL;
+  }
   if (is_nil(arg_value)) return nil(mm);
   return CAR(arg_value);
 }
@@ -132,7 +136,16 @@ static def_primitive(car) {
 static def_primitive(cdr) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), envp, mm);
-  if (!is_list(arg_value)) return LOG_ERROR("Argument is not a list");
+  if (arg_value == NULL) {
+    LOG_ERROR("Error evaluating argument");
+    return NULL;
+  }
+
+  if (!is_list(arg_value)) {
+    LOG_ERROR("Argument is not a list");
+    return NULL;
+  }
+
   if (is_nil(arg_value)) return nil(mm);
   if (CDR(arg_value) == NULL) return nil(mm);
   return CDR(arg_value);
@@ -151,18 +164,37 @@ static def_primitive(cons) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* y = ith(args, 1);
-  obj* new_cdr = eval(y, envp, mm);
-  if (new_cdr == NULL) return NULL; // todo: log error?
-  if (!is_list(new_cdr)) // no dot notation (yet) means second arg must be list
-    return LOG_ERROR("Second argument is not list.");
+  assert(y != NULL);
+
+  obj *car = eval(CAR(args), envp, mm);
+  if (car == NULL) {
+    LOG_ERROR("Error evaluating first argument");
+    return NULL;
+  }
+
+  obj* cdr = eval(y, envp, mm);
+  if (cdr == NULL) {
+    LOG_ERROR("Error evaluating second argument");
+    return NULL;
+  }
+
+  if (!is_list(cdr)) {
+    // no dot notation (yet) means second arg must be list
+    LOG_ERROR("Second argument is not list");
+    return NULL;
+  }
 
   // Allocate new slot to hold x in result list
   obj* new_obj = new_list();
-  if (new_obj == NULL) return NULL;
+  if (new_obj == NULL) {
+    LOG_ERROR("could not allocate list element");
+    return NULL;
+  }
+
   mm_add(mm, new_obj); // Record allocation
 
-  CAR(new_obj) = eval(CAR(args), envp, mm);
-  CDR(new_obj) = new_cdr;
+  CAR(new_obj) = car;
+  CDR(new_obj) = cdr;
 
   return new_obj;
 }
@@ -176,34 +208,50 @@ static def_primitive(cons) {
  * is returned as the expression
  */
 static def_primitive(cond) {
+
+  // recursive base case
   if (args == NULL) return nil(mm);
 
-  if (!is_list(args)) return LOG_ERROR("Arguments are not a list of pairs");
+  if (!is_list(args)) {
+    LOG_ERROR("Arguments are not a list of pairs");
+    return NULL;
+  }
 
-  obj* pair = CAR(args);
-  if (!is_list(pair)) return LOG_ERROR("Conditional pair clause is not a list");
-  if (is_nil(pair)) return LOG_ERROR("Empty Conditional pair.");
-  if (list_length(pair) != 2)
-    return LOG_ERROR("Conditional pair length was %d, not 2.", list_length(pair));
+  obj *pair = CAR(args);
 
-  obj* predicate = eval(CAR(pair), envp, mm);
+  if (!is_list(pair)) {
+    LOG_ERROR("Conditional pair clause is not a list");
+    return NULL;
+  }
+
+  if (is_nil(pair)) {
+    LOG_ERROR("Empty Conditional pair.");
+    return NULL;
+  }
+
+  if (list_length(pair) != 2) {
+    LOG_ERROR("Conditional pair length was %d, not 2.", list_length(pair));
+    return NULL;
+  }
+
+  obj *predicate = eval(CAR(pair), envp, mm);
   if (is_primitive(predicate)) {
     LOG_ERROR("Cannot cast primitive function as bool.");
     return NULL;
   }
 
-  if (is_t(predicate)) {
-    // recursive base case: predicate evaluated to true
+  if (!is_nil(predicate)) {
+    // recursive base case: predicate is true
     obj* e = ith(pair, 1); // get it's associated value
     if (e == NULL) {
       LOG_ERROR("Predicate has no associated value");
       return NULL;
     }
-    return eval(e, envp, mm);
+    obj *value = eval(e, envp, mm);
+    if (value == NULL)
+      LOG_ERROR("Error evaluating value for predicate");
+    return value;
   }
-
-  // recursive base case: no predicates evaluated to true
-  if (CDR(pair) == NULL) return nil(mm);
 
   // tail recursion on the remaining predicate-expression pairs
   return cond(CDR(args), envp, mm);
@@ -220,9 +268,18 @@ static def_primitive(set) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* var_name = ith_arg_value(args, envp, 0, mm);
-  if (is_nil(var_name)) return LOG_ERROR("Cannot set empty list");
-  if (is_t(var_name)) return LOG_ERROR("Cannot set truth atom");
-  if (!is_atom(var_name)) return LOG_ERROR("Can only set atom types");
+  if (is_nil(var_name)) {
+    LOG_ERROR("Cannot set empty list");
+    return NULL;
+  }
+  if (is_t(var_name)) {
+    LOG_ERROR("Cannot set truth atom");
+    return NULL;
+  }
+  if (!is_atom(var_name)) {
+    LOG_ERROR("Can only set atom types");
+    return NULL;
+  }
   obj* value = ith_arg_value(args, envp, 1, mm);
   if (value == NULL) {
     LOG_ERROR("Error evaluating right-hand-side");
@@ -288,12 +345,24 @@ static def_primitive(lambda) {
   if (!CHECK_NARGS_MAX(args, 2)) return NULL;
 
   obj* params = ith(args, 0);
-  if (!is_list(params)) return LOG_ERROR("Lambda parameters are not a list");
+  if (!is_list(params)) {
+    LOG_ERROR("Lambda parameters are not a list");
+    return NULL;
+  }
   FOR_LIST(params, var) {
     if (var == NULL) continue;
-    if (is_t(var))     return LOG_ERROR("Truth atom can't be parameter");
-    if (is_nil(var)) return LOG_ERROR("Empty list can't be a parameter");
-    if (!is_atom(var)) return LOG_ERROR("Parameter was not an atom");
+    if (is_t(var))     {
+      LOG_ERROR("Truth atom can't be parameter");
+      return NULL;
+    }
+    if (is_nil(var)) {
+      LOG_ERROR("Empty list can't be a parameter");
+      return NULL;
+    }
+    if (!is_atom(var)) {
+      LOG_ERROR("Parameter was not an atom");
+      return NULL;
+    }
   }
   params = copy_recursive(params); // Params are well-formed, make a copy for saving.
   obj* procedure = copy_recursive(ith(args, 1));
@@ -334,7 +403,8 @@ static def_primitive(lambda) {
  * Defines a lisp macro
  */
 static def_primitive(defmacro) {
-  return LOG_ERROR("Macros not yet supported");
+  LOG_ERROR("Macros not yet supported");
+  return NULL;
 }
 
 /**

@@ -75,12 +75,16 @@ def_math_op_primitive(mod)
   if (!CHECK_NARGS(args, 2)) return NULL; \
   obj* first = eval(ith(args, 0), envp, mm); \
   if (first == NULL) return NULL; \
-  if (!is_number(first)) \
-    return LOG_ERROR("First argument did not evaluate to a number."); \
+  if (!is_number(first)) { \
+      LOG_ERROR("First argument did not evaluate to a number."); \
+      return NULL; \
+  } \
   obj* second = eval(ith(args, 1), envp, mm); \
   if (second == NULL) return NULL; \
-  if (!is_number(second)) \
-    return LOG_ERROR("Second argument did not evaluate to a number."); \
+  if (!is_number(second)) { \
+    LOG_ERROR("Second argument did not evaluate to a number."); \
+    return NULL; \
+  } \
   if (is_int(first) && is_int(second)) \
     return get_int(first) op get_int(second) ? t(mm) : nil(mm); \
   return get_float(first) op get_float(second) ? t(mm) : nil(mm); \
@@ -107,13 +111,18 @@ static obj *apply_arithmetic(const obj *args, obj **envp, intArithmeticFuncPtr i
 
   obj* first = eval(ith(args, 0), envp, mm);
   if (first == NULL) return NULL;
-  if (!is_number(first))
-    return LOG_ERROR("First argument did not evaluate to a number.");
+  if (!is_number(first)) {
+    LOG_ERROR("First argument did not evaluate to a number.");
+    return NULL;
+  }
 
   obj* second = eval(ith(args, 1), envp, mm);
   if (second == NULL) return NULL;
-  if (!is_number(second))
-    return LOG_ERROR("Second argument did not evaluate to a number.");
+  if (!is_number(second)) {
+    LOG_ERROR("Second argument did not evaluate to a number.");
+    return NULL;
+  }
+
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = float_op(get_float(first), get_float(second));

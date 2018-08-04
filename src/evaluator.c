@@ -26,8 +26,11 @@ obj *eval(const obj *o, obj **envp, MemoryManager *gc) {
   if (is_atom(o)) {
     if (is_t(o)) return (obj*) o;
     obj* value = lookup(o, *envp);
-    if (value != NULL) return value;
-    return LOG_ERROR("Variable: \"%s\" not found in environment", ATOM(o));
+    if (value == NULL) {
+      LOG_ERROR("Variable: \"%s\" not found in environment", ATOM(o));
+      return NULL;
+    }
+    return value;
   }
 
   // Numbers, primitives and closures evaluate to themselves
@@ -41,7 +44,8 @@ obj *eval(const obj *o, obj **envp, MemoryManager *gc) {
     obj* oper = eval(CAR(o), envp, gc);
     return apply(oper, CDR(o), envp, gc);
   }
-  return LOG_ERROR("Object of unknown type");
+  LOG_ERROR("Object of unknown type");
+  return NULL;
 }
 
 obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc) {
@@ -73,8 +77,12 @@ obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc) {
     return result;
   }
 
-  if (is_atom(oper)) return LOG_ERROR("Cannot apply atom: \"%s\" as function", ATOM(oper));
-  return LOG_ERROR("Non-procedure cannot be applied");
+  if (is_atom(oper)) {
+    LOG_ERROR("Cannot apply atom: \"%s\" as function", ATOM(oper));
+    return NULL;
+  }
+  LOG_ERROR("Non-procedure cannot be applied");
+  return NULL;
 }
 
 /**

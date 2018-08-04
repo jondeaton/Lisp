@@ -203,7 +203,8 @@ static expression unparse_atom(const obj *o) {
     sprintf(e, "%g", get_float(o));
     return e;
   }
-  return LOG_ERROR("Attempted to parse object that is not an atom");
+  LOG_ERROR("Attempted to parse object that is not an atom");
+  return NULL;
 }
 
 /**

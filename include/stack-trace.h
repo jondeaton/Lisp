@@ -50,9 +50,8 @@
  * replace a format specifier in the message_format string. There should be at least as many of these
  * arguments as the number of values specified in the format specifiers. Additional arguments are ignored
  * by the function.
- * @return: NULL pointer
  */
-void* log_error(const char* context, const char* message_format, ...);
+void log_error(const char* context, const char* message_format, ...);
 
 /**
  * Function: log_message

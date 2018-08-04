@@ -181,6 +181,9 @@ DEF_TEST(cond) {
   TEST_EVAL("(cond ('() 1) (() 2))", NIL_STR,        "cond no true predicates");
 
 
+  TEST_EVAL("(cond (0 4) (t 5))", "4",                "zero is true");
+  TEST_EVAL("(cond ('(a) 4) (t 5)", "4",              "simple list is true");
+
   TEST_EVAL("(cond (t 'b) ())", "b",                 "Ignore malformed later predicate pairs");
   TEST_ERROR("(cond '())",                           "quote is not true");
 

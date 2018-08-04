@@ -15,14 +15,13 @@
 #define ERROR_BUFFER_SIZE 256
 char err_buff[ERROR_BUFFER_SIZE];
 
-void *log_error(const char* context, const char* message_format, ...) {
+void log_error(const char *context, const char *message_format, ...) {
   va_list ap;
   va_start(ap, message_format);
   int n = vsnprintf(err_buff, ERROR_BUFFER_SIZE, message_format, ap); // substitute var args into message
   if (n > 0)
     fprintf(stderr, KRED "\t[%s]: %s\n" RESET, context, err_buff); // substitute message into error log
   va_end(ap);
-  return NULL; // Return NULL for cleaner NULL-returning error handling
 }
 
 void log_message(const char* context, const char* message_format, ...) {
