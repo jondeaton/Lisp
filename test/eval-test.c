@@ -3,6 +3,7 @@
 #include "eval-test.h"
 #include "parser.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -18,13 +19,29 @@
 // Macro for easy creation of a series of expressions to evaluate
 #define SERIES(name, ...) const_expression name[] = {__VA_ARGS__, NULL}
 
+/**
+ * Function: test_single_eval
+ * --------------------------
+ * Tests the evaluation of a single expression. This function will
+ * create a new Lisp interpreter, evaluate an expression in that interpreter
+ * and compare the result against the expected result.
+ * @param expr The expression to evaluate of in the lisp interpreter
+ * @param expected The expected result of evaluating the test expression
+ * @param test_name_format printf-style format specifier for the test name
+ * @param ... Variable length arguments for formatting of the test name
+ * @return True if the result of evaluating the expression matches the expected
+ * expression exactly, and false otherwise.
+ */
 bool test_single_eval(const_expression expr, const_expression expected,
                       const char *test_name_format, ...) {
 
   // Get the result: create a new lisp interpreter to evaluate expression in
-  LispInterpreter* interpreter = interpreter_init();
-  expression result = interpret_expression(interpreter, expr);
-  interpreter_dispose(interpreter);
+  LispInterpreter interpreter;
+  bool success = interpreter_init(&interpreter);
+  if (!success) return false;
+
+  expression result = interpret_expression(&interpreter, expr);
+  interpreter_dispose(&interpreter);
 
   // compare result with expectation
   bool test_result = get_test_result(expected, result);
@@ -40,15 +57,50 @@ bool test_single_eval(const_expression expr, const_expression expected,
   return test_result;
 }
 
-bool test_multi_eval(const_expression before[],
-                     const_expression expr, const_expression expected,
+/**
+ * Function: test_multi_eval
+ * -------------------------
+ * Tests the evaluation of a single expression after first having
+ * executed a set of expressions which put the interpreter environment
+ * into state under which the final "test" expression needs to be evaluated in.
+ * The result of evaluating the final expression is compares against the expected
+ * result and
+ * @param setup_expressions NULL terminated list of expressions to evaluate
+ * before evaluating the final test expression
+ * @param test_expression The final expression to evaluate, the result of which
+ * will be compared to determine the result of the test
+ * @param expected Expression which the test expression should evaluate to
+ * @param test_name_format printf-style format specifier for the test name
+ * @param ... Variable length arguments for formatting the name of the test
+ * @return True if the result of the test expression is identical to the
+ * provided expected expression.
+ */
+bool test_multi_eval(const_expression setup_expressions[],
+                     const_expression test_expression, const_expression expected,
                      const char *test_name_format, ...) {
 
+  assert(setup_expressions != NULL);
+  assert(test_expression != NULL);
+  assert(expected != NULL);
+
   // Create a lisp interpreter to evaluate the list of expressions
-  LispInterpreter* interpreter = interpreter_init();
-  for (int i = 0; before[i]; i++) free(interpret_expression(interpreter, before[i]));
-  expression result_exp = interpret_expression(interpreter, expr);
-  interpreter_dispose(interpreter);
+  LispInterpreter interpreter;
+  bool success = interpreter_init(&interpreter);
+  if (!success) return false;
+
+  // Loop through set-up expressions, evaluating each
+  for (int i = 0; setup_expressions[i] != NULL; i++) {
+    expression result = interpret_expression(&interpreter, setup_expressions[i]);
+
+    // It's fine if some of the expressions result in errors. It may be of interest
+    // to see if the interpreter will evaluate something correctly even after
+    // having had an error in a previous expression.
+    if (result == NULL) continue;
+    free(result);
+  }
+
+  expression result_exp = interpret_expression(&interpreter, test_expression);
+  interpreter_dispose(&interpreter);
 
   // compare the final result with expectation
   bool test_result = get_test_result(expected, result_exp);
@@ -56,7 +108,7 @@ bool test_multi_eval(const_expression before[],
   // report the result
   va_list vargs;
   va_start (vargs, test_name_format);
-  print_single_result("Series", expr, expected, result_exp, test_result,
+  print_single_result("Series", test_expression, expected, result_exp, test_result,
                       test_name_format, vargs);
   va_end(vargs);
 

@@ -10,7 +10,13 @@
 #include "parser.h"
 #include <stdio.h>
 
-typedef struct LispInterpreterImpl LispInterpreter;
+/**
+ * @struct Lisp interpreter object
+ */
+typedef struct {
+  obj* env;                             // Interpreter environment
+  MemoryManager mm;                     // Memory Manager
+} LispInterpreter;
 
 /**
  * Function: repl_init
@@ -19,7 +25,7 @@ typedef struct LispInterpreterImpl LispInterpreter;
  * the global environment and the vector of allocated
  * objects.
  */
-LispInterpreter *interpreter_init();
+bool interpreter_init(LispInterpreter *interpreter);
 
 /**
  * Function: repl_run_program

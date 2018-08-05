@@ -23,13 +23,13 @@ bool test_single_eval(const_expression expression, const_expression expected,
  * -------------------------
  * Tests if a single expression evaluates to the correct thing after first executing a series of
  * expressions beforehand
- * @param before: NULL terminated list of expressions to evaluate in the same environment beforehand
- * @param expr: The expression to evaluate after the list of expression, and verify the output of
+ * @param setup_expressions: NULL terminated list of expressions to evaluate in the same environment beforehand
+ * @param test_expression: The expression to evaluate after the list of expression, and verify the output of
  * @param expected: The expected output of evaluating expr
  * @return: True if expr evaluates to expected, and false otherwise
  */
-bool test_multi_eval(const_expression before[],
-                     const_expression expr, const_expression expected,
+bool test_multi_eval(const_expression setup_expressions[],
+                     const_expression test_expression, const_expression expected,
                      const char *test_name_format, ...);
 
 /**

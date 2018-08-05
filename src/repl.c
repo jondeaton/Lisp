@@ -29,17 +29,23 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
   if (program_file && !check_read_permissions(program_file)) return errno;
 
   if (verbose) LOG_MSG("Initializing interpreter.");
-  interpreter = interpreter_init();
+
+  LispInterpreter interpreter;
+  bool success = interpreter_init(&interpreter);
+  if (!success) {
+    LOG_ERROR("Error initializing interpreter");
+    return -1;
+  }
 
   signal(SIGINT, int_handler); // install signal handler
   if (bootstrap_path != NULL) {
     if (verbose) LOG_MSG("Interpreting library: %s", bootstrap_path);
-    interpret_program(interpreter, bootstrap_path, verbose);
+    interpret_program(&interpreter, bootstrap_path, verbose);
   }
 
   if (program_file != NULL) {
     if (verbose) LOG_MSG("Running script: %s", program_file);
-    interpret_program(interpreter, program_file, verbose);
+    interpret_program(&interpreter, program_file, verbose);
   }
 
   if (run_repl) {
@@ -54,7 +60,7 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
       }
     }
 
-    interpret_fd(interpreter, stdin, stdout, verbose);
+    interpret_fd(&interpreter, stdin, stdout, verbose);
 
     if (history_file) {
       int err = write_history(history_file);
@@ -63,7 +69,7 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
   }
 
   if (verbose) LOG_MSG("Disposing of interpreter.");
-  interpreter_dispose(interpreter);
+  interpreter_dispose(&interpreter);
 
   return 0; // success
 }

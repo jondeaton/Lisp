@@ -10,6 +10,7 @@
 #include <evaluator.h>
 #include <stack-trace.h>
 #include <list.h>
+#include <assert.h>
 
 #include <string.h>
 #include <sys/file.h>
@@ -35,26 +36,18 @@ static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
-struct LispInterpreterImpl {
-  obj* env;                             // Interpreter environment
-  MemoryManager mm;                     // Memory Manager
-};
-
-LispInterpreter *interpreter_init() {
-  LispInterpreter *interpreter = malloc(sizeof(LispInterpreter));
-  if (interpreter == NULL) return NULL;
+bool interpreter_init(LispInterpreter *interpreter) {
+  assert(interpreter != NULL);
 
   interpreter->env = init_env();
-  if (interpreter->env == NULL) {
-    free(interpreter);
-    return NULL;
-  }
+  if (interpreter->env == NULL) return false;
+
   bool success = mm_init(&interpreter->mm);
   if (!success) {
-    free(interpreter);
-    return NULL;
+    dispose_recursive(interpreter->env);
+    return false;
   }
-  return interpreter;
+  return true;
 }
 
 void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose) {
@@ -112,7 +105,6 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
 void interpreter_dispose(LispInterpreter *interpreter) {
   mm_dispose(&interpreter->mm);
   dispose_recursive(interpreter->env);
-  free(interpreter);
 }
 
 /**
