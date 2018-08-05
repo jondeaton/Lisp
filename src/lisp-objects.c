@@ -130,6 +130,7 @@ bool is_t(const obj* o) {
 float get_float(const obj* o) {
   if (is_int(o)) return (float) get_int(o);
   if (is_float(o)) return *(float*) ((char*) o + sizeof(obj));
+
   LOG_ERROR("Object is not a number");
   return 0;
 }

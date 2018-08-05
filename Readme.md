@@ -134,7 +134,7 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Use CVector instead of CList~~
 - ~~Y (U NO WORK) combinator tests~~
 - ~~Fix the way that errors are reported (no `return LOG_ERROR(...)`)~~
-- Use flexible array member in lisp objects
+- ~~Use flexible array member in lisp objects~~
 - Pass full interpreter to primitives
 - Write performance benchmarker
 - Use a single truth and nil tuple.

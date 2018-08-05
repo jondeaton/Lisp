@@ -21,8 +21,23 @@ enum type {
 
 typedef const char* atom_t;
 
+/**
+ * @struct obj
+ * @brief Generic lisp object.
+ * @details Lisp objects are all wrapped by this generic
+ * struct. The `objtype` field describes which type of
+ * lisp object it is, and the actual contents of the lisp
+ * object are stored in the flexible-array member field.
+ * Whenever a lisp object is created, enough memory must be
+ * allocated in the flexible array member location to store
+ * the actual contents of the object. For example, in the
+ * case of an atom object, this will be a C-string, and
+ * in the case of a List, the flexible array member will contain
+ * two pointers to car and cdr, respectively.
+ */
 typedef struct {
   enum type objtype;
+  char data[];
 } obj;
 
 typedef struct {
@@ -37,7 +52,7 @@ typedef struct {
   int nargs;
 } closure_t;
 
-#define CONTENTS(o)   ((void*) ((char *) (o) + sizeof(obj)))
+#define CONTENTS(o)   ((o)->data)
 #define ATOM(o)       ((atom_t)   CONTENTS(o))
 #define LIST(o)       ((list_t *) CONTENTS(o))
 #define PRIMITIVE(o)  ((primitive_t *) CONTENTS(o))

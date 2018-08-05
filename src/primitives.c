@@ -1,7 +1,9 @@
 /*
  * File: lisp.c
  * ------------
- * Presents the implementation of the lisp primitives
+ * Presents the implementation of the lisp primitives.
+ * These include car, cdr, quote, eq, atom, cond, cons,
+ * set, env, lambda, and defmacro
  */
 
 #include <primitives.h>
@@ -115,11 +117,17 @@ static def_primitive(eq) {
 /**
  * Primitive: car
  * -------------
- * Expects the value of l to be a list and returns it's first element
+ * Takes a single argument, evaluates it, and returns the
+ * head of the list which is the result of the evaluation.
  */
 static def_primitive(car) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), envp, mm);
+  if (arg_value == NULL) {
+    LOG_ERROR("Error evaluating argument");
+    return NULL;
+  }
+
   if (!is_list(arg_value)) {
     LOG_ERROR("Argument is not a list");
     return NULL;
@@ -131,7 +139,8 @@ static def_primitive(car) {
 /**
  * Primitive: cdr
  * -------------
- * Expects the value of l to be a list and returns everything after the first element
+ * Takes a single argument, evaluates it, and returns the
+ * tail of the list which is the result of the evaluation.
  */
 static def_primitive(cdr) {
   if (!CHECK_NARGS(args, 1)) return NULL;
