@@ -78,11 +78,27 @@ void cmap_remove(CMap *cm, const void *key);
  */
 void cmap_clear(CMap *cm);
 
-
-const void * cmap_first(const CMap *cm);
+/**
+ * @brief Returns the value associated with a given key that was
+ * returned by the cmap_first and cmap_next.
+ * @note the key must have been returned by cmap_first or cmap_next
+ * @param cm The cmap to get the value from
+ * @param key Pointer to a key that is stored internally to the cmap
+ * and was returned by cmap_first or cmap_next
+ * @return Pointer to the value stored within the cmap which is
+ * associated with the given key
+ */
+const void *get_value(const CMap *cm, const void *key);
 
 /**
- * Gets a pointer to the next key
+ * @brief Get a reference to the first key-value pair stored in the
+ * @param cm The cmap to get the first element of
+ * @return Pointer to a key
+ */
+const void *cmap_first(const CMap *cm);
+
+/**
+ * Gets a pointer to the next key, given some current key
  * @param cm The hash table
  * @param prevkey The previous key
  * @return pointer to the next key, if there is one.

@@ -151,16 +151,18 @@ void *cmap_insert(CMap *cm, const void *key, const void *value) {
   return entry;
 }
 
-
 void *cmap_lookup(const CMap *cm, const void *key) {
-  if (cm == NULL || key == NULL) return NULL;
+  assert(cm != NULL);
+  assert(key != NULL);
+
   struct entry *entry = lookup_key(cm, key);
   if (entry == NULL) return NULL;
   return value_of(cm, entry);
 }
 
 void cmap_remove(CMap *cm, const void *key) {
-  if (cm == NULL || key == NULL) return;
+  assert(cm != NULL);
+  assert(key != NULL);
 
   int start = lookup_index(cm, key);
   if (start < 0) return;
@@ -173,7 +175,7 @@ void cmap_remove(CMap *cm, const void *key) {
 }
 
 void cmap_clear(CMap *cm) {
-  if (cm == NULL) return;
+  assert(cm != NULL);
 
   unsigned int num_cleared = 0;
   for (unsigned int i = 0; i < cm->capacity; ++i) {
@@ -190,7 +192,13 @@ void cmap_clear(CMap *cm) {
   cm->size = 0;
 }
 
+const void *get_value(const CMap *cm, const void *key) {
+  return value_of(cm, key);
+}
+
 const void *cmap_first(const CMap *cm) {
+  assert(cm != NULL);
+
   if (cm == NULL) return NULL;
   if (cm->size == 0) return NULL;
 
@@ -202,7 +210,8 @@ const void *cmap_first(const CMap *cm) {
 }
 
 const void *cmap_next(const CMap *cm, const void *prevkey) {
-  if (cm == NULL || prevkey == NULL) return NULL;
+  assert(cm != NULL);
+  assert(prevkey != NULL);
 
   const struct entry *e = entry_of(prevkey);
   while (e != cm->end) {
@@ -214,10 +223,12 @@ const void *cmap_next(const CMap *cm, const void *prevkey) {
 
 // Gives the entry for a given key
 static inline struct entry *entry_of(const void *key) {
+  assert(key != NULL);
   return (struct entry *) ((char *) key - offsetof(struct entry, kv));
 }
 
 static inline size_t entry_size(const CMap *cm) {
+  assert(cm != NULL);
   return sizeof(struct entry) + cm->key_size + cm->value_size;
 }
 
@@ -235,6 +246,8 @@ static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
  * @return Pointer
  */
 static struct entry *lookup_key(const CMap *cm, const void *key) {
+  assert(cm != NULL);
+  assert(key != NULL);
   if (cm->size == 0) return NULL;
 
   unsigned int hash = cm->hash(key, cm->key_size) % cm->capacity;
@@ -253,6 +266,8 @@ static struct entry *lookup_key(const CMap *cm, const void *key) {
 }
 
 static inline void *value_of(const CMap *cm, const struct entry *entry) {
+  assert(cm != NULL);
+  assert(entry != NULL);
   return (char *) &entry->kv + cm->key_size;
 }
 
