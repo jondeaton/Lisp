@@ -136,12 +136,13 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Fix the way that errors are reported (no `return LOG_ERROR(...)`)~~
 - ~~Use flexible array member in lisp objects~~
 - Pass full interpreter to primitives
-- Write performance benchmarker
-- Use a single truth and nil tuple.
+- Lexical scoping
+- Allow circular references by keeping track of freed pointers
+- Write performance bench-marker
+- Use a single truth and nil tuple
 - `defmacro`
 - Avoid deleting large data structures during set with over-write
 - Garbage Collector
 - Lisp standard library
 - Dot notation / Variadic functions
-- Lexical scoping
 - Strings
