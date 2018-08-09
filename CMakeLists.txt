@@ -22,7 +22,14 @@ else()
     set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
 endif()
 
-include_directories(include src)
+include_directories(include src lib)
+set(CLIB_SRC
+        lib/cvector.h               lib/cvector.c
+        lib/clist.h                 lib/clist.c
+        lib/cmap.h                  lib/cmap.c
+        lib/hash.h                  lib/hash.c
+        lib/murmur3.h               lib/murmur3.c)
+
 set(COMMON_SRC
         include/lisp-objects.h      src/lisp-objects.c
         include/evaluator.h         src/evaluator.c
@@ -33,18 +40,15 @@ set(COMMON_SRC
         include/list.h              src/list.c
         include/memory-manager.h    src/memory-manager.c
         include/environment.h       src/environment.c
-        include/cvector.h           src/cvector.c
-        include/clist.h             src/clist.c
-        include/cmap.h              src/cmap.c
-        include/hash.h              src/hash.c
-        include/murmur3.h           src/murmur3.c
         include/math.h              src/math.c
         include/repl.h              src/repl.c
         include/stack-trace.h       src/stack-trace.c)
 
 set(LISP_SRC ${COMMON_SRC} src/main.c)
+
+add_library(clib STATIC ${CLIB_SRC})
 add_executable(lisp ${LISP_SRC})
-target_link_libraries(lisp readline)
+target_link_libraries(lisp readline clib)
 
 include_directories(test)
 set(TEST_SRC
@@ -55,4 +59,6 @@ set(TEST_SRC
 
 set(TEST_SRC ${COMMON_SRC} ${TEST_SRC})
 add_executable(test-lisp ${TEST_SRC})
-target_link_libraries(test-lisp readline)
+target_link_libraries(test-lisp readline clib)
+
+add_executable(clib-test ${CLIB_SRC} test/clib-test.c)

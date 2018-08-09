@@ -8,7 +8,7 @@
  * pointer arithmetic.
  */
 
-#include <cvector.h>
+#include "cvector.h"
 
 #include <stdio.h>
 #include <stdlib.h>
