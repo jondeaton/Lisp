@@ -1,4 +1,16 @@
-#include <cmap-test.c>
+#include <cmap-test.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/time.h>
+
+static bool test_creation();
+static bool test_insertion(unsigned int capacity);
+static bool test_large_insertion(unsigned int capacity, const char *string);
+static bool test_deletion(unsigned int capacity);
+static void test_insertion_performance();
+
 
 #define NUM_LETTERS 26
 const char *const alphabet[] = { "a", "b", "c", "d", "e", "f", "g",
@@ -6,7 +18,7 @@ const char *const alphabet[] = { "a", "b", "c", "d", "e", "f", "g",
                                  "o", "p", "q", "r", "s", "t", "u",
                                  "v", "w", "x", "y", "z"};
 
-bool cmap_test() {
+bool cmap_correctness_test() {
   printf("Testing creation of Hash Table... ");
   bool success = test_creation();
   printf("%s\n", success ? "success" : "failure");
@@ -42,6 +54,9 @@ bool cmap_test() {
   return 0;
 }
 
+void cmap_performance_test() {
+
+}
 
 // Testing to make sure that you can use all kinds
 // of key and value sizes
@@ -187,4 +202,3 @@ static void test_insertion_performance() {
     cmap_insert(map, &letter, &i);
   }
 }
-
