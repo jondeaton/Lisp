@@ -6,6 +6,7 @@
 
 #include <cmap.h>
 #include <hash.h>
+#include <permutations.h>
 
 #define unused __attribute__ ((unused))
 
@@ -61,6 +62,31 @@ static bool test_insertion(unsigned int capacity) {
       return false;
 
     if (*(int*) l != i)
+      return false;
+  }
+
+  return true;
+}
+
+static bool test_large_insertion(unsigned int capacity, const char *string) {
+
+  CMap *map = cmap_create(sizeof(char *), sizeof(int),
+                          string_hash, string_cmp,
+                          free, NULL, capacity);
+
+  if (map == NULL) return false;
+
+  // Insert every permutation of the string into the
+  char *permutation = malloc(strlen(string) + 1);
+  for (int i = 0; i < factorial((int) strlen(string)); i++) {
+    nth_permutation(string, i, permutation);
+    char *perm_cpy = strdup(permutation);
+    cmap_insert(map, &perm_cpy, &i);
+  }
+
+  for (int i = 0; i < factorial((int) strlen(string)); i++) {
+    nth_permutation(string, i, permutation);
+    if (cmap_lookup(map, permutation) == NULL)
       return false;
   }
 
@@ -146,6 +172,10 @@ int main (int argc unused, char* argv[] unused) {
     success = test_insertion(capacity);
     if (!success) break;
   }
+  printf("%s\n", success ? "success" : "failure");
+
+  printf("Testing large insertion into Hash Table... ");
+  success = test_large_insertion(1000, "abcdef");
   printf("%s\n", success ? "success" : "failure");
 
   printf("Testing deletion from Hash Table... ");

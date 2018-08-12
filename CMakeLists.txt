@@ -61,4 +61,5 @@ set(TEST_SRC ${COMMON_SRC} ${TEST_SRC})
 add_executable(test-lisp ${TEST_SRC})
 target_link_libraries(test-lisp readline clib)
 
-add_executable(clib-test ${CLIB_SRC} test/clib-test.c)
+add_executable(clib-test ${CLIB_SRC} test/clib-test.c test/permutations.h     test/permutations.c
+        )
