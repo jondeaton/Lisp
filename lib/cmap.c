@@ -72,7 +72,6 @@ static void erase(CMap *cm, struct entry *e);
 static void delete(CMap *cm, unsigned int start, unsigned int stop);
 static int lookup_index(const CMap *cm, const void *key);
 
-
 int string_cmp(const void *a, const void *b, size_t keysize unused) {
   return strcmp(*(const char **) a, *(const char **) b);
 }
@@ -255,10 +254,10 @@ static struct entry *lookup_key(const CMap *cm, const void *key) {
     struct entry *e = get_entry(cm, (hash + i) % cm->capacity);
     if (e == NULL || is_free(e)) continue;
 
-    // Use cached hash value to do an easy/cache-friendly comparison
+    // use cached hash value to do an easy/cache-friendly comparison
     if (e->hash != hash) continue;
 
-    // Only dereference to compare full keys if you have to
+    // only dereference to compare full keys if you have to
     if (cm->cmp(&e->kv, key, cm->key_size) == 0)
       return e;
   }

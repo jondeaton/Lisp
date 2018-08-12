@@ -39,7 +39,14 @@ void nth_permutation(const char *string, int n, char *perm);
  * @param cmp comparison function
  * @return a new permuter object
  */
-permuter *new_permuter(void *elems, int nelems, size_t elem_size, CompareFn cmp);
+permuter *new_permuter(void *elems, size_t nelems, size_t elem_size, CompareFn cmp);
+
+/**
+ * @brief Creates a permuter for a mutable C-string
+ * @param string Pointer to a mutable C-string
+ * @return permuter object for that C string
+ */
+permuter *new_cstring_permuter(char *string);
 
 /**
  * @brief disposes of a permuter object
@@ -58,6 +65,16 @@ void permuter_dispose(permuter *p);
  * @return pointer to the elements having been arranged in the new permutation
  */
 void *next_permutation(permuter *p);
+
+/**
+ * @brief Comparison function for characters
+ * @note useful for making permutations of C-strings: pass this in
+ * as the comparison function to do C-string permutations.
+ * @param pchar1 pointer to first character
+ * @param pchar2 pointer to second character
+ * @return difference between the two characters pointed to
+ */
+int cmp_char(const void *pchar1, const void *pchar2);
 
 /**
  * @brief Populates a buffer with the n'th combination of an array of items

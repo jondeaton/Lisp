@@ -56,6 +56,7 @@ bool cmap_correctness_test() {
 
 void cmap_performance_test() {
 
+
 }
 
 // Testing to make sure that you can use all kinds
@@ -64,41 +65,41 @@ static bool test_creation() {
   for (size_t keysize = 1; keysize <= 32; keysize++) {
     for (size_t valuesize = 1; valuesize <= 32; valuesize++) {
 
-      CMap *map = cmap_create(keysize, valuesize,
+      CMap *cm = cmap_create(keysize, valuesize,
                               NULL, NULL, NULL, NULL, (unsigned int) (keysize * valuesize));
 
-      if (map == NULL) return false;
-      if (cmap_count(map) != 0) return false;
+      if (cm == NULL) return false;
+      if (cmap_count(cm) != 0) return false;
 
-      cmap_dispose(map);
+      cmap_dispose(cm);
     }
   }
   return true;
 }
 
 static bool test_insertion(unsigned int capacity) {
-  CMap *map = cmap_create(sizeof(char *), sizeof(int),
+  CMap *cm = cmap_create(sizeof(char *), sizeof(int),
                           string_hash, string_cmp,
                           NULL, NULL, capacity);
 
-  if (map == NULL)
+  if (cm == NULL)
     return false;
 
-  if (cmap_count(map) != 0)
+  if (cmap_count(cm) != 0)
     return false;
 
   for (int i = 0; i < NUM_LETTERS; ++i) {
     const char *const letter = alphabet[i];
-    cmap_insert(map, &letter, &i);
+    cmap_insert(cm, &letter, &i);
   }
 
-  if (cmap_count(map) != NUM_LETTERS)
+  if (cmap_count(cm) != NUM_LETTERS)
     return false;
 
   // Make sure they're all in there
   for (int i = 0; i < NUM_LETTERS; ++i) {
     const char *const letter = alphabet[i];
-    const void *l = cmap_lookup(map, &letter);
+    const void *l = cmap_lookup(cm, &letter);
 
     if (l == NULL)
       return false;
@@ -112,25 +113,37 @@ static bool test_insertion(unsigned int capacity) {
 
 static bool test_large_insertion(unsigned int capacity, const char *string) {
 
-  CMap *map = cmap_create(sizeof(char *), sizeof(int),
+  CMap *cm = cmap_create(sizeof(char *), sizeof(int),
                           string_hash, string_cmp,
                           free, NULL, capacity);
 
-  if (map == NULL) return false;
+  if (cm == NULL)
+    return false;
 
-  // Insert every permutation of the string into the
-  char *permutation = malloc(strlen(string) + 1);
-  for (int i = 0; i < factorial((int) strlen(string)); i++) {
-    nth_permutation(string, i, permutation);
-    char *perm_cpy = strdup(permutation);
-    cmap_insert(map, &perm_cpy, &i);
-  }
+  // Insert every permutation of the string into the map
 
-  for (int i = 0; i < factorial((int) strlen(string)); i++) {
-    nth_permutation(string, i, permutation);
-    if (cmap_lookup(map, permutation) == NULL)
-      return false;
-  }
+  char *s = strdup("0123456789");
+  permuter *permuter = new_cstring_permuter(s);
+
+//  char *perm_cpy = strdup(s);
+//  cmap_insert(cm, &perm_cpy);
+//
+//  int count = 1;
+//   while (next_permutation(permuter) != NULL) {
+//     perm_cpy = strdup(s);
+//     cmap_insert(cm, &perm_cpy, &count);
+//   }
+
+//  for (int i = 0; i < factorial((int) strlen(string)); i++) {
+//    nth_permutation(string, i, permutation);
+//
+//  }
+//
+//  for (int i = 0; i < factorial((int) strlen(string)); i++) {
+//    nth_permutation(string, i, permutation);
+//    if (cmap_lookup(cm, permutation) == NULL)
+//      return false;
+//  }
 
   return true;
 }

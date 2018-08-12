@@ -23,15 +23,15 @@ static int ith_false(const bool booleans[], size_t len, int i);
  * API doesn't need to understand the algorithm
  */
 struct permuter {
-  int n;                  // Number of elements to take the permutation of
+  size_t n;               // Number of elements to take the permutation of
   size_t elem_size;       // The size of each element
-  void *elems;         // Pointer to the elements
+  void *elems;            // Pointer to the elements
   void *tmp;              // Temporary element pointer for swapping elements
   CompareFn cmp;          // Comparison function between elements
   char directions[];      // bit-array storing directions of each element
 };
 
-permuter *new_permuter(void *elems, int nelems, size_t elem_size, CompareFn cmp) {
+permuter *new_permuter(void *elems, size_t nelems, size_t elem_size, CompareFn cmp) {
   assert(elems != NULL);
   permuter *p = malloc(sizeof(permuter) + div_round_up(nelems, CHAR_BIT));
   if (p == NULL) return NULL;
@@ -50,6 +50,20 @@ permuter *new_permuter(void *elems, int nelems, size_t elem_size, CompareFn cmp)
 
   reset_directions(p); // set all the directions to "left"
   return p;
+}
+
+permuter *new_cstring_permuter(char *string) {
+  assert(string != 0);
+  qsort(string, strlen(string), sizeof(char), cmp_char);
+  return new_permuter(string, strlen(string), sizeof(char), cmp_char);
+}
+
+int cmp_char(const void *pchar1, const void *pchar2) {
+  assert(pchar1 != NULL);
+  assert(pchar2 != NULL);
+  char char1 = *(const char *) pchar1;
+  char char2 = *(const char *) pchar2;
+  return char1 - char2;
 }
 
 void permuter_dispose(permuter *p) {
@@ -223,14 +237,6 @@ static int ith_false(const bool booleans[], size_t len, int i) {
 
 #if defined(DEBUG)
 
-static int cmp_char(const void *pchar1, const void *pchar2) {
-  assert(pchar1 != NULL);
-  assert(pchar2 != NULL);
-  char char1 = *(const char *) pchar1;
-  char char2 = *(const char *) pchar2;
-  return char1 - char2;
-}
-
 bool permutation_correctness_test() {
   char *s = strdup("123");
   permuter *p = new_permuter(s, (int) strlen(s), sizeof(char), cmp_char);
@@ -240,23 +246,33 @@ bool permutation_correctness_test() {
                                        "321", "231", "213"};
 
   for (int i = 0; i < factorial(strlen(s)) - 1; i++) {
-    if (strcmp(s, correct_permutation[i]) != 0)
+    if (strcmp(s, correct_permutation[i]) != 0) {
+      free(s);
+      permuter_dispose(p);
       return false;
+    }
 
     void *np = next_permutation(p);
-    if (np == NULL)
+    if (np == NULL) {
+      free(s);
+      permuter_dispose(p);
       return false;
+    }
   }
 
-  if (next_permutation(p) != NULL)
+  if (next_permutation(p) != NULL) {
+    free(s);
+    permuter_dispose(p);
     return false;
+  }
 
   free(s);
   permuter_dispose(p);
 
+  // Make sure that you generate 10! permutations of this string
   s = strdup("0123456789");
   int correct_num_perms = factorial(strlen(s));
-  p = new_permuter(s, strlen(s), sizeof(char), cmp_char);
+  p = new_cstring_permuter(s);
   int n_perms = 0;
   while (next_permutation(p) != NULL)
     n_perms += 1;
@@ -271,7 +287,7 @@ bool permutation_correctness_test() {
 }
 
 bool combination_correctness_test() {
-
+  // todo
   return true;
 }
 
