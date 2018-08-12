@@ -19,7 +19,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_C_FLAGS  "-Ofast")
 else()
     message(STATUS "Mode: Debug")
-    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic")
+    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic -DDEBUG")
 endif()
 
 include_directories(include src lib)
@@ -67,3 +67,4 @@ set(CLIB_TEST_SRC
         test/permutations.h     test/permutations.c)
 
 add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
+target_link_libraries(clib-test clib)
