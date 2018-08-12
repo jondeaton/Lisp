@@ -1,6 +1,8 @@
 /**
  * @file permutations.h
- * @brief For iterating through all permutations of a collection
+ * @brief For iterating through all permutations and combinations
+ * of a collection of elements. Uses the Steinhaus–Johnson–Trotter algorithm
+ * to iterate through
  */
 
 #ifndef _PERMUTATIONS_H
@@ -47,20 +49,40 @@ void permuter_dispose(permuter *p);
 
 /**
  * @brief swaps elements to produce the next permutation
- * @details The core of the Steinhaus–Johnson–Trotter algorithm
- * @param p The permuter object
- * @return Pointer to the elements having been arranged in the new permutation
+ * @details Steinhaus–Johnson–Trotter algorithm. This implementation
+ * has time complexity O(n) where n is the number of elements in the permutation.
+ * This method will rearrange the elements in-place. Thus, to access the permutation
+ * you can either use the return value from this function, or the pointer to the
+ * elements that was originally passed to "new_permuter".
+ * @param p The permuter object that was returned from new_permuter
+ * @return pointer to the elements having been arranged in the new permutation
  */
 void *next_permutation(permuter *p);
 
 /**
  * @brief Populates a buffer with the n'th combination of an array of items
- * @param items Array of items to get a combination or
- * @param item_size The size of each item
- * @param n Which combination
- * @param combination Buffer to store the n'th combination
+ * @details this method can be used to efficiently iterate through all combinations of a
+ * series of elements by calling this function in a loop for values of n from
+ * 0 to 2^k - 1 where k = the number of items. You don't need to pass the length
+ * of the array to items to long as your value of n is less than 2^k. Values of
+ * n greater of this will attempt to read values from beyond the end of the items
+ * array and will result in undefined behavior.
+ * The time complexity of this algorithm is equal to O(b) where b = the number of
+ * bits that are in n. Said differently - time complexity is linear in the number
+ * of elements that will be copied into the combinations buffer. Ensure that the
+ * buffer is large enough to hold that many elements
+ * @param elements array of k elements to make a combination of
+ * @param elem_size the size of each element in the array
+ * @param n number between 0 and 2^k - 1 (inclusive) denoting which combination
+ * of the elements to copy into the combinations buffer
+ * @param end pointer to an element that will be copied at the end of the combinations
+ * array to demark the end of the combination. For instance if you are taking
+ * combinations of character arrays represented as C-strings then pass a pointer
+ * to a null-terminator so that the resulting combination is a valid C-string.
+ * @param combination buffer to store the n'th combination. Must be large enough to hold
+ * as many elements as there are in the elements array plus one extra for the "end" element.
  */
-void nth_combination(const void *items, size_t item_size, int n,
+void nth_combination(const void *elements, size_t elem_size, int n,
                      const void *end,
                      const void *combination);
 
@@ -70,5 +92,10 @@ void nth_combination(const void *items, size_t item_size, int n,
  * @return n!
  */
 int factorial(int n);
+
+#ifdef DEBUG
+bool permutation_correctness_test();
+bool combination_correctness_test();
+#endif // DEBUG
 
 #endif // _PERMUTATIONS_H

@@ -12,8 +12,8 @@ static inline void *permuter_ith(const permuter *p, int i);
 static inline void swap(permuter *p, int i, int j);
 static inline void swap_adjacent(permuter *p, int i, enum Direction dir);
 static enum Direction ith_direction(const permuter *p, int i);
-static void set_ith_direction(permuter *p, int i, enum Direction direction);
-static void flip_ith_direction(permuter *p, int i);
+static inline void set_ith_direction(permuter *p, int i, enum Direction direction);
+static inline void flip_ith_direction(permuter *p, int i);
 static int ith_false(const bool booleans[], size_t len, int i);
 
 /**
@@ -77,21 +77,21 @@ void *next_permutation(permuter *p) {
   return p->elems;
 }
 
-void nth_combination(const void *items, size_t item_size, int n,
+void nth_combination(const void *elements, size_t elem_size, int n,
                      const void *end, const void *combination) {
   int i = 0;
   while (n != 0) {
     int first_offset = __builtin_ctz(n); // Find offset of first bit
 
-    void *dst = (char *) combination + i * item_size;
-    void *src = (char *) items + item_size * first_offset;
+    void *dst = (char *) combination + i * elem_size;
+    void *src = (char *) elements + elem_size * first_offset;
 
-    memcpy(dst, src, item_size);
+    memcpy(dst, src, elem_size);
 
     n &= n - 1; // Turn that bit off
     i++;
   }
-  memcpy((char *) combination + i * item_size, end, item_size); // add the end
+  memcpy((char *) combination + i * elem_size, end, elem_size); // add the end
 }
 
 int factorial(int n) {
@@ -123,9 +123,9 @@ static inline bool is_mobile(const permuter *p, int i) {
   assert(p != NULL);
   enum Direction dir = ith_direction(p, i);
   if (dir == left) {
-    return i != 0 && compare(p, i, i - 1) > 0;
+    return i > 0 && compare(p, i, i - 1) > 0;
   } else {
-    return i != p->n && compare(p, i, i + 1) > 0;
+    return i < (p->n - 1) && compare(p, i, i + 1) > 0;
   }
 }
 
@@ -170,24 +170,22 @@ static enum Direction ith_direction(const permuter *p, int i) {
   return bit ? right : left;
 }
 
-static void flip_ith_direction(permuter *p, int i) {
+static inline void flip_ith_direction(permuter *p, int i) {
   assert(p != NULL);
-  int index = i / CHAR_BIT;
-  char current = p->directions[index];
-  char mask = (1 << (i % CHAR_BIT));
-  p->directions[index] = current ^ mask;
+  enum Direction dir = ith_direction(p, i);
+  set_ith_direction(p, i, dir == left ? right : left);
 }
 
-static void set_ith_direction(permuter *p, int i, enum Direction direction) {
+static inline void set_ith_direction(permuter *p, int i, enum Direction direction) {
   assert(p != NULL);
   int index = i / CHAR_BIT;
   char current = p->directions[index];
   char mask = (1 << (i % CHAR_BIT));
 
   if (direction == left)
-    p->directions[index] = current | ~mask;
+    p->directions[index] = current & ~mask;
   else
-    p->directions[index] = current & mask;
+    p->directions[index] = current | mask;
 }
 
 static inline int div_round_up(int numer, int denom) {
@@ -222,3 +220,59 @@ static int ith_false(const bool booleans[], size_t len, int i) {
   }
   return -1;
 }
+
+#if defined(DEBUG)
+
+static int cmp_char(const void *pchar1, const void *pchar2) {
+  assert(pchar1 != NULL);
+  assert(pchar2 != NULL);
+  char char1 = *(const char *) pchar1;
+  char char2 = *(const char *) pchar2;
+  return char1 - char2;
+}
+
+bool permutation_correctness_test() {
+  char *s = strdup("123");
+  permuter *p = new_permuter(s, (int) strlen(s), sizeof(char), cmp_char);
+  if (p == NULL) return false;
+
+  const char* correct_permutation[] = {"123", "132", "312",
+                                       "321", "231", "213"};
+
+  for (int i = 0; i < factorial(strlen(s)) - 1; i++) {
+    if (strcmp(s, correct_permutation[i]) != 0)
+      return false;
+
+    void *np = next_permutation(p);
+    if (np == NULL)
+      return false;
+  }
+
+  if (next_permutation(p) != NULL)
+    return false;
+
+  free(s);
+  permuter_dispose(p);
+
+  s = strdup("0123456789");
+  int correct_num_perms = factorial(strlen(s));
+  p = new_permuter(s, strlen(s), sizeof(char), cmp_char);
+  int n_perms = 0;
+  while (next_permutation(p) != NULL)
+    n_perms += 1;
+
+  free(s);
+  permuter_dispose(p);
+
+  if (n_perms != correct_num_perms - 1)
+    return false;
+
+  return true;
+}
+
+bool combination_correctness_test() {
+
+  return true;
+}
+
+#endif // DEBUG
