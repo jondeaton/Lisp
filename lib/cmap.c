@@ -242,7 +242,8 @@ static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
  * @breif Finds the entry for this key
  * @param cm The CMap to lookup the key in
  * @param key the key to lookup in the CMap
- * @return Pointer
+ * @return pointer to the hash table entry that contains the key and value
+ * if the key exists in the hash table, else NULL
  */
 static struct entry *lookup_key(const CMap *cm, const void *key) {
   assert(cm != NULL);
@@ -252,7 +253,7 @@ static struct entry *lookup_key(const CMap *cm, const void *key) {
   unsigned int hash = cm->hash(key, cm->key_size) % cm->capacity;
   for (unsigned int i = 0; i < cm->capacity; ++i) {
     struct entry *e = get_entry(cm, (hash + i) % cm->capacity);
-    if (e == NULL || is_free(e)) continue;
+    if (is_free(e)) return NULL;
 
     // use cached hash value to do an easy/cache-friendly comparison
     if (e->hash != hash) continue;
