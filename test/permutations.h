@@ -2,7 +2,32 @@
  * @file permutations.h
  * @brief For iterating through all permutations and combinations
  * of a collection of elements. Uses the Steinhaus–Johnson–Trotter algorithm
- * to iterate through
+ * to iterate through.
+ *
+ * @example simple example with array of integers
+ *
+ * int arr[] = { 1, 2, 3, 4 };
+ *
+ * permuter *p = new_permuter(arr, 4, sizeof(int), cmp_int);
+ * for (void *permutation = get_permutation(p);
+ *      permutation != NULL;
+ *      permutation = next_permutation(p)) {
+ *
+ *      // do something with permutation
+ *  }
+ *  permuter_dispose(p);
+ *
+ *  @example simple example with C-strings
+ *
+ * permuter *p = new_cstring_permuter("ABCDEFG");
+ * for (const char *str = get_permutation(p);
+ *      str != NULL;
+ *      str = next_permutation(p)) {
+ *
+ *      // do something with str
+ *  }
+ * cstring_permuter_dispose(p);
+ *
  */
 
 #ifndef _PERMUTATIONS_H
@@ -39,20 +64,27 @@ void nth_permutation(const char *string, int n, char *perm);
  * @param cmp comparison function
  * @return a new permuter object
  */
-permuter *new_permuter(void *elems, size_t nelems, size_t elem_size, CompareFn cmp);
-
-/**
- * @brief Creates a permuter for a mutable C-string
- * @param string Pointer to a mutable C-string
- * @return permuter object for that C string
- */
-permuter *new_cstring_permuter(char *string);
+permuter *new_permuter(void *elems, int nelems, size_t elem_size, CompareFn cmp);
 
 /**
  * @brief disposes of a permuter object
  * @param p permuter object to dispose of
  */
 void permuter_dispose(permuter *p);
+
+/**
+ * @brief Creates a permuter for a mutable C-string
+ * @param string pointer to a C-string (will be copied)
+ * @return permuter object for that C string
+ */
+permuter *new_cstring_permuter(const char *string);
+
+/**
+ * @brief disposes of a C-string permuter
+ * @param p pointer to the c string permuter returned by
+ * the new_cstring_permuter function
+ */
+void cstring_permuter_dispose(permuter *p);
 
 /**
  * @brief swaps elements to produce the next permutation
@@ -65,6 +97,37 @@ void permuter_dispose(permuter *p);
  * @return pointer to the elements having been arranged in the new permutation
  */
 void *next_permutation(permuter *p);
+
+/**
+ * @brief get the current permutation from the permuter.
+ * @note no elements will be swapped. This function makes no changes
+ * to the state of the permuter or permutation.
+ * @param p The permuter object that was returned from new_permuter
+ * @return The current permutation
+ */
+void *get_permutation(const permuter *p);
+
+/**
+ * @brief gets the index of the current permutation
+ * @note will be between 0 and k! - 1 (inclusive)
+ * @param p the permuter to get the number of
+ * @return the index of the current permutation
+ */
+int permutation_index(const permuter *p);
+
+/**
+ * @brief resets the permuter so that it can be iterated through again
+ * @details sorts the elements and resets all the directions back to "left"
+ * @param p the permuter to reset
+ */
+void reset_permuter(permuter *p);
+
+/**
+ * @brief returns the number of elements that are in each permutation
+ * @param p the permuter to get the size of
+ * @return the number of elements that are in each permutation
+ */
+int permuter_size(permuter *p);
 
 /**
  * @brief Comparison function for characters

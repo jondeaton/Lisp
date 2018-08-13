@@ -10,6 +10,7 @@ static int compare(const permuter *p, int i, int j);
 static inline bool is_mobile(const permuter *p, int i);
 static inline void *permuter_ith(const permuter *p, int i);
 static inline void swap(permuter *p, int i, int j);
+static inline void swap_facing(permuter *p, int i);
 static inline void swap_adjacent(permuter *p, int i, enum Direction dir);
 static enum Direction ith_direction(const permuter *p, int i);
 static inline void set_ith_direction(permuter *p, int i, enum Direction direction);
@@ -23,15 +24,16 @@ static int ith_false(const bool booleans[], size_t len, int i);
  * API doesn't need to understand the algorithm
  */
 struct permuter {
-  size_t n;               // Number of elements to take the permutation of
-  size_t elem_size;       // The size of each element
-  void *elems;            // Pointer to the elements
-  void *tmp;              // Temporary element pointer for swapping elements
-  CompareFn cmp;          // Comparison function between elements
-  char directions[];      // bit-array storing directions of each element
+  int n;               // number of elements to take the permutation of
+  size_t elem_size;       // the size of each element
+  void *elems;            // pointer to the elements
+  void *tmp;              // temporary element pointer for swapping elements
+  CompareFn cmp;          // comparison function between elements
+  int index;              // number of the current permutation
+  char directions[];      // bit-array storing directions of each element of size n
 };
 
-permuter *new_permuter(void *elems, size_t nelems, size_t elem_size, CompareFn cmp) {
+permuter *new_permuter(void *elems, int nelems, size_t elem_size, CompareFn cmp) {
   assert(elems != NULL);
   permuter *p = malloc(sizeof(permuter) + div_round_up(nelems, CHAR_BIT));
   if (p == NULL) return NULL;
@@ -48,14 +50,31 @@ permuter *new_permuter(void *elems, size_t nelems, size_t elem_size, CompareFn c
   p->elems = elems;
   p->cmp = cmp;
 
-  reset_directions(p); // set all the directions to "left"
+  reset_permuter(p); // set all the directions to "left"
   return p;
 }
 
-permuter *new_cstring_permuter(char *string) {
+void *get_permutation(const permuter *p) {
+  assert(p != NULL);
+  return p->elems;
+}
+
+int permutation_index(const permuter *p) {
+  assert(p != NULL);
+  return p->index;
+}
+
+permuter *new_cstring_permuter(const char *string) {
   assert(string != 0);
-  qsort(string, strlen(string), sizeof(char), cmp_char);
-  return new_permuter(string, strlen(string), sizeof(char), cmp_char);
+  char *str = strdup(string);
+  qsort(str, strlen(str), sizeof(char), cmp_char);
+  return new_permuter(str, strlen(str), sizeof(char), cmp_char);
+}
+
+void cstring_permuter_dispose(permuter *p) {
+  assert(p != NULL);
+  free(p->elems);
+  permuter_dispose(p);
 }
 
 int cmp_char(const void *pchar1, const void *pchar2) {
@@ -86,9 +105,22 @@ void *next_permutation(permuter *p) {
 
   // swap the largest mobile element with the element adjacent to
   // it in the direction that it is facing
-  swap_adjacent(p, max_mobile_idx, ith_direction(p, max_mobile_idx));
+  swap_facing(p, max_mobile_idx);
 
+  p->index++;
   return p->elems;
+}
+
+void reset_permuter(permuter *p) {
+  assert(p != NULL);
+  qsort(p->elems, p->n, p->elem_size, p->cmp);
+  reset_directions(p);
+  p->index = 0;
+}
+
+int permuter_size(permuter *p) {
+  assert(p != NULL);
+  return p->n;
 }
 
 void nth_combination(const void *elements, size_t elem_size, int n,
@@ -129,7 +161,7 @@ static inline int find_largest_mobile(const permuter *p) {
 
 static void reset_directions(permuter *p) {
   assert(p != NULL);
-  for (int i = 0; i < p->n / CHAR_BIT; ++i)
+  for (int i = 0; i < div_round_up(p->n, CHAR_BIT); ++i)
     p->directions[i] = 0;
 }
 
@@ -141,6 +173,12 @@ static inline bool is_mobile(const permuter *p, int i) {
   } else {
     return i < (p->n - 1) && compare(p, i, i + 1) > 0;
   }
+}
+
+static inline void swap_facing(permuter *p, int i) {
+  assert(p != NULL);
+  assert(i >= 0 && i < p->n);
+  swap_adjacent(p, i, ith_direction(p, i));
 }
 
 static inline void swap_adjacent(permuter *p, int i, enum Direction dir) {
@@ -237,51 +275,61 @@ static int ith_false(const bool booleans[], size_t len, int i) {
 
 #if defined(DEBUG)
 
+#include "stdio.h"
+
 bool permutation_correctness_test() {
-  char *s = strdup("123");
-  permuter *p = new_permuter(s, (int) strlen(s), sizeof(char), cmp_char);
+
+  permuter *p = new_cstring_permuter("123");
   if (p == NULL) return false;
 
   const char* correct_permutation[] = {"123", "132", "312",
                                        "321", "231", "213"};
 
-  for (int i = 0; i < factorial(strlen(s)) - 1; i++) {
-    if (strcmp(s, correct_permutation[i]) != 0) {
-      free(s);
-      permuter_dispose(p);
-      return false;
+  for (int repeat = 0; repeat < 3; repeat++) {
+    for (const char *str = get_permutation(p); str != NULL; str = next_permutation(p)) {
+      int i = permutation_index(p);
+      if (strcmp(str, correct_permutation[i]) != 0) {
+        cstring_permuter_dispose(p);
+        return false;
+      }
     }
 
-    void *np = next_permutation(p);
-    if (np == NULL) {
-      free(s);
-      permuter_dispose(p);
+    if (next_permutation(p) != NULL) {
+      cstring_permuter_dispose(p);
       return false;
     }
+    reset_permuter(p);
   }
-
-  if (next_permutation(p) != NULL) {
-    free(s);
-    permuter_dispose(p);
-    return false;
-  }
-
-  free(s);
-  permuter_dispose(p);
+  cstring_permuter_dispose(p);
 
   // Make sure that you generate 10! permutations of this string
-  s = strdup("0123456789");
-  int correct_num_perms = factorial(strlen(s));
-  p = new_cstring_permuter(s);
-  int n_perms = 0;
-  while (next_permutation(p) != NULL)
-    n_perms += 1;
 
-  free(s);
-  permuter_dispose(p);
+  const char *strs[] = {"0", "01", "012", "01234", "012345", "0123456", "01234567" , NULL};
 
-  if (n_perms != correct_num_perms - 1)
-    return false;
+  for (int i = 0; strs[i] != NULL; i++) {
+    p = new_cstring_permuter(strs[i]);
+    if (p == NULL) return false;
+
+    // rinse and repeat three times
+    for (int repeat = 0; repeat < 3; repeat++) {
+      int n_perms = 0;
+      for (const char *str = get_permutation(p); str != NULL; str = next_permutation(p)) {
+        n_perms += 1;
+        if ((int) strlen(str) != permuter_size(p)) {
+          cstring_permuter_dispose(p);
+          return false;
+        }
+      }
+
+      if (n_perms != factorial(permuter_size(p))){
+        cstring_permuter_dispose(p);
+        return false;
+      }
+      reset_permuter(p);
+    }
+
+    cstring_permuter_dispose(p);
+  }
 
   return true;
 }
