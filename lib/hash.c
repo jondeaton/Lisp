@@ -13,10 +13,10 @@ unsigned int roberts_hash(const void *key, size_t keysize) {
   return (unsigned int) hashcode;
 }
 
-unsigned int string_hash(const void *key, size_t keysize) {
-  (void) keysize;
-  size_t keylen = strlen((const char*) key);
-  return roberts_hash(key, keylen);
+unsigned int string_hash(const void *key, size_t keysize __unused) {
+  const char *keystr = *(const char **) key;
+  size_t keylen = strlen(keystr);
+  return roberts_hash(keystr, keylen);
 }
 
 unsigned long djb2_hash(unsigned char *str) {
