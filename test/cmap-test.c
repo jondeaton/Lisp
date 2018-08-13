@@ -31,7 +31,7 @@ bool cmap_correctness_test() {
   printf("%s\n", success ? "success" : "failure");
 
   printf("Testing large insertion into Hash Table... ");
-  success = test_large_insertion(1000, "abcdef");
+  success = test_large_insertion(50000, "12345678");
   printf("%s\n", success ? "success" : "failure");
 
   printf("Testing deletion from Hash Table... ");
@@ -113,38 +113,28 @@ static bool test_insertion(unsigned int capacity) {
 
 static bool test_large_insertion(unsigned int capacity, const char *string) {
 
-  CMap *cm = cmap_create(sizeof(char *), sizeof(int),
-                          string_hash, string_cmp,
+  CMap *cm = cmap_create(sizeof(char *), sizeof(int), string_hash, string_cmp,
                           free, NULL, capacity);
-
-  if (cm == NULL)
-    return false;
+  if (cm == NULL) return false;
 
   // Insert every permutation of the string into the map
+  permuter *p = new_cstring_permuter(string);
+  for (const char *str = get_permutation(p); str != NULL; str = next_permutation(p)) {
+    int i = permutation_index(p);
+    char *s = strdup(str);
+    cmap_insert(cm, &s, &i);
+  }
 
-  char *s = strdup("0123456789");
-  permuter *permuter = new_cstring_permuter(s);
+  reset_permuter(p);
 
-//  char *perm_cpy = strdup(s);
-//  cmap_insert(cm, &perm_cpy);
-//
-//  int count = 1;
-//   while (next_permutation(permuter) != NULL) {
-//     perm_cpy = strdup(s);
-//     cmap_insert(cm, &perm_cpy, &count);
-//   }
+  // Check to make sure that they're all there
+  for (const char *str = get_permutation(p); str != NULL; str = next_permutation(p)) {
+    int *valuep = cmap_lookup(cm, &str);
+    if (valuep == NULL || *valuep != permutation_index(p))
+      return false;
+  }
 
-//  for (int i = 0; i < factorial((int) strlen(string)); i++) {
-//    nth_permutation(string, i, permutation);
-//
-//  }
-//
-//  for (int i = 0; i < factorial((int) strlen(string)); i++) {
-//    nth_permutation(string, i, permutation);
-//    if (cmap_lookup(cm, permutation) == NULL)
-//      return false;
-//  }
-
+  cstring_permuter_dispose(p);
   return true;
 }
 
