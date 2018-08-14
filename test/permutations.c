@@ -24,7 +24,7 @@ static int ith_false(const bool booleans[], size_t len, int i);
  * API doesn't need to understand the algorithm
  */
 struct permuter {
-  int n;               // number of elements to take the permutation of
+  int n;                  // number of elements to take the permutation of
   size_t elem_size;       // the size of each element
   void *elems;            // pointer to the elements
   void *tmp;              // temporary element pointer for swapping elements
