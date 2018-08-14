@@ -35,7 +35,7 @@ bool cmap_correctness_test() {
   printf("%s\n", success ? "success" : "failure");
 
   printf("Testing deletion from Hash Table... ");
-  for (unsigned int capacity = 30; capacity < 200; capacity += 10) {
+  for (unsigned int capacity = 1440; capacity < 1000000; capacity = (int) capacity * 1.1) {
     success = test_deletion(capacity);
     if (!success) break;
   }
@@ -139,58 +139,52 @@ static bool test_large_insertion(unsigned int capacity, const char *string) {
 }
 
 static bool test_deletion(unsigned int capacity) {
-  CMap *map = cmap_create(sizeof(char *), sizeof(int),
+  CMap *cm = cmap_create(sizeof(char *), sizeof(int),
                           string_hash, string_cmp,
                           NULL, NULL, capacity);
 
-  if (map == NULL)
+  if (cm == NULL) return false;
+  
+  if (cmap_count(cm) != 0)
     return false;
-  if (cmap_count(map) != 0)
-    return false;
 
-  for (int i = 0; i < NUM_LETTERS; ++i) {
-    const char *const letter = alphabet[i];
-    cmap_insert(map, &letter, &i);
+  // insert all number premutations into the cmap
+  permuter *p1 = new_cstring_permuter("012345");
+  for (const char *str = get_permutation(p1); str != NULL; str = next_permutation(p1)) {
+    int i = permutation_index(p1);
+    char *s = strdup(str);
+    cmap_insert(cm, &s, &i);
   }
 
-  if (cmap_count(map) != NUM_LETTERS) return false;
+  // insert all letter permutations into the cmap
+  permuter *p2 = new_cstring_permuter("abcdef");
+  for (const char *str = get_permutation(p2); str != NULL; str = next_permutation(p2)) {
+    int i = permutation_index(p2);
+    char *s = strdup(str);
+    cmap_insert(cm, &s, &i);
+  }
 
-  // Make sure they're all in there
-  for (int i = 0; i < NUM_LETTERS; ++i) {
-    const char * letter = alphabet[i];
-    const void *l = cmap_lookup(map, &letter);
-    if (l == NULL)
+  reset_permuter(p1);
+  reset_permuter(p2);
+
+  // remove all the number premutations
+   for (const char *str = get_permutation(p1); str != NULL; str = next_permutation(p1))
+     cmap_remove(cm, &str);
+   
+   // check to make sure that all the letter premutations are there and correct
+   for (const char *str = get_permutation(p2); str != NULL; str = next_permutation(p2)) {
+    int *valuep = cmap_lookup(cm, &str);
+    if (valuep == NULL)
       return false;
-    if (*(int*) l != i)
+    
+    if (*valuep != permutation_index(p2))
       return false;
   }
 
-  // Make sure that you can remove things, and that they go away
-  for (int i = 0; i < NUM_LETTERS; ++i) {
-    const char * letter = alphabet[i];
-    cmap_remove(map, &letter);
+  cstring_permuter_dispose(p1);
+  cstring_permuter_dispose(p2);
 
-    // Make sure it's gone
-    const void *value = cmap_lookup(map, &letter);
-    if (value != NULL)
-      return false;
-
-    // Make sure count reflects deletion
-    if (cmap_count(map) != (unsigned int) (NUM_LETTERS - (i + 1)))
-      return false;
-
-    // Make sure all the *others* are still in there
-    for (int j = i + 1; i < NUM_LETTERS; ++i) {
-      letter = alphabet[j];
-      value = cmap_lookup(map, &letter);
-      if (value == NULL)
-        return false;
-      if (*(int*) value != j)
-        return false;
-    }
-  }
-
-  cmap_dispose(map);
+  cmap_dispose(cm);
   return true;
 }
 
