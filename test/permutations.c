@@ -165,6 +165,9 @@ static void reset_directions(permuter *p) {
     p->directions[i] = 0;
 }
 
+/* an element is said to be mobile if it is larger than the element
+ * adjacent to it in the direction that it is facing 
+ */
 static inline bool is_mobile(const permuter *p, int i) {
   assert(p != NULL);
   enum Direction dir = ith_direction(p, i);
@@ -175,6 +178,9 @@ static inline bool is_mobile(const permuter *p, int i) {
   }
 }
 
+/*
+ * swap an element with the adjacent elemnt in the direction that it is facing
+ */
 static inline void swap_facing(permuter *p, int i) {
   assert(p != NULL);
   assert(i >= 0 && i < p->n);
@@ -194,10 +200,12 @@ static inline void swap(permuter *p, int i, int j) {
   assert(i >= 0 && i < p->n);
   assert(j >= 0 && j < p->n);
 
+  // must swap direction bits also!
   enum Direction dir_i = ith_direction(p, i);
   set_ith_direction(p, i, ith_direction(p, j));
   set_ith_direction(p, j, dir_i);
 
+  // swap elements
   memcpy(p->tmp, permuter_ith(p, i), p->elem_size);
   memcpy(permuter_ith(p, i), permuter_ith(p, j), p->elem_size);
   memcpy(permuter_ith(p, j), p->tmp, p->elem_size);

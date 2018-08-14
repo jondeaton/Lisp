@@ -13,7 +13,8 @@ unsigned int roberts_hash(const void *key, size_t keysize) {
   return (unsigned int) hashcode;
 }
 
-unsigned int string_hash(const void *key, size_t keysize __unused) {
+unsigned int string_hash(const void *key, size_t keysize) {
+  (void) keysize;
   const char *keystr = *(const char **) key;
   size_t keylen = strlen(keystr);
   return roberts_hash(keystr, keylen);

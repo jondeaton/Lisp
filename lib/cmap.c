@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
@@ -233,7 +234,7 @@ static inline size_t entry_size(const CMap *cm) {
 
 static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
   assert(cm != NULL);
-  assert(index >= 0 && index < cm->capacity);
+  assert(index < cm->capacity);
   void *entry = (char *) cm->entries + index * entry_size(cm);
   return (struct entry *) entry;
 }

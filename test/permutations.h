@@ -1,10 +1,10 @@
 /**
  * @file permutations.h
- * @brief For iterating through all permutations and combinations
+ * @brief For iterating through all permutations or combinations
  * of a collection of elements. Uses the Steinhaus–Johnson–Trotter algorithm
- * to iterate through.
+ * to iterate through permutations efficiently.
  *
- * @example simple example with array of integers
+ * @example simple permutation iteration with array of integers
  *
  * int arr[] = { 1, 2, 3, 4 };
  *
@@ -17,7 +17,7 @@
  *  }
  *  permuter_dispose(p);
  *
- *  @example simple example with C-strings
+ *  @example simple permutation of C-strings
  *
  * permuter *p = new_cstring_permuter("ABCDEFG");
  * for (const char *str = get_permutation(p);
