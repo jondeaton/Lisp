@@ -19,6 +19,7 @@
 
 // A suggested value to use when given capacity_hint is 0
 #define DEFAULT_CAPACITY 16
+#define SEARCH_NOT_FOUND (-1)
 
 // Function declarations
 static void cvec_double_size(CVector* cv);
@@ -39,13 +40,12 @@ CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
 
 bool cvec_init(CVector *cvec, size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
   assert(cvec != NULL);
-  cvec->nelems = 0; // Store starting
+  cvec->nelems = 0;
 
-  // Use DEFAULT_CAPACITY if an invalid capacity_hint is given
   cvec->capacity = (int) (capacity_hint > 0 ? capacity_hint : DEFAULT_CAPACITY);
   cvec->elemsz = elemsz;
-  cvec->cleanup = fn; // Store the callback function for laster cleanup of elements
-  cvec->elems = malloc(cvec->capacity * elemsz); // Allocate space for the initial elements
+  cvec->cleanup = fn;
+  cvec->elems = malloc(cvec->capacity * elemsz);
   if (cvec->elems == NULL) return false;
   return true;
 }
@@ -68,8 +68,11 @@ void* cvec_nth(const CVector* cv, int index) {
 
 void cvec_insert(CVector* cv, const void* source, int index) {
   assert(cv != NULL);
-  assert(index >= 0 && index <= cv->nelems); // Assert valid index
-  if (cv->capacity == cv->nelems) cvec_double_size(cv); // Resize vector if at capacity
+  assert(index >= 0 && index <= cv->nelems);
+  
+  // resize the vector if there isn't enough space
+  if (cv->capacity == cv->nelems) 
+      cvec_double_size(cv);
 
   // Loop through the elements after the target backwards, copying them forward
   for (int i = cv->nelems; i > index; i--) {
@@ -91,20 +94,26 @@ void cvec_append(CVector* cv, const void* addr) {
 }
 
 void cvec_replace(CVector* cv, const void* addr, int index) {
-  void* destination = cvec_nth(cv, index); // Get nth element. Valid index will be asserted therein.
-  if (cv->cleanup != NULL) (*cv).cleanup(destination); // Cleanup the old value if necessary
-  memcpy(destination, addr, cv->elemsz); // Copy the new element into it's space
+  assert(cv != NULL);
+  void* destination = cvec_nth(cv, index);
+  if (cv->cleanup != NULL) (*cv).cleanup(destination);
+  memcpy(destination, addr, cv->elemsz);
 }
 
 void cvec_remove(CVector* cv, int index) {
-  void* el = cvec_nth(cv, index); // Get the element. Valid index asserted therein
-  if (cv->cleanup != NULL) cv->cleanup(el); // Cleanup if necessary
+  assert(cv != NULL);
+  void* el = cvec_nth(cv, index);
+  
+  if (cv->cleanup != NULL) 
+      cv->cleanup(el);
+  
   for(void* next = cvec_next(cv, el); next != NULL; next = cvec_next(cv, next))
     memcpy((char*) next - cv->elemsz, next, cv->elemsz);
   cv->nelems--;
 }
 
 void cvec_clear(CVector* cv) {
+  assert(cv != NULL);
   if (cv->cleanup == NULL) {
     cv->nelems = 0;
     return;
@@ -115,17 +124,18 @@ void cvec_clear(CVector* cv) {
 }
 
 int cvec_search(const CVector* cv, const void* key, CompareFn cmp, int start, bool sorted) {
-  assert(start >= 0 && start <= cv->nelems); // Assert start index is in range
+  assert(cv != NULL);
+  assert(start >= 0 && start <= cv->nelems);
 
   void* start_loc = (char*) cv->elems + start * cv->elemsz;
   size_t nitems = (size_t) cv->nelems - start;
   void* found_elem;
 
-  // Search with binary or linear search if sorted or not, respectively
+  // search with binary or linear search if sorted or not, respectively
   if (sorted) found_elem = bsearch(key, start_loc, nitems, cv->elemsz, cmp);
   else found_elem = lfind(key, start_loc, &nitems, cv->elemsz, cmp);
 
-  if (found_elem == NULL) return -1; // Not found: -1
+  if (found_elem == NULL) return SEARCH_NOT_FOUND;
   else return (int) index_of(cv, found_elem);
 }
 
@@ -138,13 +148,17 @@ void* cvec_first(const CVector* cv) {
 }
 
 void* cvec_next(const CVector* cv, const void* prev) {
-  if (prev < cv->elems) return NULL; // Check prev isn't before the first element
+  assert(cv != NULL);
+  assert(prev != NULL);
 
-  // Check to see previous is the last element by pointer arithmetic
+  // Check prev isn't before the first element
+  if (prev < cv->elems) 
+      return NULL;
+
   bool is_last_element = (int) index_of(cv, prev) == cv->nelems - 1;
   if (is_last_element) return NULL;
 
-  return (char*) prev + cv->elemsz; // Advance pointer one element
+  return (char *) prev + cv->elemsz; // Advance pointer one element
 }
 
 static void cvec_double_size(CVector* cv) {
