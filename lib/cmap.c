@@ -1,6 +1,8 @@
 /**
  * @file cmap.c
- * @brief Defines the implementation of a HashTable in C
+ * @brief Defines the implementation of a HashTable in C.
+ * This implementation uses an open-addressing scheme.
+ * There are future plans to use robin-hood scheme.
  */
 
 #include "cmap.h"
@@ -50,12 +52,12 @@ struct entry {
 // Macros/functions for setting entry status bits
 #define FREE_MASK ((uint8_t) 1)
 
-// Read the "free bit" from the status bits in the entry
+// read the "free bit" from the status bits in the entry
 static inline bool is_free(const struct entry* e) {
   return (bool) (e->status & FREE_MASK);
 }
 
-// Set the "free bit" in the status bits in the entry
+// set the "free bit" in the status bits in the entry
 static inline void set_free(struct entry *e, bool free) {
   if (free) e->status |= FREE_MASK;
   else e->status &= ~FREE_MASK;
@@ -286,6 +288,7 @@ static void erase(CMap *cm, struct entry *e) {
 
   if (cm->cleanupKey != NULL)
     cm->cleanupKey(key_of(e));
+
   if (cm->cleanupValue != NULL)
     cm->cleanupValue(value_of(cm, e));
 
