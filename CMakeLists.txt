@@ -13,13 +13,19 @@ macro(use_c99)
 endmacro(use_c99)
 use_c99()
 
+# Compiler flags for debugging, releasing, and performance benchmarking
+set(DEBUG_FLAGS "-g -O0 -Wall -Wextra -pedantic -DDEBUG")
+set(RELEASE_FLAGS "-Ofast")
+set(BENCH_FLAGS "-O3 -fno-omit-frame-pointer")
+
+# To configure for "release", then run cmake with:
 # cmake -DCMAKE_BUILD_TYPE=Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Mode: Release")
-    set(CMAKE_C_FLAGS  "-Ofast")
+    set(CMAKE_C_FLAGS  ${RELEASE_FLAGS})
 else()
     message(STATUS "Mode: Debug")
-    set(CMAKE_C_FLAGS  "-g -O0 -Wall -Wextra -pedantic -DDEBUG")
+    set(CMAKE_C_FLAGS ${DEBUG_FLAGS})
 endif()
 
 include_directories(include src lib)
@@ -68,3 +74,16 @@ set(CLIB_TEST_SRC
 
 add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
 target_link_libraries(clib-test clib)
+
+# Performance Benchmarking
+find_package(GoogleBenchmark)
+if(GoogleBenchmark_FOUND)
+    include_directories(bench ${GoogleBenchmark_INCLUDE_DIR})
+        set(CLIB_BENCH_SRC
+                bench/map-bench.c)
+        add_executable(cmap-bench ${CLIB_BENCH_SRC})
+    target_link_libraries(cmap-bench ${GoogleBenchmark_INCLUDE_DIR})
+    target_compile_options(cmap-bench ${BENCH_FLAGS})
+else()
+    message("Google Benchmark not found. Not building performance benchmarking.")
+endif()
