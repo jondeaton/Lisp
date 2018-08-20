@@ -13,8 +13,5 @@ int main (int argc unused, char* argv[] unused) {
 
   cmap_correctness_test();
 
-
-  cmap_performance_test();
-
   return 0;
 }

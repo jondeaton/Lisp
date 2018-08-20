@@ -75,8 +75,12 @@ static void erase(CMap *cm, struct entry *e);
 static void delete(CMap *cm, unsigned int start, unsigned int stop);
 static int lookup_index(const CMap *cm, const void *key);
 
-int string_cmp(const void *a, const void *b, size_t keysize unused) {
+int cmp_cstr(const void *a, const void *b, size_t keysize unused) {
   return strcmp(*(const char **) a, *(const char **) b);
+}
+
+int cmp_int(const void *intp1, const void *intp2) {
+  return *(int *) intp1 - *(int *) intp2;
 }
 
 CMap *cmap_create(size_t key_size, size_t value_size,

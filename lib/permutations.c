@@ -1,9 +1,8 @@
 #include <permutations.h>
-#include <assert.h>
 #include <limits.h>
+#include <assert.h>
 
 // static forward declarations
-static inline int div_round_up(int numer, int denom);
 static inline int find_largest_mobile(const permuter *p);
 static void reset_directions(permuter *p);
 static int compare(const permuter *p, int i, int j);
@@ -12,14 +11,16 @@ static inline void *permuter_ith(const permuter *p, int i);
 static inline void swap(permuter *p, int i, int j);
 static inline void swap_facing(permuter *p, int i);
 static inline void swap_adjacent(permuter *p, int i, enum Direction dir);
+static inline int direction_arr_len(int num_elems);
 static enum Direction ith_direction(const permuter *p, int i);
 static inline void set_ith_direction(permuter *p, int i, enum Direction direction);
 static inline void flip_ith_direction(permuter *p, int i);
 static int ith_false(const bool booleans[], size_t len, int i);
+static inline int div_round_up(int numer, int denom);
 
 /**
  * @struct permuter
- * @brief encapsules the metadata required to perform the
+ * @brief encapsulates the metadata required to perform the
  * Steinhaus–Johnson–Trotter algorithm so that the user of the
  * API doesn't need to understand the algorithm
  */
@@ -30,12 +31,12 @@ struct permuter {
   void *tmp;              // temporary element pointer for swapping elements
   CompareFn cmp;          // comparison function between elements
   int index;              // number of the current permutation
-  char directions[];      // bit-array storing directions of each element of size n
+  uint8_t directions[];   // bit-array storing directions of each element of size n
 };
 
 permuter *new_permuter(void *elems, int nelems, size_t elem_size, CompareFn cmp) {
   assert(elems != NULL);
-  permuter *p = malloc(sizeof(permuter) + div_round_up(nelems, CHAR_BIT));
+  permuter *p = malloc(sizeof(permuter) + direction_arr_len(nelems));
   if (p == NULL) return NULL;
 
   // Allocate space for temporary element used to swapping
@@ -161,7 +162,7 @@ static inline int find_largest_mobile(const permuter *p) {
 
 static void reset_directions(permuter *p) {
   assert(p != NULL);
-  for (int i = 0; i < div_round_up(p->n, CHAR_BIT); ++i)
+  for (int i = 0; i < direction_arr_len(p->n); ++i)
     p->directions[i] = 0;
 }
 
@@ -171,15 +172,14 @@ static void reset_directions(permuter *p) {
 static inline bool is_mobile(const permuter *p, int i) {
   assert(p != NULL);
   enum Direction dir = ith_direction(p, i);
-  if (dir == left) {
+  if (dir == left)
     return i > 0 && compare(p, i, i - 1) > 0;
-  } else {
+  else
     return i < (p->n - 1) && compare(p, i, i + 1) > 0;
-  }
 }
 
 /*
- * swap an element with the adjacent elemnt in the direction that it is facing
+ * swap an element with the adjacent element in the direction that it is facing
  */
 static inline void swap_facing(permuter *p, int i) {
   assert(p != NULL);
@@ -226,7 +226,10 @@ static inline void *permuter_ith(const permuter *p, int i) {
 
 static enum Direction ith_direction(const permuter *p, int i) {
   assert(p != NULL);
-  bool bit = p->directions[i / CHAR_BIT] & (1 << (i % CHAR_BIT));
+
+  uint8_t dir_bucket = p->directions[i / CHAR_BIT];
+  uint8_t mask = (uint8_t) (1 << (i % CHAR_BIT));
+  bool bit = dir_bucket & mask;
   return bit ? right : left;
 }
 
@@ -239,13 +242,16 @@ static inline void flip_ith_direction(permuter *p, int i) {
 static inline void set_ith_direction(permuter *p, int i, enum Direction direction) {
   assert(p != NULL);
   int index = i / CHAR_BIT;
-  char current = p->directions[index];
   char mask = (1 << (i % CHAR_BIT));
 
   if (direction == left)
-    p->directions[index] = current & ~mask;
+    p->directions[index] &= ~mask;
   else
-    p->directions[index] = current | mask;
+    p->directions[index] |= mask;
+}
+
+static inline int direction_arr_len(int num_elems) {
+  return div_round_up(num_elems, CHAR_BIT);
 }
 
 static inline int div_round_up(int numer, int denom) {

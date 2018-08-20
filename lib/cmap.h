@@ -1,20 +1,35 @@
 /**
- * @file hashtable.h
+ * @file cmap.h
  * @breif Defines the interface for the CMap type.
  */
 
 #ifndef _CMAP_H
 #define _CMAP_H
 
+#ifdef __cplusplus
+#include <cstddef>
+#include <cstdbool>
+extern "C" {
+#else
+
 #include <stddef.h>
 #include <stdbool.h>
+
+#endif
+
+#include <hash.h>
+
+// macro for defining map of simple types that need no cleanup (i.e. int -> int)
+#define simple_map(key_size, value_size) cmap_create(key_size, value_size, roberts_hash, \
+                                                      memcmp, NULL, NULL, 0)
 
 typedef void (*CleanupFn)(void *addr);
 typedef unsigned int (*CMapHashFn)(const void *key, size_t keysize);
 typedef int (*CMapCmpFn)(const void *keyA, const void *keyB, size_t keysize);
 typedef struct CMapImplementation CMap;
 
-int string_cmp(const void *a, const void *b, size_t keysize);
+int cmp_cstr(const void *a, const void *b, size_t keysize);
+int cmp_int(const void *intp1, const void *intp2);
 
 /**
  * Create a HashTable in a dynamically allocated region of memory.
@@ -103,6 +118,10 @@ const void *cmap_first(const CMap *cm);
  * @param prevkey The previous key
  * @return pointer to the next key, if there is one.
  */
-const void * cmap_next(const CMap *cm, const void *prevkey);
+const void *cmap_next(const CMap *cm, const void *prevkey);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _CMAP_H

@@ -79,12 +79,16 @@ You can also run a Lisp script by adding it as an argument.
     - Ubuntu: `sudo apt-get install libreadline-dev`
     - MacOS: `brew install readline`
 
-## Testing
-If you would like to check out my handiwork, a testing framework for the interpreter is also included
-and can be run with the `test-lisp` executable.
+## Testing and Benchmarking
+If you would like to check out my handiwork, a testing framework for the interpreter
+is also included and can be run with the `test-lisp` executable.
+
+For performance benchmarking, we use the
+[Google Benchmark library](https://github.com/google/benchmark "Google Benchmark").
+To use this part of the repository, you will need a C++ compiler (as this library
+is written in C++) and have installed the library as instructed.
 
 ## Design
-
 To understand in greater detail the design choices which were made in the creation of this interpreter
 you may refer to `design.md`.
 
@@ -135,10 +139,10 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Y (U NO WORK) combinator tests~~
 - ~~Fix the way that errors are reported (no `return LOG_ERROR(...)`)~~
 - ~~Use flexible array member in lisp objects~~
+- Performance benchmarking
 - Pass full interpreter to primitives
 - Lexical scoping
 - Allow circular references by keeping track of freed pointers
-- Write performance bench-marker
 - Use a single truth and nil tuple
 - `defmacro`
 - Avoid deleting large data structures during set with over-write

@@ -17,6 +17,14 @@
  *  }
  *  permuter_dispose(p);
  *
+ * alternatively, there is a nice macro that will accomplish the same thing with
+ *
+ * permuter *p = new_permuter(arr, 4, sizeof(int), cmp_int);
+ * void *permutation;
+ * for_permutations(p, permutation) {
+ *    // use permutation
+ * }
+ *
  *  @example simple permutation of C-strings
  *
  * permuter *p = new_cstring_permuter("ABCDEFG");
@@ -33,14 +41,29 @@
 #ifndef _PERMUTATIONS_H
 #define _PERMUTATIONS_H
 
+#ifdef __cplusplus
+
+#include <cstdlib>
+#include <cstdbool>
+#include <cstring>
+extern "C" {
+
+#else
+
 #include "stdlib.h"
 #include "stdbool.h"
 #include "string.h"
 
+#endif
+
+#define for_permutations(permuter, permutation) for((permutation) = get_permutation(permuter); \
+                                                    (permutation) != NULL; \
+                                                    (permutation) = next_permutation(permuter))
+
 /**
  * @enum Direction
  * @brief For indicating which direction an integer is
- * facing in the Steinhaus–Johnson–Trotter algorithm
+ * "facing" in the Steinhaus–Johnson–Trotter algorithm
  */
 enum Direction { left = 0, right = 1 };
 
@@ -156,7 +179,7 @@ int cmp_char(const void *pchar1, const void *pchar2);
  * @param n number between 0 and 2^k - 1 (inclusive) denoting which combination
  * of the elements to copy into the combinations buffer
  * @param end pointer to an element that will be copied at the end of the combinations
- * array to demark the end of the combination. For instance if you are taking
+ * array to indicate the end of the combination. For instance if you are taking
  * combinations of character arrays represented as C-strings then pass a pointer
  * to a null-terminator so that the resulting combination is a valid C-string.
  * @param combination buffer to store the n'th combination. Must be large enough to hold
@@ -174,8 +197,15 @@ void nth_combination(const void *elements, size_t elem_size, int n,
 int factorial(int n);
 
 #ifdef DEBUG
+
 bool permutation_correctness_test();
+
 bool combination_correctness_test();
+
 #endif // DEBUG
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif // _PERMUTATIONS_H

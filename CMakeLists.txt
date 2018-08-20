@@ -13,10 +13,12 @@ macro(use_c99)
 endmacro(use_c99)
 use_c99()
 
+find_library(readline REQUIRED)
+
 # Compiler flags for debugging, releasing, and performance benchmarking
 set(DEBUG_FLAGS "-g -O0 -Wall -Wextra -pedantic -DDEBUG")
-set(RELEASE_FLAGS "-Ofast")
-set(BENCH_FLAGS "-O3 -fno-omit-frame-pointer")
+set(RELEASE_FLAGS -Ofast -DNDEBUG)
+set(BENCH_FLAGS -Ofast -fno-omit-frame-pointer -std=c++17 -DNDEBUG)
 
 # To configure for "release", then run cmake with:
 # cmake -DCMAKE_BUILD_TYPE=Release
@@ -34,9 +36,10 @@ set(CLIB_SRC
         lib/clist.h                 lib/clist.c
         lib/cmap.h                  lib/cmap.c
         lib/hash.h                  lib/hash.c
-        lib/murmur3.h               lib/murmur3.c)
+        lib/murmur3.h               lib/murmur3.c
+        lib/permutations.h          lib/permutations.c)
 
-set(COMMON_SRC
+set(LISP_SRC
         include/lisp-objects.h      src/lisp-objects.c
         include/evaluator.h         src/evaluator.c
         include/primitives.h        src/primitives.c
@@ -50,10 +53,8 @@ set(COMMON_SRC
         include/repl.h              src/repl.c
         include/stack-trace.h       src/stack-trace.c)
 
-set(LISP_SRC ${COMMON_SRC} src/main.c)
-
 add_library(clib STATIC ${CLIB_SRC})
-add_executable(lisp ${LISP_SRC})
+add_executable(lisp ${LISP_SRC} src/main.c)
 target_link_libraries(lisp readline clib)
 
 include_directories(test)
@@ -61,29 +62,33 @@ set(TEST_SRC
         test/eval-test.h        test/eval-test.c
         test/parse-test.h       test/parse-test.c
         test/test.h             test/test.c
-        test/main-test.c)
+        test/main-test.c
+        test/alphabet.h)
 
-set(TEST_SRC ${COMMON_SRC} ${TEST_SRC})
+set(TEST_SRC ${LISP_SRC} ${TEST_SRC})
 add_executable(test-lisp ${TEST_SRC})
 target_link_libraries(test-lisp readline clib)
 
 set(CLIB_TEST_SRC
         test/clib-test.c
-        test/cmap-test.h        test/cmap-test.c
-        test/permutations.h     test/permutations.c)
+        test/cmap-test.h        test/cmap-test.c)
 
 add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
 target_link_libraries(clib-test clib)
 
 # Performance Benchmarking
-find_package(GoogleBenchmark)
-if(GoogleBenchmark_FOUND)
-    include_directories(bench ${GoogleBenchmark_INCLUDE_DIR})
-        set(CLIB_BENCH_SRC
-                bench/map-bench.c)
-        add_executable(cmap-bench ${CLIB_BENCH_SRC})
-    target_link_libraries(cmap-bench ${GoogleBenchmark_INCLUDE_DIR})
-    target_compile_options(cmap-bench ${BENCH_FLAGS})
+# Make sure to install Google Benchmark
+find_package(benchmark)
+if(benchmark_FOUND)
+    include_directories(bench lib ${benchmark_INCLUDE_DIR})
+
+    set(CLIB_BENCH_SRC
+            bench/clib-bench.cpp)
+
+    add_executable(cmap-bench ${CLIB_BENCH_SRC})
+    target_link_libraries(cmap-bench benchmark clib)
+    target_compile_options(cmap-bench PUBLIC ${BENCH_FLAGS})
+
 else()
-    message("Google Benchmark not found. Not building performance benchmarking.")
+    message(WARNING "Google Benchmark not found. Not building performance benchmarking.")
 endif()
