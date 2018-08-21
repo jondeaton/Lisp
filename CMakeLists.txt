@@ -19,6 +19,7 @@ find_library(readline REQUIRED)
 set(DEBUG_FLAGS "-g -O0 -Wall -Wextra -pedantic -DDEBUG")
 set(RELEASE_FLAGS -Ofast -DNDEBUG)
 set(BENCH_FLAGS -Ofast -fno-omit-frame-pointer -std=c++17 -DNDEBUG)
+set(TEST_FLAGS -std=c++17 -g -O0 -Wall -Wextra -pedantic -DDEBUG)
 
 # To configure for "release", then run cmake with:
 # cmake -DCMAKE_BUILD_TYPE=Release
@@ -65,7 +66,7 @@ set(TEST_SRC
         test/main-test.c
         test/alphabet.h)
 
-set(TEST_SRC ${LISP_SRC} ${TEST_SRC})
+set(TEST_SRC ${LISP_SRC} ${TEST_SRC} test/permutation-test.hpp)
 add_executable(test-lisp ${TEST_SRC})
 target_link_libraries(test-lisp readline clib)
 
@@ -75,10 +76,12 @@ if (gtest)
 
     set(CLIB_TEST_SRC
             test/clib-test.cpp
+            test/permutation-test.hpp
             test/cmap-test.hpp)
 
     add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
-    target_link_libraries(clib-test clib)
+    target_link_libraries(clib-test clib gtest)
+    target_compile_options(clib-test PUBLIC ${TEST_FLAGS})
 else()
     message("Google Test not found")
 endif()
@@ -96,7 +99,6 @@ if(benchmark_FOUND)
     add_executable(cmap-bench ${CLIB_BENCH_SRC})
     target_link_libraries(cmap-bench benchmark clib pthread)
     target_compile_options(cmap-bench PUBLIC ${BENCH_FLAGS})
-
 else()
     message(WARNING "Google Benchmark not found. Not building performance benchmarking.")
 endif()

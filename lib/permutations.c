@@ -299,57 +299,7 @@ static int ith_false(const bool booleans[], size_t len, int i) {
 
 bool permutation_correctness_test() {
 
-  permuter *p = new_cstring_permuter("123");
-  if (p == NULL) return false;
 
-  const char* correct_permutation[] = {"123", "132", "312",
-                                       "321", "231", "213"};
-
-  for (int repeat = 0; repeat < 3; repeat++) {
-    for (const char *str = get_permutation(p); str != NULL; str = next_permutation(p)) {
-      int i = permutation_index(p);
-      if (strcmp(str, correct_permutation[i]) != 0) {
-        cstring_permuter_dispose(p);
-        return false;
-      }
-    }
-
-    if (next_permutation(p) != NULL) {
-      cstring_permuter_dispose(p);
-      return false;
-    }
-    reset_permuter(p);
-  }
-  cstring_permuter_dispose(p);
-
-  // Make sure that you generate 10! permutations of this string
-
-  const char *strs[] = {"0", "01", "012", "01234", "012345", "0123456", "01234567" , NULL};
-
-  for (int i = 0; strs[i] != NULL; i++) {
-    p = new_cstring_permuter(strs[i]);
-    if (p == NULL) return false;
-
-    // rinse and repeat three times
-    for (int repeat = 0; repeat < 3; repeat++) {
-      int n_perms = 0;
-      for (const char *str = get_permutation(p); str != NULL; str = next_permutation(p)) {
-        n_perms += 1;
-        if ((int) strlen(str) != permuter_size(p)) {
-          cstring_permuter_dispose(p);
-          return false;
-        }
-      }
-
-      if (n_perms != factorial(permuter_size(p))){
-        cstring_permuter_dispose(p);
-        return false;
-      }
-      reset_permuter(p);
-    }
-
-    cstring_permuter_dispose(p);
-  }
 
   return true;
 }

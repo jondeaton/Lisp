@@ -1,15 +1,13 @@
+#include <gtest/gtest.h>
+
+#include <permutation-test.hpp>
 #include <cmap-test.hpp>
-#include <cstdio>
 
-#define unused __attribute__ ((unused))
+namespace {
 
-int main (int argc unused, char* argv[] unused) {
+}
 
-#if defined(DEBUG)
-  printf("Testing permutations... ");
-  bool permutations_working = permutation_correctness_test();
-  printf("%s\n", permutations_working ? "success" : "failure");
-#endif
-
-  return 0;
+int main(int argc, char *argv[]) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
