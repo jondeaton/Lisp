@@ -153,7 +153,7 @@ namespace {
 
   // Compare two void * pointers to the same type of value
   template <typename T>
-  static inline int cmp(const void *Tptr1, const void *Tptr2) {
+  inline int cmp(const void *Tptr1, const void *Tptr2) {
     assert(Tptr1 != NULL);
     assert(Tptr2 != NULL);
     auto t1 = static_cast<const T*>(Tptr1);
@@ -163,18 +163,31 @@ namespace {
 
   // Compare two arrays of the same type of elements
   template <typename T, int N>
-  static inline bool arr_eq(const T arr1[N], const T arr2[N]) {
+  inline bool arr_eq(const T arr1[N], const T arr2[N]) {
     for (int i = 0; i < N; i++)
       if (arr1[i] > arr2[i]) return false;
     return true;
   }
+
+  // Did I create this entire permutation library and test suite
+  // just to fabricate a use-case for the cannonical "factorial"
+  // function using template metaprogramming? You'll never know...
+  template <int N>
+  struct Factorial {
+    enum { value = N * Factorial<N - 1>::value };
+  };
+
+  template <>
+  struct Factorial<0> {
+    enum { value = 1 };
+  };
 
   // Tests that permutations of integers will work correctly
   typedef PermuterTest<int> IntegerPermuterTest; // gotta do this because macros
   TEST_F(IntegerPermuterTest, Three) {
     const int arr[] = {1, 2, 3};
     SetUp(arr, 3, cmp<int>);
-    const int correct_permutations[6][3] =
+    const int correct_permutations[Factorial<3>::value][3] =
       {
         {1, 2, 3}, {1, 3, 2}, {3, 1, 2},
         {3, 2, 1}, {2, 3, 1}, {2, 1, 3}
