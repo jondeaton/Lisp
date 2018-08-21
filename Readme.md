@@ -1,12 +1,20 @@
 # Lisp Interpreter from C
 
 This repository contains a Lisp interpreter written from scratch in pure C (c99).
-The interpreter can be used to run Lisp programs saved in files, or from an interactive shell.
-This Lisp interpreter showcases many features including
+The interpreter can be used to run Lisp programs saved in files, or from an
+interactive shell. This Lisp interpreter showcases many features including
 variable and function declaration, arithmetic operations,
-first class/lambda functions, closures, recursive functions,
+first class/lambda functions, closures, currying, recursive functions,
 a mutable global interpreter environment, dynamic scoping, memory allocation
 and deterministic memory management without garbage collection.
+
+Although the interpreter and all of it's libraries are written in C, performance
+benchmarking and some unit testing are done using
+[Google Benchmark](https://github.com/google/benchmark "Google Benchmark")
+and
+[Google Test](https://github.com/google/googletest "Google Test"),
+respectively, which are both C++ libraries. If you want to build
+the performance and unit testing binaries, you will need a C++ compiler.
 
 #### Example
 
@@ -32,7 +40,7 @@ This interpreter also supports the creation of closures from lambda functions wi
     42
 
 In this example the `make-adder` function returns a closure with the value of `n` captured within the closure.
-Because of this, recursive functions may declared, such as this recursive definition of the factorial function:
+Recursive functions may declared, such as this recursive definition of the factorial function:
 
     > (set 'factorial 
         (lambda (n)

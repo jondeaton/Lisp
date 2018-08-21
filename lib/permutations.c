@@ -2,6 +2,12 @@
 #include <limits.h>
 #include <assert.h>
 
+#ifdef __cplusplus
+#include <cstdint>
+#else
+#include <stdint.h>
+#endif
+
 // static forward declarations
 static inline int find_largest_mobile(const permuter *p);
 static void reset_directions(permuter *p);

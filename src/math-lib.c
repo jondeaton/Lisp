@@ -4,7 +4,7 @@
  * @details Full disclosure, this file is honestly not that great.
  */
 
-#include <math.h>
+#include <math-lib.h>
 #include <memory-manager.h>
 #include <parser.h>
 #include <list.h>

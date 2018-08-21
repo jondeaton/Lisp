@@ -7,7 +7,7 @@
 #include <environment.h>
 #include <lisp-objects.h>
 #include <list.h>
-#include <math.h>
+#include <math-lib.h>
 #include <parser.h>
 #include <string.h>
 

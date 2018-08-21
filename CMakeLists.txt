@@ -49,7 +49,7 @@ set(LISP_SRC
         include/list.h              src/list.c
         include/memory-manager.h    src/memory-manager.c
         include/environment.h       src/environment.c
-        include/math.h              src/math.c
+        include/math-lib.h          src/math-lib.c
         include/repl.h              src/repl.c
         include/stack-trace.h       src/stack-trace.c)
 
@@ -69,12 +69,20 @@ set(TEST_SRC ${LISP_SRC} ${TEST_SRC})
 add_executable(test-lisp ${TEST_SRC})
 target_link_libraries(test-lisp readline clib)
 
-set(CLIB_TEST_SRC
-        test/clib-test.c
-        test/cmap-test.h        test/cmap-test.c)
+find_library(gtest gtest)
+if (gtest)
+    include_directories(test ${gtest_INCLUDE_DIR})
 
-add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
-target_link_libraries(clib-test clib)
+    set(CLIB_TEST_SRC
+            test/clib-test.cpp
+            test/cmap-test.hpp)
+
+    add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
+    target_link_libraries(clib-test clib)
+else()
+    message("Google Test not found")
+endif()
+
 
 # Performance Benchmarking
 # Make sure to install Google Benchmark
@@ -86,7 +94,7 @@ if(benchmark_FOUND)
             bench/clib-bench.cpp)
 
     add_executable(cmap-bench ${CLIB_BENCH_SRC})
-    target_link_libraries(cmap-bench benchmark clib)
+    target_link_libraries(cmap-bench benchmark clib pthread)
     target_compile_options(cmap-bench PUBLIC ${BENCH_FLAGS})
 
 else()

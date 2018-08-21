@@ -1,4 +1,4 @@
-#include <cmap-test.h>
+#include <cmap-test.hpp>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
