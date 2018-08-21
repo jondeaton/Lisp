@@ -196,14 +196,6 @@ void nth_combination(const void *elements, size_t elem_size, int n,
  */
 int factorial(int n);
 
-#ifdef DEBUG
-
-bool permutation_correctness_test();
-
-bool combination_correctness_test();
-
-#endif // DEBUG
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus

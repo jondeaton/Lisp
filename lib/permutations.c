@@ -296,21 +296,3 @@ static int ith_false(const bool booleans[], size_t len, int i) {
   }
   return -1;
 }
-
-#if defined(DEBUG)
-
-#include "stdio.h"
-
-bool permutation_correctness_test() {
-
-
-
-  return true;
-}
-
-bool combination_correctness_test() {
-  // todo
-  return true;
-}
-
-#endif // DEBUG
