@@ -213,6 +213,10 @@ static inline void swap(permuter *p, int i, int j) {
 
   // swap elements
   memcpy(p->tmp, permuter_ith(p, i), p->elem_size);
+
+  // NOTE: if you get a segmentation fault here, it's probably
+  // because you passed an array of elements in read-only memory.
+  // i.e. you probably passed an ARRAY/STRING LITERAL
   memcpy(permuter_ith(p, i), permuter_ith(p, j), p->elem_size);
   memcpy(permuter_ith(p, j), p->tmp, p->elem_size);
 }

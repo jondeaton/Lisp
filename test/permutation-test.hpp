@@ -4,27 +4,40 @@
 #include <gtest/gtest.h>
 #include <permutations.h>
 
+/**
+ * @class PermuterTest
+ * @brief sets-up and tears down a permuter object. Also copies the elements
+ * passed in so that they can be mutated in writable memory
+ * @tparam T the type of element in the array of elements to permute
+ */
 template <class T>
 class PermuterTest : public testing::Test {
 protected:
   PermuterTest() : p(nullptr) { }
   using Test::SetUp;
   void SetUp(const T arr[], int nelems, CompareFn cmp) {
-    _array = new T[nelems];
-    memcpy(_array, arr, nelems * sizeof(T));
-    p = new_permuter(_array, nelems, sizeof(T), cmp);
+    // need to make a copy of the passed array because we want
+    // to use array-literals in read-only memory during testing
+    _arr_cpy = new T[nelems];
+    memcpy(_arr_cpy, arr, nelems * sizeof(T));
+    p = new_permuter(_arr_cpy, nelems, sizeof(T), cmp);
     ASSERT_FALSE(p == nullptr);
   }
 
   void TearDown() {
-    delete[] _array;
+    delete[] _arr_cpy;
     permuter_dispose(p);
   }
 
   permuter *p;
-  T *_array;
+  T *_arr_cpy;
 };
 
+/**
+ * @class StringPermuterTest
+ * @brief sets up and tears down a string permuter object
+ * for testing permutations of C-strings
+ */
 class StringPermuterTest : public testing::Test {
 protected:
   StringPermuterTest() : p(nullptr) { }
@@ -138,9 +151,11 @@ namespace {
     }
   }
 
-  // Compare void * pointers to the same type of value
+  // Compare two void * pointers to the same type of value
   template <typename T>
   static inline int cmp(const void *Tptr1, const void *Tptr2) {
+    assert(Tptr1 != NULL);
+    assert(Tptr2 != NULL);
     auto t1 = static_cast<const T*>(Tptr1);
     auto t2 = static_cast<const T*>(Tptr2);
     return *t1 - *t2;
@@ -154,7 +169,8 @@ namespace {
     return true;
   }
 
-  typedef PermuterTest<int> IntegerPermuterTest;
+  // Tests that permutations of integers will work correctly
+  typedef PermuterTest<int> IntegerPermuterTest; // gotta do this because macros
   TEST_F(IntegerPermuterTest, Three) {
     const int arr[] = {1, 2, 3};
     SetUp(arr, 3, cmp<int>);
@@ -168,7 +184,7 @@ namespace {
       void *permutation;
       int index = 0;
       for_permutations(p, permutation)  {
-        ASSERT_TRUE(permutation != NULL);
+        ASSERT_TRUE(permutation != nullptr);
 
         int i = permutation_index(p);
         ASSERT_GE(i, 0);
