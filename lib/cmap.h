@@ -24,7 +24,6 @@ extern "C" {
                                                       memcmp, NULL, NULL, 0)
 
 typedef void (*CleanupFn)(void *addr);
-typedef unsigned int (*CMapHashFn)(const void *key, size_t keysize);
 typedef int (*CMapCmpFn)(const void *keyA, const void *keyB, size_t keysize);
 typedef struct CMapImplementation CMap;
 

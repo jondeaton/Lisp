@@ -4,57 +4,58 @@
 #include <gtest/gtest.h>
 #include <permutations.h>
 
-/**
- * @class PermuterTest
- * @brief sets-up and tears down a permuter object. Also copies the elements
- * passed in so that they can be mutated in writable memory
- * @tparam T the type of element in the array of elements to permute
- */
-template <class T>
-class PermuterTest : public testing::Test {
-protected:
-  PermuterTest() : p(nullptr) { }
-  using Test::SetUp;
-  void SetUp(const T arr[], int nelems, CompareFn cmp) {
-    // need to make a copy of the passed array because we want
-    // to use array-literals in read-only memory during testing
-    _arr_cpy = new T[nelems];
-    memcpy(_arr_cpy, arr, nelems * sizeof(T));
-    p = new_permuter(_arr_cpy, nelems, sizeof(T), cmp);
-    ASSERT_FALSE(p == nullptr);
-  }
-
-  void TearDown() {
-    delete[] _arr_cpy;
-    permuter_dispose(p);
-  }
-
-  permuter *p;
-  T *_arr_cpy;
-};
-
-/**
- * @class StringPermuterTest
- * @brief sets up and tears down a string permuter object
- * for testing permutations of C-strings
- */
-class StringPermuterTest : public testing::Test {
-protected:
-  StringPermuterTest() : p(nullptr) { }
-  using Test::SetUp;
-  void SetUp(const char *str) {
-    p = new_cstring_permuter(str);
-    ASSERT_FALSE(p == nullptr);
-  }
-
-   void TearDown() {
-    cstring_permuter_dispose(p);
-  }
-
-  permuter *p;
-};
-
 namespace {
+
+  /**
+   * @class PermuterTest
+   * @brief sets-up and tears down a permuter object. Also copies the elements
+   * passed in so that they can be mutated in writable memory
+   * @tparam T the type of element in the array of elements to permute
+   */
+  template <class T>
+  class PermuterTest : public testing::Test {
+  protected:
+    PermuterTest() : p(nullptr) { }
+    using Test::SetUp;
+    void SetUp(const T arr[], int nelems, CompareFn cmp) {
+      // need to make a copy of the passed array because we want
+      // to use array-literals in read-only memory during testing
+      _arr_cpy = new T[nelems];
+      memcpy(_arr_cpy, arr, nelems * sizeof(T));
+      p = new_permuter(_arr_cpy, nelems, sizeof(T), cmp);
+      ASSERT_FALSE(p == nullptr);
+    }
+
+    void TearDown() {
+      delete[] _arr_cpy;
+      permuter_dispose(p);
+    }
+
+    permuter *p;
+    T *_arr_cpy;
+  };
+
+  /**
+   * @class StringPermuterTest
+   * @brief sets up and tears down a string permuter object
+   * for testing permutations of C-strings
+   */
+  class StringPermuterTest : public testing::Test {
+  protected:
+    StringPermuterTest() : p(nullptr) { }
+    using Test::SetUp;
+    void SetUp(const char *str) {
+      p = new_cstring_permuter(str);
+      ASSERT_FALSE(p == nullptr);
+    }
+
+    void TearDown() {
+      cstring_permuter_dispose(p);
+    }
+
+    permuter *p;
+  };
+
 
   // Tests factorial of negative numbers.
   TEST(FactorialTest, Negative) {
