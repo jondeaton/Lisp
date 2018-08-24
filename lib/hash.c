@@ -15,7 +15,7 @@ unsigned int string_hash(const void *key, size_t keysize) {
   (void) keysize;
   const unsigned int MULTIPLIER = 2630849305;
   unsigned int hashcode = 0;
-  const char *s = (char const *) key;
+  const char *s = *(char const **) key;
   for (int i = 0; s[i] != '\0'; i++)
     hashcode = hashcode * MULTIPLIER + s[i];
   return hashcode;
