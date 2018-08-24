@@ -25,7 +25,7 @@ namespace {
   }
 
   /**
-   * Function that hashes everything to one of two values!
+   * Function that "hashes" everything to one of two values!
    * Again, very helpful for testing hash collision behavior, especially with open addressing
    * @tparam T The type of the key (make sure it supports GTE operator)
    * @tparam N first value that might be hashed to

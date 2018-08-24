@@ -94,7 +94,7 @@ if(benchmark_FOUND)
     include_directories(bench lib ${benchmark_INCLUDE_DIR})
 
     set(CLIB_BENCH_SRC
-            bench/clib-bench.cpp)
+            bench/clib-bench.cpp bench/cmap-bench.hpp)
 
     add_executable(cmap-bench ${CLIB_BENCH_SRC})
     target_link_libraries(cmap-bench benchmark clib pthread)

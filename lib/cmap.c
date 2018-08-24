@@ -301,7 +301,7 @@ static void erase(CMap *cm, struct entry *e) {
 
 static void delete(CMap *cm, unsigned int start, unsigned int stop) {
 
-  // The entry to delete
+  // the entry to delete
   struct entry *entry = get_entry(cm, start);
 
   unsigned int j = start;
