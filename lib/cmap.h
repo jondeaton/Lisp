@@ -18,17 +18,11 @@ extern "C" {
 #endif
 
 #include <hash.h>
+#include <ops.h>
 
 // macro for defining map of simple types that need no cleanup (i.e. int -> int)
 #define simple_map(key_size, value_size) cmap_create(key_size, value_size, roberts_hash, \
                                                       memcmp, NULL, NULL, 0)
-
-typedef void (*CleanupFn)(void *addr);
-typedef int (*CMapCmpFn)(const void *keyA, const void *keyB, size_t keysize);
-typedef struct CMapImplementation CMap;
-
-int cmp_cstr(const void *a, const void *b, size_t keysize);
-int cmp_int(const void *intp1, const void *intp2);
 
 /**
  * Create a HashTable in a dynamically allocated region of memory.
