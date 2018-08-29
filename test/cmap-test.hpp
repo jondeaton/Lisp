@@ -6,8 +6,7 @@
 
 #include <hash.h>
 #include <permutations.h>
-
-#define UNUSED __attribute__ ((unused))
+#include <ops.h>
 
 namespace {
 
