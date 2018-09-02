@@ -34,6 +34,8 @@ static struct Node *insert_at(CSet *set, struct Node *node, const void *data);
 static struct Node *delete_at(CSet *set, struct Node *node, const void *data);
 static struct Node *balance(struct Node *node);
 static struct Node *rotate(struct Node *root, enum Direction dir);
+static inline void dispose_recursive(const CSet *set, struct Node *node);
+static inline void dispose_node(const CSet *set, struct Node *node);
 static inline void assign_child(struct Node *node, struct Node *child, enum Direction dir);
 static int get_balance(const struct Node * node);
 static inline struct Node **child_ref(const struct Node *node, enum Direction dir);
@@ -92,6 +94,13 @@ void set_remove(CSet *set, const void *data) {
   assert(data != NULL);
   delete_at(set, set->root, data);
 }
+
+void set_dispose(CSet *set) {
+  assert(set != NULL);
+  dispose_recursive(set, set->root);
+  free(set);
+}
+
 
 static struct Node *new_node(const void *data, size_t data_size) {
   assert(data != NULL);
@@ -193,6 +202,22 @@ static struct Node *rotate(struct Node *root, enum Direction dir) {
   update_height(root);
   update_height(new_root);
   return new_root;
+}
+
+static inline void dispose_recursive(const CSet *set, struct Node *node) {
+  assert(set != NULL);
+  if (node == NULL) return;
+  dispose_recursive(set, node->left);
+  dispose_recursive(set, node->right);
+  dispose_node(set, node);
+}
+
+static inline void dispose_node(const CSet *set, struct Node *node) {
+  assert(set != NULL);
+  assert(node != NULL);
+  if (set->cleanup != NULL)
+    set->cleanup(&node->data);
+  free(node);
 }
 
 static inline void assign_child(struct Node *node, struct Node *child, enum Direction dir) {
