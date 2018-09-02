@@ -77,7 +77,7 @@ if (gtest)
     set(CLIB_TEST_SRC
             test/clib-test.cpp
             test/permutation-test.hpp
-            test/cmap-test.hpp)
+            test/cmap-test.hpp test/cset-test.hpp)
 
     add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
     target_link_libraries(clib-test clib gtest)

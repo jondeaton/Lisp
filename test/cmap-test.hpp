@@ -47,7 +47,7 @@ namespace {
     using Test::SetUp;
     void SetUp(CMapHashFn hash, CMapCmpFn cmp, unsigned int capacity_hint) {
       cm = cmap_create(sizeof(K), sizeof(V), hash, cmp, nullptr, nullptr, capacity_hint);
-      ASSERT_FALSE(cm == nullptr);
+      ASSERT_NE(cm, nullptr);
     }
     void TearDown() { cmap_dispose(cm); }
     CMap *cm;
