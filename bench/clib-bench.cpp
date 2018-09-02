@@ -15,7 +15,7 @@ namespace {
     for (int i = 0; i < state.range(0); i++)
       arr[i] = i;
 
-    permuter *p = new_permuter(arr, 4, sizeof(int), cmp_int);
+    permuter *p = new_permuter(arr, 4, 0);
     for (auto _ : state) {
       void *permutation = next_permutation(p);
       benchmark::DoNotOptimize(permutation);
@@ -32,7 +32,7 @@ namespace {
     for (int i = 0; i < state.range(0); i++)
       arr[i] = i;
 
-    permuter *p = new_permuter(arr, 4, sizeof(int), cmp_int);
+    permuter *p = new_permuter(arr, 4, 0);
     for (auto _ : state) {
       void *permutation;
       reset_permuter(p);
@@ -52,7 +52,7 @@ namespace {
     for (int i = 0; i < state.range(0); i++)
       arr[i] = -i;
 
-    permuter *p = new_permuter(arr, 4, sizeof(int), cmp_int);
+    permuter *p = new_permuter(arr, 4, 0);
 
     for (auto _ : state) {
       memcmp(get_permutation(p), arr, sizeof(int) * state.range(0));

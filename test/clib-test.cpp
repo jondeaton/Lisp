@@ -2,6 +2,7 @@
 
 #include <permutation-test.hpp>
 #include <cmap-test.hpp>
+#include <cset-test.hpp>
 
 namespace {
 

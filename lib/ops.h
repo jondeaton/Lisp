@@ -22,7 +22,7 @@ typedef struct CMapImplementation CMap;
 
 int cmp_cstr(const void *a, const void *b, size_t keysize UNUSED);
 
-int cmp_int(const void *intp1, const void *intp2);
+int cmp_int(const void *intp1, const void *intp2, size_t keysize UNUSED);
 
 #ifdef __cplusplus
 }
