@@ -30,11 +30,11 @@ static const struct Node *lookup(const CSet *set, const struct Node *node, const
 static inline void update_height(struct Node *node);
 static inline struct Node *child(const struct Node *node, enum Direction dir);
 static struct Node *insert_at(CSet *set, struct Node *node, const void *data);
-static struct Node *delete_at(CSet *set, struct Node *node, const void *data);
+static struct Node *remove_at(CSet *set, struct Node *node, const void *data, struct Node **removed);
 static struct Node *balance(struct Node *node);
 static struct Node *rotate(struct Node *root, enum Direction dir);
 static inline void dispose_node(const CSet *set, struct Node *node, bool recursive);
-static struct Node *delete_node(CSet *set, struct Node *node);
+static struct Node *remove_node(CSet *set, struct Node *node);
 static struct Node *extrema(struct Node *node, enum Direction dir);
 static inline void assign_child(struct Node *node, struct Node *new_child, enum Direction dir);
 static int get_balance(const struct Node * node);
@@ -96,7 +96,10 @@ int set_rank(CSet *set, const void *data) {
 void set_remove(CSet *set, const void *data) {
   assert(set != NULL);
   assert(data != NULL);
-  set->root = delete_at(set, set->root, data);
+  struct Node *removed;
+  set->root = remove_at(set, set->root, data, &removed);
+  if (removed != NULL)
+    dispose_node(set, removed, false);
 }
 
 void set_clear(CSet *set) {
@@ -150,53 +153,43 @@ static struct Node *insert_at(CSet *set, struct Node *node, const void *data) {
   return balance(node);
 }
 
-static struct Node *delete_at(CSet *set, struct Node *node, const void *data) {
+static struct Node *remove_at(CSet *set, struct Node *node, const void *data, struct Node **removed) {
   assert(set != NULL);
   assert(data != NULL);
-  if (node == NULL) return NULL; // not found in set
+  if (node == NULL) {
+    if (removed != NULL) *removed = NULL;
+    return NULL; // not found in set
+  }
 
   int comparison = set->cmp(node->data, data, set->data_size);
-  if (comparison == 0) return delete_node(set, node);
+  if (comparison == 0) {
+    if (removed != NULL) *removed = node;
+    return remove_node(set, node);
+  }
 
   enum Direction dir = comparison > 0 ? right : left;
-  struct Node *new_child = delete_at(set, child(node, dir), data);
+  struct Node *new_child = remove_at(set, child(node, dir), data, removed);
   assign_child(node, new_child, dir);
   return balance(node);
 }
 
-static struct Node *delete_node(CSet *set, struct Node *node) {
+static struct Node *remove_node(CSet *set, struct Node *node) {
   assert(set != NULL);
   assert(node != NULL);
 
-  if (node->left == NULL && node->right == NULL) {
-    dispose_node(set, node, false);
-    return NULL;
-  }
+  if (node->left == NULL) return node->right;
+  if (node->right == NULL) return node->left;
+
+  // take the highest node in the left sub-tree and make that the new root of this subtree
+  struct Node *next = extrema(node->left, right);
 
   struct Node *new_root;
-  if (node->left == NULL) {
-    new_root = node->right;
-    dispose_node(set, node, false);
-    return new_root;
-  }
+  struct Node *new_left = remove_at(set, node->left, next->data, &new_root);
 
-  if (node->right == NULL) {
-    new_root = node->left;
-    dispose_node(set, node, false);
-    return new_root;
-  }
+  assign_child(new_root, node->right, right);
+  assign_child(new_root, new_left, left);
 
-  if (set->cleanup != NULL)
-    set->cleanup(&node->data);
-  struct Node *next = extrema(node->left, right);
-  memcpy(&node->data, &next->data, set->data_size);
-
-  CleanupFn cleanup = set->cleanup;
-  set->cleanup = NULL;
-  assign_child(node, delete_at(set, node->left, next->data), left);
-  set->cleanup = cleanup;
-
-  return balance(node);
+  return balance(new_root);
 }
 
 static struct Node *balance(struct Node *node) {

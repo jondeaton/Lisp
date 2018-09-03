@@ -160,6 +160,7 @@ namespace {
       }
     }
   }
+  
 
   TEST_F(SetTestInt, Clear) {
     SetUp();
