@@ -38,7 +38,9 @@ set(CLIB_SRC
         lib/cmap.h                  lib/cmap.c
         lib/hash.h                  lib/hash.c
         lib/murmur3.h               lib/murmur3.c
-        lib/permutations.h          lib/permutations.c lib/cset.h lib/ops.h lib/cset.c lib/ops.c)
+        lib/permutations.h          lib/permutations.c
+        lib/cset.h                  lib/cset.c
+        lib/ops.h                   lib/ops.c)
 
 set(LISP_SRC
         include/lisp-objects.h      src/lisp-objects.c
