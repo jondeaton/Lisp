@@ -19,7 +19,6 @@ extern "C" {
 typedef struct CSetImplementation CSet;
 
 CSet *new_set(size_t data_size, CMapCmpFn cmp, CleanupFn cleanup);
-
 void set_insert(CSet *set, const void *data);
 void *set_lookup(const CSet *set, const void *data);
 int set_rank(CSet *set, const void *data);

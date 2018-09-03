@@ -168,19 +168,35 @@ static struct Node *delete_node(CSet *set, struct Node *node) {
   assert(set != NULL);
   assert(node != NULL);
 
-  struct Node *largest = extrema(node->left, right);
-  (void) largest;
-//  if (largest == NULL)
-//
-//  if (largest != NULL) {
-//    struct Node *new_root = new_node(largest->data, set->data_size);
-//    assign_child(new_root, largest->right, right);
-//    assign_child(node, delete_at(set, node, largest->data), left);
-//    balance(new_root);
-//  }
-//
-//  // todo: write this
-  return NULL;
+  if (node->left == NULL && node->right == NULL) {
+    dispose_node(set, node, false);
+    return NULL;
+  }
+
+  struct Node *new_root;
+  if (node->left == NULL) {
+    new_root = node->right;
+    dispose_node(set, node, false);
+    return new_root;
+  }
+
+  if (node->right == NULL) {
+    new_root = node->left;
+    dispose_node(set, node, false);
+    return new_root;
+  }
+
+  if (set->cleanup != NULL)
+    set->cleanup(&node->data);
+  struct Node *next = extrema(node->left, right);
+  memcpy(&node->data, &next->data, set->data_size);
+
+  CleanupFn cleanup = set->cleanup;
+  set->cleanup = NULL;
+  assign_child(node, delete_at(set, node->left, next->data), left);
+  set->cleanup = cleanup;
+
+  return balance(node);
 }
 
 static struct Node *balance(struct Node *node) {
@@ -194,10 +210,10 @@ static struct Node *balance(struct Node *node) {
   int sub_bal = get_balance(*childp);
 
   if (dir == left) {
-    if (sub_bal == -1)
+    if (sub_bal <= -1)
       *childp = rotate(*childp, dir);
   } else {
-    if (sub_bal == 1)
+    if (sub_bal >= 1)
       *childp = rotate(*childp, dir);
   }
   return balance(rotate(node, opposite(dir)));
@@ -224,7 +240,7 @@ static struct Node *rotate(struct Node *root, enum Direction dir) {
 
 static inline void dispose_node(const CSet *set, struct Node *node, bool recursive) {
   assert(set != NULL);
-  assert(node != NULL);
+  if (node == NULL) return;
   if (recursive) {
     dispose_node(set, node->left, recursive);
     dispose_node(set, node->right, recursive);
