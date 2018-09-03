@@ -4,14 +4,13 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define max(a, b) (a) > (b) ? (a) : (b)
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 enum Direction { left = 0, right = 1 };
 
 struct CSetImplementation {
   struct Node *root;
   size_t data_size;
-  unsigned int count;
   CMapCmpFn cmp;
   CleanupFn cleanup;
 };
@@ -34,13 +33,13 @@ static struct Node *insert_at(CSet *set, struct Node *node, const void *data);
 static struct Node *delete_at(CSet *set, struct Node *node, const void *data);
 static struct Node *balance(struct Node *node);
 static struct Node *rotate(struct Node *root, enum Direction dir);
-static inline void dispose_recursive(const CSet *set, struct Node *node);
-static inline void dispose_node(const CSet *set, struct Node *node);
-static inline void assign_child(struct Node *node, struct Node *child, enum Direction dir);
+static inline void dispose_node(const CSet *set, struct Node *node, bool recursive);
+static struct Node *delete_node(CSet *set, struct Node *node);
+static struct Node *extrema(struct Node *node, enum Direction dir);
+static inline void assign_child(struct Node *node, struct Node *new_child, enum Direction dir);
 static int get_balance(const struct Node * node);
 static inline struct Node **child_ref(const struct Node *node, enum Direction dir);
-static inline void increment_count(struct Node *node, int increment, enum Direction dir);
-static inline void set_count(struct Node *node, int count, enum Direction dir);
+static inline void update_count(struct Node *node, enum Direction dir);
 static inline int num_ancestors(const struct Node *node, enum Direction dir);
 static inline int get_size(const struct Node *node);
 static inline enum Direction opposite(enum Direction dir);
@@ -49,7 +48,6 @@ CSet *new_set(size_t data_size, CMapCmpFn cmp, CleanupFn cleanup) {
   assert(cmp != NULL);
   CSet *set = malloc(sizeof(CSet));
   if (set == NULL) return NULL;
-  set->count = 0;
   set->root = NULL;
   set->data_size = data_size;
   set->cmp = cmp;
@@ -57,10 +55,15 @@ CSet *new_set(size_t data_size, CMapCmpFn cmp, CleanupFn cleanup) {
   return set;
 }
 
-void *set_insert(CSet *set, const void *data) {
+int set_size(const CSet *set) {
+  assert(set != NULL);
+  return get_size(set->root);
+}
+
+void set_insert(CSet *set, const void *data) {
   assert(set != NULL);
   assert(data != NULL);
-  return insert_at(set, set->root, data);
+  set->root = insert_at(set, set->root, data);
 }
 
 void *set_lookup(const CSet *set, const void *data) {
@@ -87,25 +90,31 @@ int set_rank(CSet *set, const void *data) {
     } else
       node = node->left;
   }
+  return CSET_ERROR;
 }
 
 void set_remove(CSet *set, const void *data) {
   assert(set != NULL);
   assert(data != NULL);
-  delete_at(set, set->root, data);
+  set->root = delete_at(set, set->root, data);
+}
+
+void set_clear(CSet *set) {
+  assert(set != NULL);
+  dispose_node(set, set->root, true);
+  set->root = NULL;
 }
 
 void set_dispose(CSet *set) {
   assert(set != NULL);
-  dispose_recursive(set, set->root);
+  set_clear(set);
   free(set);
 }
-
 
 static struct Node *new_node(const void *data, size_t data_size) {
   assert(data != NULL);
   struct Node *node = malloc(sizeof(struct Node) + data_size);
-  if (node == NULL) return NULL;
+  if (node == NULL) return NULL; // allocation failure
   node->left = NULL;
   node->right = NULL;
   node->height = 0;
@@ -122,7 +131,7 @@ static const struct Node *lookup(const CSet *set, const struct Node *node, const
   int cmp = set->cmp(node->data, data, set->data_size);
   if (cmp == 0) return node;
   enum Direction dir = cmp > 0 ? right : left;
-  return lookup(set, child(node, dir), data); // tail recursion optimization
+  return lookup(set, child(node, dir), data); // tail recursion! should be optimized
 }
 
 static struct Node *insert_at(CSet *set, struct Node *node, const void *data) {
@@ -134,28 +143,44 @@ static struct Node *insert_at(CSet *set, struct Node *node, const void *data) {
   if (comparison == 0) return node; // already there!
 
   enum Direction dir = comparison > 0 ? right : left;
-  assign_child(node, insert_at(set, child(node, dir), data), dir);
-  set_count(node, get_size(child(node, dir)), dir);
+  struct Node *new_child = insert_at(set, child(node, dir), data);
+  if (new_child == NULL) return NULL; // insertion failure
+
+  assign_child(node, new_child, dir);
   return balance(node);
 }
 
 static struct Node *delete_at(CSet *set, struct Node *node, const void *data) {
   assert(set != NULL);
   assert(data != NULL);
-  if (node == NULL) return NULL; // not found
+  if (node == NULL) return NULL; // not found in set
 
   int comparison = set->cmp(node->data, data, set->data_size);
-  if (comparison == 0) {
-    if (set->cleanup != NULL)
-      set->cleanup(&node->data);
-    free(node);
-    return NULL;
-  }
+  if (comparison == 0) return delete_node(set, node);
 
   enum Direction dir = comparison > 0 ? right : left;
-  assign_child(node, delete_at(set, child(node, dir), data), dir);
-  set_count(node, get_size(child(node, dir)), dir);
+  struct Node *new_child = delete_at(set, child(node, dir), data);
+  assign_child(node, new_child, dir);
   return balance(node);
+}
+
+static struct Node *delete_node(CSet *set, struct Node *node) {
+  assert(set != NULL);
+  assert(node != NULL);
+
+  struct Node *largest = extrema(node->left, right);
+  (void) largest;
+//  if (largest == NULL)
+//
+//  if (largest != NULL) {
+//    struct Node *new_root = new_node(largest->data, set->data_size);
+//    assign_child(new_root, largest->right, right);
+//    assign_child(node, delete_at(set, node, largest->data), left);
+//    balance(new_root);
+//  }
+//
+//  // todo: write this
+  return NULL;
 }
 
 static struct Node *balance(struct Node *node) {
@@ -175,7 +200,7 @@ static struct Node *balance(struct Node *node) {
     if (sub_bal == 1)
       *childp = rotate(*childp, dir);
   }
-  return rotate(node, opposite(dir));
+  return balance(rotate(node, opposite(dir)));
 }
 
 static int get_balance(const struct Node * node) {
@@ -194,35 +219,27 @@ static struct Node *rotate(struct Node *root, enum Direction dir) {
   struct Node *transplant = child(child(root, opposite(dir)), dir);
   assign_child(root, transplant, opposite(dir));
   assign_child(new_root, root, dir);
-
-  // update left and right counts
-  set_count(root,  num_ancestors(new_root, dir), opposite(dir));
-  increment_count(new_root, 1 + num_ancestors(root, dir), dir);
-
-  update_height(root);
-  update_height(new_root);
   return new_root;
 }
 
-static inline void dispose_recursive(const CSet *set, struct Node *node) {
-  assert(set != NULL);
-  if (node == NULL) return;
-  dispose_recursive(set, node->left);
-  dispose_recursive(set, node->right);
-  dispose_node(set, node);
-}
-
-static inline void dispose_node(const CSet *set, struct Node *node) {
+static inline void dispose_node(const CSet *set, struct Node *node, bool recursive) {
   assert(set != NULL);
   assert(node != NULL);
+  if (recursive) {
+    dispose_node(set, node->left, recursive);
+    dispose_node(set, node->right, recursive);
+  }
+
   if (set->cleanup != NULL)
     set->cleanup(&node->data);
   free(node);
 }
 
-static inline void assign_child(struct Node *node, struct Node *child, enum Direction dir) {
+static inline void assign_child(struct Node *node, struct Node *new_child, enum Direction dir) {
   assert(node != NULL);
-  *child_ref(node, dir) = child;
+  *child_ref(node, dir) = new_child;
+  update_count(node, dir);
+  update_height(node);
 }
 
 static inline struct Node *child(const struct Node *node, enum Direction dir) {
@@ -242,14 +259,15 @@ static inline void update_height(struct Node *node) {
   node->height = 1 + max(left_height, right_height);
 }
 
-static inline void increment_count(struct Node *node, int increment, enum Direction dir) {
-  assert(node != NULL);
-  if (dir == left) node->nleft += increment;
-  else node->nright += increment;
+static struct Node *extrema(struct Node *node, enum Direction dir) {
+  if (node == NULL) return NULL;
+  if (child(node, dir) == NULL) return node;
+  return extrema(child(node, dir), dir);
 }
 
-static inline void set_count(struct Node *node, int count, enum Direction dir) {
+static inline void update_count(struct Node *node, enum Direction dir) {
   assert(node != NULL);
+  int count = get_size(child(node, dir));
   if (dir == left) node->nleft = count;
   else node->nright = count;
 }
@@ -260,12 +278,10 @@ static inline int num_ancestors(const struct Node *node, enum Direction dir) {
 }
 
 static inline int get_size(const struct Node *node) {
-  if (node == 0) return 0;
+  if (node == NULL) return 0;
   return 1 + num_ancestors(node, left) + num_ancestors(node, right);
 }
 
 static inline enum Direction opposite(enum Direction dir) {
   return dir == left ? right : left;
 }
-
-
