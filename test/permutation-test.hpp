@@ -1,5 +1,5 @@
-#ifndef LISP_PERMUTATION_TEST_HPP
-#define LISP_PERMUTATION_TEST_HPP
+#ifndef PERMUTATION_TEST_HPP
+#define PERMUTATION_TEST_HPP
 
 #include <gtest/gtest.h>
 #include <permutations.h>
@@ -12,11 +12,13 @@ namespace {
    * passed in so that they can be mutated in writable memory
    * @tparam T the type of element in the array of elements to permute
    */
-  template <class T>
+  template<class T>
   class PermuterTest : public testing::Test {
   protected:
-    PermuterTest() : p(nullptr) { }
+    PermuterTest() : p(nullptr) {}
+
     using Test::SetUp;
+
     void SetUp(const T arr[], int nelems, CompareFn cmp) {
       // need to make a copy of the passed array because we want
       // to use array-literals in read-only memory during testing
@@ -42,8 +44,10 @@ namespace {
    */
   class StringPermuterTest : public testing::Test {
   protected:
-    StringPermuterTest() : p(nullptr) { }
+    StringPermuterTest() : p(nullptr) {}
+
     using Test::SetUp;
+
     void SetUp(const char *str) {
       p = new_cstring_permuter(str);
       ASSERT_FALSE(p == nullptr);
@@ -83,7 +87,7 @@ namespace {
     EXPECT_EQ(permutation_index(p), 0);
 
     void *permutation = get_permutation(p);
-    auto str = static_cast<const char*>(permutation);
+    auto str = static_cast<const char *>(permutation);
     EXPECT_STREQ(str, "");
 
     EXPECT_EQ(next_permutation(p), nullptr);
@@ -96,13 +100,13 @@ namespace {
   // Tests explicitly for all permutations of one character
   TEST_F(StringPermuterTest, One) {
     SetUp("1");
-    const char* correct_permutation[] = { "1" };
+    const char *correct_permutation[] = {"1"};
 
     for (int repeat = 0; repeat < 2; repeat++) {
 
       void *permutation;
-      for_permutations(p, permutation)  {
-        auto str = static_cast<const char*>(permutation);
+      for_permutations(p, permutation) {
+        auto str = static_cast<const char *>(permutation);
         int i = permutation_index(p);
         ASSERT_GE(i, 0);
         EXPECT_STREQ(str, correct_permutation[i]);
@@ -116,12 +120,12 @@ namespace {
   // Tests explicitly for all permutations of two characters
   TEST_F(StringPermuterTest, Two) {
     SetUp("12");
-    const char* correct_permutation[] = { "12", "21" };
+    const char *correct_permutation[] = {"12", "21"};
 
     for (int repeat = 0; repeat < 3; repeat++) {
       void *permutation;
-      for_permutations(p, permutation)  {
-        auto str = static_cast<const char*>(permutation);
+      for_permutations(p, permutation) {
+        auto str = static_cast<const char *>(permutation);
         int i = permutation_index(p);
         ASSERT_GE(i, 0);
         EXPECT_STREQ(str, correct_permutation[i]);
@@ -135,13 +139,13 @@ namespace {
   // Tests explicitly for all permutations of three characters
   TEST_F(StringPermuterTest, Three) {
     SetUp("123");
-    const char* correct_permutation[] = { "123", "132", "312",
-                                          "321", "231", "213" };
+    const char *correct_permutation[] = {"123", "132", "312",
+                                         "321", "231", "213"};
 
     for (int repeat = 0; repeat < 3; repeat++) {
       void *permutation;
-      for_permutations(p, permutation)  {
-        auto str = static_cast<const char*>(permutation);
+      for_permutations(p, permutation) {
+        auto str = static_cast<const char *>(permutation);
         int i = permutation_index(p);
         ASSERT_GE(i, 0);
         EXPECT_STREQ(str, correct_permutation[i]);
@@ -153,17 +157,17 @@ namespace {
   }
 
   // Compare two void * pointers to the same type of value
-  template <typename T>
+  template<typename T>
   inline int cmp(const void *Tptr1, const void *Tptr2) {
     assert(Tptr1 != NULL);
     assert(Tptr2 != NULL);
-    auto t1 = static_cast<const T*>(Tptr1);
-    auto t2 = static_cast<const T*>(Tptr2);
+    auto t1 = static_cast<const T *>(Tptr1);
+    auto t2 = static_cast<const T *>(Tptr2);
     return *t1 - *t2;
   }
 
   // Compare two arrays of the same type of elements
-  template <typename T, int N>
+  template<typename T, int N>
   inline bool arr_eq(const T arr1[N], const T arr2[N]) {
     for (int i = 0; i < N; i++)
       if (arr1[i] > arr2[i]) return false;
@@ -173,14 +177,18 @@ namespace {
   // Did I create this entire permutation library and test suite
   // just to fabricate a use-case for the cannonical "factorial"
   // function using template metaprogramming? You'll never know...
-  template <int N>
+  template<int N>
   struct Factorial {
-    enum { value = N * Factorial<N - 1>::value };
+    enum {
+      value = N * Factorial<N - 1>::value
+    };
   };
 
-  template <>
+  template<>
   struct Factorial<0> {
-    enum { value = 1 };
+    enum {
+      value = 1
+    };
   };
 
   // Tests that permutations of integers will work correctly
@@ -190,21 +198,25 @@ namespace {
     SetUp(arr, 3, cmp<int>);
     const int correct_permutations[Factorial<3>::value][3] =
       {
-        {1, 2, 3}, {1, 3, 2}, {3, 1, 2},
-        {3, 2, 1}, {2, 3, 1}, {2, 1, 3}
+        {1, 2, 3},
+        {1, 3, 2},
+        {3, 1, 2},
+        {3, 2, 1},
+        {2, 3, 1},
+        {2, 1, 3}
       };
 
     for (int repeat = 0; repeat < 2; repeat++) {
       void *permutation;
       int index = 0;
-      for_permutations(p, permutation)  {
+      for_permutations(p, permutation) {
         ASSERT_TRUE(permutation != nullptr);
 
         int i = permutation_index(p);
         ASSERT_GE(i, 0);
         EXPECT_EQ(i, index);
         bool equal = arr_eq<int, 3>(correct_permutations[i],
-                                    static_cast<const int*>(permutation));
+                                    static_cast<const int *>(permutation));
         EXPECT_TRUE(equal);
         index++;
       }
@@ -220,22 +232,28 @@ namespace {
     for (int repeat = 0; repeat < 2; repeat++) {
       int num_permutations = 0;
       void *permutation;
-      for_permutations(p, permutation)
-        num_permutations++;
+      for_permutations(p, permutation)num_permutations++;
       EXPECT_EQ(num_permutations, factorial(strlen(s)));
       reset_permuter(p);
     }
   }
 
-  // Make sure that 9! permutations happen
+  /**
+   * Make sure that 9! permutations happen.
+   * If you're thinking this test is over-kill - remember that permuter
+   * uses a single bit per element for it's current direction. Without
+   * testing more than 8 elements we would only ever test using a single
+   * uint8_t. By testing nine elements, we require that the permuter
+   * uses more than one uint8_t to keep track of all the directions
+   * of the nine different elements.
+   */
   TEST_F(StringPermuterTest, NineCount) {
     const char *s = "123456789";
     SetUp(s);
     for (int repeat = 0; repeat < 2; repeat++) {
       int num_permutations = 0;
       void *permutation;
-      for_permutations(p, permutation)
-        num_permutations++;
+      for_permutations(p, permutation)num_permutations++;
       EXPECT_EQ(num_permutations, factorial(strlen(s)));
       reset_permuter(p);
     }
@@ -243,5 +261,4 @@ namespace {
 
 }
 
-
-#endif //LISP_PERMUTATION_TEST_HPP
+#endif //PERMUTATION_TEST_HPP
