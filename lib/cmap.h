@@ -24,6 +24,8 @@ extern "C" {
 #define simple_map(key_size, value_size) cmap_create(key_size, value_size, roberts_hash, \
                                                       memcmp, NULL, NULL, 0)
 
+typedef struct CMapImplementation CMap;
+
 /**
  * Create a HashTable in a dynamically allocated region of memory.
  * @param key_size size of all keys stored in HashTable
@@ -36,7 +38,7 @@ extern "C" {
  * @return Pointer to a hash table in dynamically allocated memory
  */
 CMap *cmap_create(size_t key_size, size_t value_size,
-                  CMapHashFn hash, CMapCmpFn cmp,
+                  CMapHashFn hash, CmpFn cmp,
                   CleanupFn cleanupKey, CleanupFn cleanupValue,
                   unsigned int capacity_hint);
 

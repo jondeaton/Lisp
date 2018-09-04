@@ -45,7 +45,7 @@ namespace {
   protected:
     MapTest() : cm(nullptr) { }
     using Test::SetUp;
-    void SetUp(CMapHashFn hash, CMapCmpFn cmp, unsigned int capacity_hint) {
+    void SetUp(CMapHashFn hash, CmpFn cmp, unsigned int capacity_hint) {
       cm = cmap_create(sizeof(K), sizeof(V), hash, cmp, nullptr, nullptr, capacity_hint);
       ASSERT_NE(cm, nullptr);
     }
@@ -55,13 +55,13 @@ namespace {
 
   typedef MapTest<int, int> MapIntIntTest;
   TEST_F(MapIntIntTest, create) {
-    SetUp(hash_to_n<0>, (CMapCmpFn) cmp_int, 0);
+    SetUp(hash_to_n<0>, (CmpFn) cmp_int, 0);
     EXPECT_EQ(cmap_count(cm), 0);
   }
 
   typedef MapTest<int, int> MapIntIntTest;
   TEST_F(MapIntIntTest, InsertOne) {
-    SetUp(hash_to_n<0>, (CMapCmpFn) cmp_int, 0);
+    SetUp(hash_to_n<0>, (CmpFn) cmp_int, 0);
 
     int i = 42;
     cmap_insert(cm, &i, &i);
@@ -69,7 +69,7 @@ namespace {
   }
 
   TEST_F(MapIntIntTest, Insert10) {
-    SetUp(two_hash<int, 0, 100, 5>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, 0, 100, 5>, (CmpFn) cmp_int, 0);
 
     for (int i = 0; i < 10; ++i) {
       EXPECT_EQ(cmap_count(cm), i);
@@ -90,7 +90,7 @@ namespace {
     constexpr int first_hash = 0;
     constexpr int second_hash = 10;
     constexpr int threshold = 1000;
-    SetUp(two_hash<int, first_hash, second_hash, threshold>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, first_hash, second_hash, threshold>, (CmpFn) cmp_int, 0);
 
     constexpr int N = 2 * second_hash; // how many of each hash to insert
 
@@ -127,7 +127,7 @@ namespace {
     constexpr int first_hash = 0;
     constexpr int second_hash = 10;
     constexpr int threshold = 1000;
-    SetUp(two_hash<int, first_hash, second_hash, threshold>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, first_hash, second_hash, threshold>, (CmpFn) cmp_int, 0);
 
     constexpr int N = 2 * second_hash; // how many of each hash to insert
     const int first_value = 42;
@@ -156,7 +156,7 @@ namespace {
 
   // Make sure that when you delete an element, its gone.
   TEST_F(MapIntIntTest, Delete) {
-    SetUp(two_hash<int, 0, 100, 5>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, 0, 100, 5>, (CmpFn) cmp_int, 0);
     int i = 42;
     cmap_insert(cm, &i, &i);
     cmap_remove(cm, &i);
@@ -166,7 +166,7 @@ namespace {
   // Make sure that when you delete an element when there was a collision, the other
   // one is still there
   TEST_F(MapIntIntTest, DeleteWithCollision) {
-    SetUp(two_hash<int, 0, 100, 5>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, 0, 100, 5>, (CmpFn) cmp_int, 0);
 
     int x = 0;
     int y = 1;
@@ -182,7 +182,7 @@ namespace {
   }
 
   TEST_F(MapIntIntTest, DeleteSecondWithCollision) {
-    SetUp(two_hash<int, 0, 100, 5>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, 0, 100, 5>, (CmpFn) cmp_int, 0);
 
     int x = 0;
     int y = 1;
@@ -200,7 +200,7 @@ namespace {
     constexpr int first_hash = 0;
     constexpr int second_hash = 10;
     constexpr int threshold = 1000;
-    SetUp(two_hash<int, first_hash, second_hash, threshold>, (CMapCmpFn) cmp_int, 0);
+    SetUp(two_hash<int, first_hash, second_hash, threshold>, (CmpFn) cmp_int, 0);
 
     constexpr int N = 2 * second_hash; // how many of each hash to insert
     const int first_value = 42;
@@ -233,7 +233,7 @@ namespace {
   protected:
     PermutationMapTest() : p(nullptr), cm(nullptr) { }
     using Test::SetUp;
-    void SetUp(const char * str, CMapHashFn hash, CMapCmpFn cmp, unsigned int capacity_hint) {
+    void SetUp(const char * str, CMapHashFn hash, CmpFn cmp, unsigned int capacity_hint) {
       cm = cmap_create(sizeof(const char *), sizeof(int), hash, cmp, str_cleanup, nullptr, capacity_hint);
       ASSERT_NE(cm, nullptr);
       p = new_cstring_permuter(str);

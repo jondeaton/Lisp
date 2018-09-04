@@ -13,7 +13,7 @@
 
 namespace {
 
-  template <typename T, CMapCmpFn Compare, CleanupFn Cleanup, int Seed=0>
+  template <typename T, CmpFn Compare, CleanupFn Cleanup, int Seed=0>
   class SetTest : public testing::Test {
   protected:
     typedef T type;

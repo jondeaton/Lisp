@@ -35,7 +35,7 @@ struct CMapImplementation {
   CleanupFn cleanupKey;         // Callback for key disposal
   CleanupFn cleanupValue;       // Callback for value disposal
   CMapHashFn hash;              // hash function callback
-  CMapCmpFn cmp;                // key comparison function
+  CmpFn cmp;                // key comparison function
 };
 
 /**
@@ -75,7 +75,7 @@ static void delete(CMap *cm, unsigned int start, unsigned int stop);
 static int lookup_index(const CMap *cm, const void *key);
 
 CMap *cmap_create(size_t key_size, size_t value_size,
-                  CMapHashFn hash, CMapCmpFn cmp,
+                  CMapHashFn hash, CmpFn cmp,
                   CleanupFn cleanupKey, CleanupFn cleanupValue,
                   unsigned int capacity) {
   if (key_size <= 0 || value_size <= 0) return NULL;

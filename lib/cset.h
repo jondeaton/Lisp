@@ -38,7 +38,7 @@ typedef struct CSetImplementation CSet;
  * @param cleanup Function to use for disposing of elements
  * @return Pointer to a new set in dynamically allocated memory
  */
-CSet *new_set(size_t data_size, CMapCmpFn cmp, CleanupFn cleanup);
+CSet *new_set(size_t data_size, CmpFn cmp, CleanupFn cleanup);
 
 /**
  * Insert a single element into the set.

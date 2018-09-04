@@ -16,7 +16,7 @@ enum Direction { left = 0, right = 1 };
 struct CSetImplementation {
   struct Node *root;
   size_t data_size;
-  CMapCmpFn cmp;
+  CmpFn cmp;
   CleanupFn cleanup;
 };
 
@@ -50,7 +50,7 @@ static inline int get_size(const struct Node *node);
 static inline enum Direction opposite(enum Direction dir);
 static inline enum Direction get_direction(int comparison);
 
-CSet *new_set(size_t data_size, CMapCmpFn cmp, CleanupFn cleanup) {
+CSet *new_set(size_t data_size, CmpFn cmp, CleanupFn cleanup) {
   assert(cmp != NULL);
   CSet *set = malloc(sizeof(CSet));
   if (set == NULL) return NULL;
