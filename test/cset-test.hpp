@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <set>
+//#include <vector>
 #include <limits>
 #include <algorithm>
 
@@ -35,11 +36,11 @@ namespace {
   };
 
   typedef SetTest<int, cmp_int, nullptr> SetTestInt;
+
   TEST_F(SetTestInt, StartsEmpty) {
     SetUp();
     EXPECT_EQ(set_size(set), 0);
   }
-
 
   TEST_F(SetTestInt, InsertOne) {
     SetUp();
@@ -48,6 +49,15 @@ namespace {
     auto aye = static_cast<const int *>(set_lookup(set, &i));
     ASSERT_NE(aye, nullptr);
     EXPECT_EQ(*aye, i);
+  }
+
+  TEST_F(SetTestInt, InsertDuplicate) {
+    SetUp();
+    int i = 7;
+    int j = 7;
+    set_insert(set, &i);
+    set_insert(set, &j);
+    EXPECT_EQ(set_size(set), 1);
   }
 
   TEST_F(SetTestInt, Insert10) {
@@ -60,6 +70,70 @@ namespace {
       auto aye = static_cast<const int *>(set_lookup(set, &i));
       ASSERT_NE(aye, nullptr);
       EXPECT_EQ(*aye, i);
+    }
+  }
+
+  TEST_F(SetTestInt, RotateRight) {
+    SetUp();
+
+    std::vector<type> elements = { 1, 2, 3 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    EXPECT_EQ(set_size(set), elements.size());
+
+    for (auto el : elements) {
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
+    }
+  }
+
+  TEST_F(SetTestInt, RotateLeft) {
+    SetUp();
+
+    std::vector<type> elements = { 3, 2, 1 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    EXPECT_EQ(set_size(set), elements.size());
+
+    for (auto el : elements) {
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
+    }
+  }
+
+  TEST_F(SetTestInt, RotateRightSub) {
+    SetUp();
+
+    std::vector<type> elements = { 3, 1, 2 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    EXPECT_EQ(set_size(set), elements.size());
+
+    for (auto el : elements) {
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
+    }
+  }
+
+  TEST_F(SetTestInt, RotateLeftSub) {
+    SetUp();
+
+    std::vector<type> elements = { 1, 3, 2 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    EXPECT_EQ(set_size(set), elements.size());
+
+    for (auto el : elements) {
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
     }
   }
 
@@ -114,7 +188,18 @@ namespace {
     EXPECT_EQ(set_lookup(set, &i), nullptr);
   }
 
-  TEST_F(SetTestInt, DeleteOne) {
+  TEST_F(SetTestInt, DeleteAbsent) {
+    SetUp();
+
+    int i = 123;
+    int j = 345;
+    set_insert(set, &i);
+    set_remove(set, &j);
+    EXPECT_NE(set_lookup(set, &i), nullptr);
+    EXPECT_EQ(set_size(set), 1);
+  }
+
+  TEST_F(SetTestInt, DeleteSingle) {
     SetUp();
     int N = 10;
     for (int i = 0; i < N; i++)
@@ -133,6 +218,92 @@ namespace {
       auto aye = static_cast<const int *>(set_lookup(set, &i));
       ASSERT_NE(aye, nullptr);
       EXPECT_EQ(*aye, i);
+    }
+  }
+
+  TEST_F(SetTestInt, DeleteRightRotate) {
+    SetUp();
+
+    std::vector<type> elements = { 20, 10, 30, 15 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    int d = 30;
+    set_remove(set, &d);
+
+    EXPECT_EQ(set_lookup(set, &d), nullptr);
+    EXPECT_EQ(set_size(set), elements.size() - 1);
+
+    for (auto el : elements) {
+      if (el == d) continue;
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
+    }
+  }
+
+  TEST_F(SetTestInt, DeleteLeftRotate) {
+    SetUp();
+
+    std::vector<type> elements = { 20, 10, 30, 25 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    int d = 10;
+    set_remove(set, &d);
+
+    EXPECT_EQ(set_lookup(set, &d), nullptr);
+    EXPECT_EQ(set_size(set), elements.size() - 1);
+
+    for (auto el : elements) {
+      if (el == d) continue;
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
+    }
+  }
+
+  TEST_F(SetTestInt, DeleteRecursiveRotate) {
+    SetUp();
+
+    std::vector<type> elements = { 100, 20, 120, 10, 110, 30, 130, 15,
+                                   115, 125, 140, 135 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    int d = 30;
+    set_remove(set, &d);
+
+    EXPECT_EQ(set_lookup(set, &d), nullptr);
+    EXPECT_EQ(set_size(set), elements.size() - 1);
+
+    for (auto el : elements) {
+      if (el == d) continue;
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
+    }
+  }
+
+  TEST_F(SetTestInt, DeleteNonLeaf) {
+    SetUp();
+
+    std::vector<type> elements = { 100, 20, 120, 10, 110, 30, 130, 15,
+                                   115, 125, 140, 135 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    int d = 20;
+    set_remove(set, &d);
+
+    EXPECT_EQ(set_lookup(set, &d), nullptr);
+    EXPECT_EQ(set_size(set), elements.size() - 1);
+
+    for (auto el : elements) {
+      if (el == d) continue;
+      auto aye = static_cast<const int *>(set_lookup(set, &el));
+      ASSERT_NE(aye, nullptr);
+      EXPECT_EQ(*aye, el);
     }
   }
 
@@ -160,7 +331,75 @@ namespace {
       }
     }
   }
-  
+
+  TEST_F(SetTestInt, RankOne) {
+    SetUp();
+    int i = 123;
+    set_insert(set, &i);
+    EXPECT_EQ(set_rank(set, &i), 0);
+  }
+
+  TEST_F(SetTestInt, RankNoRotate) {
+    SetUp();
+    std::vector<type> elements = { 15, 10, 20, 30 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    EXPECT_EQ(set_rank(set, &elements[0]), 1);
+    EXPECT_EQ(set_rank(set, &elements[1]), 0);
+    EXPECT_EQ(set_rank(set, &elements[2]), 2);
+    EXPECT_EQ(set_rank(set, &elements[3]), 3);
+  }
+
+  TEST_F(SetTestInt, RankRotateRight) {
+    SetUp();
+    std::vector<type> elements = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    for (auto el : elements)
+      EXPECT_EQ(set_rank(set, &el), el);
+  }
+
+  TEST_F(SetTestInt, RankRotateLeft) {
+    SetUp();
+    std::vector<type> elements = { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    for (auto el : elements)
+      EXPECT_EQ(set_rank(set, &el), el);
+  }
+
+  TEST_F(SetTestInt, RankAbsent) {
+    SetUp();
+    std::vector<type> elements = { 20, 10, 15, 30 };
+    for (auto el : elements)
+      set_insert(set, &el);
+
+    int e = 72;
+    EXPECT_EQ(set_rank(set, &e), CSET_ERROR);
+  }
+
+  TEST_F(SetTestInt, RankMany) {
+    SetUp();
+    int N = 1 << 14;
+
+    std::set<type> elements;
+    for (int i = 0; i < N; i++) {
+      int random_element = random();
+      set_insert(set, &random_element);
+      elements.insert(random_element);
+    }
+
+    std::vector<type> distinct_els;
+    for (auto el : elements)
+      distinct_els.push_back(el);
+    std::sort(distinct_els.begin(), distinct_els.end());
+
+    for (int i = 0; i < (int) distinct_els.size(); i++)
+      EXPECT_EQ(set_rank(set, &distinct_els[i]), i);
+  }
 
   TEST_F(SetTestInt, Clear) {
     SetUp();
@@ -179,7 +418,7 @@ namespace {
   TEST_F(SetTestInt, BigInsertDelete) {
     SetUp();
 
-    int N = (1 << 10);
+    int N = 1 << 13;
 
     std::set<type> reference_set;   // all the elements that are inserted
     std::set<type> deletion_set;    // those which become deleted
