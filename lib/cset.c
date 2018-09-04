@@ -1,3 +1,8 @@
+/**
+ * @file cset.c
+ *
+ */
+
 #include <cset.h>
 
 #include <stdlib.h>
@@ -43,6 +48,7 @@ static inline void update_count(struct Node *node, enum Direction dir);
 static inline int num_ancestors(const struct Node *node, enum Direction dir);
 static inline int get_size(const struct Node *node);
 static inline enum Direction opposite(enum Direction dir);
+static inline enum Direction get_direction(int comparison);
 
 CSet *new_set(size_t data_size, CMapCmpFn cmp, CleanupFn cleanup) {
   assert(cmp != NULL);
@@ -84,7 +90,7 @@ int set_rank(CSet *set, const void *data) {
     if (node == NULL) return CSET_ERROR;
     int comparison = set->cmp(node->data, data, set->data_size);
     if (comparison == 0) return rank + node->nleft;
-    if (comparison > 0) {
+    if (comparison < 0) {
       rank += 1 + node->nleft;
       node = node->right;
     } else
@@ -133,7 +139,7 @@ static const struct Node *lookup(const CSet *set, const struct Node *node, const
   if (node == NULL) return NULL;
   int cmp = set->cmp(node->data, data, set->data_size);
   if (cmp == 0) return node;
-  enum Direction dir = cmp > 0 ? right : left;
+  enum Direction dir = get_direction(cmp);
   return lookup(set, child(node, dir), data); // tail recursion! should be optimized
 }
 
@@ -145,7 +151,7 @@ static struct Node *insert_at(CSet *set, struct Node *node, const void *data) {
   int comparison = set->cmp(node->data, data, set->data_size);
   if (comparison == 0) return node; // already there!
 
-  enum Direction dir = comparison > 0 ? right : left;
+  enum Direction dir = get_direction(comparison);
   struct Node *new_child = insert_at(set, child(node, dir), data);
   if (new_child == NULL) return NULL; // insertion failure
 
@@ -167,7 +173,7 @@ static struct Node *remove_at(CSet *set, struct Node *node, const void *data, st
     return remove_node(set, node);
   }
 
-  enum Direction dir = comparison > 0 ? right : left;
+  enum Direction dir = get_direction(comparison);
   struct Node *new_child = remove_at(set, child(node, dir), data, removed);
   assign_child(node, new_child, dir);
   return balance(node);
@@ -293,4 +299,8 @@ static inline int get_size(const struct Node *node) {
 
 static inline enum Direction opposite(enum Direction dir) {
   return dir == left ? right : left;
+}
+
+static inline enum Direction get_direction(int comparison) {
+  return comparison > 0 ? left : right;
 }
