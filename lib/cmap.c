@@ -110,17 +110,21 @@ CMap *cmap_create(size_t key_size, size_t value_size,
 }
 
 void cmap_dispose(CMap* cm) {
+  assert(cm != NULL);
   cmap_clear(cm);
   free(cm->entries);
   free(cm);
 }
 
 unsigned int cmap_count(const CMap* cm) {
+  assert(cm != NULL);
   return cm->size;
 }
 
 void *cmap_insert(CMap *cm, const void *key, const void *value) {
-  if (cm == NULL || key == NULL || value == NULL) return NULL;
+  assert(cm != NULL);
+  assert(key != NULL);
+  assert(value != NULL);
 
   // there is no vacancy
   if (cm->size == cm->capacity)
@@ -190,6 +194,8 @@ void cmap_clear(CMap *cm) {
 }
 
 const void *get_value(const CMap *cm, const void *key) {
+  assert(cm != NULL);
+  assert(key != NULL);
   return value_of(cm, key);
 }
 
@@ -270,10 +276,14 @@ static inline void *value_of(const CMap *cm, const struct entry *entry) {
 }
 
 static inline void *key_of(const struct entry *entry) {
+  assert(entry != NULL);
   return (void *) (&entry->kv);
 }
 
 static inline void move(CMap *cm, struct entry *entry1, struct entry *entry2) {
+  assert(cm != NULL);
+  assert(entry1 != NULL);
+  assert(entry2 != NULL);
   memcpy(entry1, entry2, entry_size(cm));
 }
 
@@ -291,6 +301,7 @@ static void erase(CMap *cm, struct entry *e) {
 }
 
 static void delete(CMap *cm, unsigned int start, unsigned int stop) {
+  assert(cm != NULL);
 
   // the entry to delete
   struct entry *entry = get_entry(cm, start);
@@ -314,6 +325,9 @@ static void delete(CMap *cm, unsigned int start, unsigned int stop) {
 }
 
 static int lookup_index(const CMap *cm, const void *key) {
+  assert(cm != NULL);
+  assert(key != NULL);
+
   unsigned int hash = cm->hash(key, cm->key_size) % cm->capacity;
 
   for (unsigned int i = 0; i < cm->capacity; ++i) {
