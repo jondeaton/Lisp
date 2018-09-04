@@ -19,7 +19,7 @@ typedef void (*CleanupFn)(void *addr);
 typedef int (*CmpFn)(const void *keyA, const void *keyB, size_t keysize);
 
 /**
- * String comparison functoin for pointers to C-strings (i.e. char**)
+ * String comparison function for pointers to C-strings (i.e. char**)
  * @details simply wraps `strcmp` by a single level of indirection
  * @param a Pointer to char* to compare with `b`
  * @param b Pointer to char* to compare with `a`
