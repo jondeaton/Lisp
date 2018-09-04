@@ -1,6 +1,8 @@
 /**
  * @file cmap.c
- * @brief Defines the implementation of a HashTable in C
+ * @brief Defines the implementation of a HashTable in C.
+ * This implementation uses an open-addressing scheme.
+ * There are future plans to use robin-hood scheme.
  */
 
 #include "cmap.h"
@@ -10,12 +12,12 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
 // a suggested value to use when given capacity_hint is 0
 #define DEFAULT_CAPACITY 1024
-#define unused __attribute__ ((unused))
 
 /**
  * @struct CMapImplementation
@@ -33,7 +35,7 @@ struct CMapImplementation {
   CleanupFn cleanupKey;         // Callback for key disposal
   CleanupFn cleanupValue;       // Callback for value disposal
   CMapHashFn hash;              // hash function callback
-  CMapCmpFn cmp;                // key comparison function
+  CmpFn cmp;                // key comparison function
 };
 
 /**
@@ -49,12 +51,12 @@ struct entry {
 // Macros/functions for setting entry status bits
 #define FREE_MASK ((uint8_t) 1)
 
-// Read the "free bit" from the status bits in the entry
+// read the "free bit" from the status bits in the entry
 static inline bool is_free(const struct entry* e) {
   return (bool) (e->status & FREE_MASK);
 }
 
-// Set the "free bit" in the status bits in the entry
+// set the "free bit" in the status bits in the entry
 static inline void set_free(struct entry *e, bool free) {
   if (free) e->status |= FREE_MASK;
   else e->status &= ~FREE_MASK;
@@ -72,13 +74,8 @@ static void erase(CMap *cm, struct entry *e);
 static void delete(CMap *cm, unsigned int start, unsigned int stop);
 static int lookup_index(const CMap *cm, const void *key);
 
-
-int string_cmp(const void *a, const void *b, size_t keysize unused) {
-  return strcmp(*(const char **) a, *(const char **) b);
-}
-
 CMap *cmap_create(size_t key_size, size_t value_size,
-                  CMapHashFn hash, CMapCmpFn cmp,
+                  CMapHashFn hash, CmpFn cmp,
                   CleanupFn cleanupKey, CleanupFn cleanupValue,
                   unsigned int capacity) {
   if (key_size <= 0 || value_size <= 0) return NULL;
@@ -234,7 +231,7 @@ static inline size_t entry_size(const CMap *cm) {
 
 static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
   assert(cm != NULL);
-  assert(index >= 0 && index < cm->capacity);
+  assert(index < cm->capacity);
   void *entry = (char *) cm->entries + index * entry_size(cm);
   return (struct entry *) entry;
 }
@@ -243,7 +240,8 @@ static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
  * @breif Finds the entry for this key
  * @param cm The CMap to lookup the key in
  * @param key the key to lookup in the CMap
- * @return Pointer
+ * @return pointer to the hash table entry that contains the key and value
+ * if the key exists in the hash table, else NULL
  */
 static struct entry *lookup_key(const CMap *cm, const void *key) {
   assert(cm != NULL);
@@ -253,12 +251,12 @@ static struct entry *lookup_key(const CMap *cm, const void *key) {
   unsigned int hash = cm->hash(key, cm->key_size) % cm->capacity;
   for (unsigned int i = 0; i < cm->capacity; ++i) {
     struct entry *e = get_entry(cm, (hash + i) % cm->capacity);
-    if (e == NULL || is_free(e)) continue;
+    if (is_free(e)) return NULL;
 
-    // Use cached hash value to do an easy/cache-friendly comparison
+    // use cached hash value to do an easy/cache-friendly comparison
     if (e->hash != hash) continue;
 
-    // Only dereference to compare full keys if you have to
+    // only dereference to compare full keys if you have to
     if (cm->cmp(&e->kv, key, cm->key_size) == 0)
       return e;
   }
@@ -285,6 +283,7 @@ static void erase(CMap *cm, struct entry *e) {
 
   if (cm->cleanupKey != NULL)
     cm->cleanupKey(key_of(e));
+
   if (cm->cleanupValue != NULL)
     cm->cleanupValue(value_of(cm, e));
 
@@ -293,7 +292,7 @@ static void erase(CMap *cm, struct entry *e) {
 
 static void delete(CMap *cm, unsigned int start, unsigned int stop) {
 
-  // The entry to delete
+  // the entry to delete
   struct entry *entry = get_entry(cm, start);
 
   unsigned int j = start;

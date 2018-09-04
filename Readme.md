@@ -1,12 +1,20 @@
 # Lisp Interpreter from C
 
 This repository contains a Lisp interpreter written from scratch in pure C (c99).
-The interpreter can be used to run Lisp programs saved in files, or from an interactive shell.
-This Lisp interpreter showcases many features including
+The interpreter can be used to run Lisp programs saved in files, or from an
+interactive shell. This Lisp interpreter showcases many features including
 variable and function declaration, arithmetic operations,
-first class/lambda functions, closures, recursive functions,
+first class/lambda functions, closures, currying, recursive functions,
 a mutable global interpreter environment, dynamic scoping, memory allocation
 and deterministic memory management without garbage collection.
+
+Although the interpreter and all of it's libraries are written in C, performance
+benchmarking and some unit testing are done using
+[Google Benchmark](https://github.com/google/benchmark "Google Benchmark")
+and
+[Google Test](https://github.com/google/googletest "Google Test"),
+respectively, which are both C++ libraries. If you want to build
+the performance and unit testing binaries, you will need a C++ compiler.
 
 #### Example
 
@@ -32,7 +40,7 @@ This interpreter also supports the creation of closures from lambda functions wi
     42
 
 In this example the `make-adder` function returns a closure with the value of `n` captured within the closure.
-Because of this, recursive functions may declared, such as this recursive definition of the factorial function:
+Recursive functions may declared, such as this recursive definition of the factorial function:
 
     > (set 'factorial 
         (lambda (n)
@@ -79,12 +87,16 @@ You can also run a Lisp script by adding it as an argument.
     - Ubuntu: `sudo apt-get install libreadline-dev`
     - MacOS: `brew install readline`
 
-## Testing
-If you would like to check out my handiwork, a testing framework for the interpreter is also included
-and can be run with the `test-lisp` executable.
+## Testing and Benchmarking
+If you would like to check out my handiwork, a testing framework for the interpreter
+is also included and can be run with the `test-lisp` executable.
+
+For performance benchmarking, we use the
+[Google Benchmark library](https://github.com/google/benchmark "Google Benchmark").
+To use this part of the repository, you will need a C++ compiler (as this library
+is written in C++) and have installed the library as instructed.
 
 ## Design
-
 To understand in greater detail the design choices which were made in the creation of this interpreter
 you may refer to `design.md`.
 
@@ -135,10 +147,10 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Y (U NO WORK) combinator tests~~
 - ~~Fix the way that errors are reported (no `return LOG_ERROR(...)`)~~
 - ~~Use flexible array member in lisp objects~~
+- Performance benchmarking
 - Pass full interpreter to primitives
 - Lexical scoping
 - Allow circular references by keeping track of freed pointers
-- Write performance bench-marker
 - Use a single truth and nil tuple
 - `defmacro`
 - Avoid deleting large data structures during set with over-write
