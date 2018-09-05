@@ -38,7 +38,7 @@ namespace {
   unsigned int two_hash(const void *key, size_t keysize UNUSED) {
     auto tp = static_cast<const T*>(key);
     return *tp >= Threshold ? N : M;
-  };
+  }
 
   template <typename K, typename V>
   class MapTest : public testing::Test {
