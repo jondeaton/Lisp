@@ -302,26 +302,27 @@ static void erase(CMap *cm, struct entry *e) {
 
 static void delete(CMap *cm, unsigned int start, unsigned int stop) {
   assert(cm != NULL);
+  while (true) {
+    // the entry to delete
+    struct entry *entry = get_entry(cm, start);
 
-  // the entry to delete
-  struct entry *entry = get_entry(cm, start);
+    unsigned int j = start;
+    for (unsigned int i = 0; i < cm->capacity; ++i) {
+      j = (j + 1) % cm->capacity;
+      if (j == stop) return;
 
-  unsigned int j = start;
-  for (unsigned int i = 0; i < cm->capacity; ++i) {
-    j = (j + 1) % cm->capacity;
-    if (j == stop) return;
+      struct entry *next = get_entry(cm, j);
+      if (is_free(next)) return; // reached the end
 
-    struct entry *next = get_entry(cm, j);
-    if (is_free(next)) return; // reached the end
-
-    // Found one that can replace
-    if ((next->hash) % cm->capacity >= start) {
-      move(cm, entry, next);
-      set_free(next, true);
-      break;
+      // Found one that can replace
+      if ((next->hash) % cm->capacity >= start) {
+        move(cm, entry, next);
+        set_free(next, true);
+        break;
+      }
     }
+    start = j;
   }
-  delete(cm, j, stop); // tail recursion optimization!
 }
 
 static int lookup_index(const CMap *cm, const void *key) {

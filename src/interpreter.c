@@ -23,7 +23,7 @@
 #define BUFSIZE 512
 char buff[BUFSIZE];
 #define PROMPT "> "
-#define REPROMPT ">>"
+#define REPROMPT "  "
 
 // Static function declarations
 static obj *read_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error);
@@ -185,7 +185,7 @@ static expression get_expression_from_prompt(bool* eof) {
  * ----------------------------------
  * Retrieves the next expression in the file
  * @param fd: File descriptor to read from
- * @param eof: Pointer to a bool to write whether or not EOF occured
+ * @param eof: Pointer to a bool to write whether or not EOF occurred
  * @return: The next expression read form the file descriptor
  */
 static expression get_expression_from_file(FILE *fd, bool *eof, bool *syntax_error) {

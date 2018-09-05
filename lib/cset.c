@@ -136,11 +136,15 @@ static struct Node *new_node(const void *data, size_t data_size) {
 static const struct Node *lookup(const CSet *set, const struct Node *node, const void *data) {
   assert(set != NULL);
   assert(data != NULL);
-  if (node == NULL) return NULL;
-  int cmp = set->cmp(node->data, data, set->data_size);
-  if (cmp == 0) return node;
-  enum Direction dir = get_direction(cmp);
-  return lookup(set, child(node, dir), data); // tail recursion! should be optimized
+  while (true) {
+
+    if (node == NULL) return NULL;
+    int cmp = set->cmp(node->data, data, set->data_size);
+    if (cmp == 0) return node;
+    enum Direction dir = get_direction(cmp);
+
+    node = child(node, dir);
+  }
 }
 
 static struct Node *insert_at(CSet *set, struct Node *node, const void *data) {
@@ -200,22 +204,26 @@ static struct Node *remove_node(CSet *set, struct Node *node) {
 
 static struct Node *balance(struct Node *node) {
   assert(node != NULL);
-  int bal = get_balance(node); // left height minus right height
-  if (bal >= -1 && bal <= 1) return node;
 
-  enum Direction dir = bal > 1 ? left : right;
+  while (true) {
 
-  struct Node **childp = child_ref(node, dir);
-  int sub_bal = get_balance(*childp);
+    int bal = get_balance(node); // left height minus right height
+    if (bal >= -1 && bal <= 1) return node;
 
-  if (dir == left) {
-    if (sub_bal <= -1)
-      *childp = rotate(*childp, dir);
-  } else {
-    if (sub_bal >= 1)
-      *childp = rotate(*childp, dir);
+    enum Direction dir = bal > 1 ? left : right;
+
+    struct Node **childp = child_ref(node, dir);
+    int sub_bal = get_balance(*childp);
+
+    if (dir == left) {
+      if (sub_bal <= -1)
+        *childp = rotate(*childp, dir);
+    } else {
+      if (sub_bal >= 1)
+        *childp = rotate(*childp, dir);
+    }
+    node = rotate(node, opposite(dir));
   }
-  return balance(rotate(node, opposite(dir)));
 }
 
 static int get_balance(const struct Node * node) {
@@ -275,9 +283,11 @@ static inline void update_height(struct Node *node) {
 }
 
 static struct Node *extrema(struct Node *node, enum Direction dir) {
-  if (node == NULL) return NULL;
-  if (child(node, dir) == NULL) return node;
-  return extrema(child(node, dir), dir);
+  while (true) {
+    if (node == NULL) return NULL;
+    if (child(node, dir) == NULL) return node;
+    node = child(node, dir);
+  }
 }
 
 static inline void update_count(struct Node *node, enum Direction dir) {
