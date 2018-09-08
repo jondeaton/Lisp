@@ -72,7 +72,7 @@ obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
   MALLOC_CHECK(o);
   o->objtype = int_obj;
-  int* contents = (int*) CONTENTS(o);
+  int *contents = (int*) CONTENTS(o);
   *contents = value;
   return o;
 }
@@ -81,7 +81,7 @@ obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
   MALLOC_CHECK(o);
   o->objtype = float_obj;
-  float* contents = (float*) CONTENTS(o);
+  float *contents = (float*) CONTENTS(o);
   *contents = value;
   return o;
 }
@@ -129,7 +129,7 @@ bool is_t(const obj* o) {
 
 float get_float(const obj* o) {
   if (is_int(o)) return (float) get_int(o);
-  if (is_float(o)) return *(float*) ((char*) o + sizeof(obj));
+  if (is_float(o)) return *(float*) CONTENTS(o);
 
   LOG_ERROR("Object is not a number");
   return 0;
@@ -137,7 +137,7 @@ float get_float(const obj* o) {
 
 int get_int(const obj* o) {
   if (is_float(o)) return (int) get_float(o);
-  if (is_int(o)) return *(int*) ((char*) o + sizeof(obj));
+  if (is_int(o)) return *(int*) CONTENTS(o);
   LOG_ERROR("Object is not a number");
   return 0;
 }

@@ -36,8 +36,9 @@ typedef const char* atom_t;
  * two pointers to car and cdr, respectively.
  */
 typedef struct {
-  enum type objtype;
-  char data[];
+  enum type objtype;    // what type of object
+  bool trash : 1;       // is trash (for GC)
+  char data[];          // the actual object's data
 } obj;
 
 typedef struct {

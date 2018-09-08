@@ -358,9 +358,11 @@ static def_primitive(lambda) {
     LOG_ERROR("Lambda parameters are not a list");
     return NULL;
   }
+
+  // check to make sure that the parameters are all atoms
   FOR_LIST(params, var) {
     if (var == NULL) continue;
-    if (is_t(var))     {
+    if (is_t(var)) {
       LOG_ERROR("Truth atom can't be parameter");
       return NULL;
     }
