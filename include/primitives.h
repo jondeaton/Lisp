@@ -9,7 +9,8 @@
 
 #include "lisp-objects.h"
 #include "memory-manager.h"
-#define whatduhar __attribute__ ((unused))
+#include <ops.h>
+
 /**
  * Primitive Definition Macro
  * --------------------------
@@ -23,7 +24,7 @@
  * that were created during the application of the primitive
  * @return: A new lisp object which is the result of applying
  */
-#define def_primitive(name) obj *name(const obj *args whatduhar, obj **envp whatduhar, MemoryManager *mm whatduhar)
+#define def_primitive(name) obj *name(const obj *args UNUSED, obj **envp UNUSED, MemoryManager *mm UNUSED)
 
 // Function type definitions
 typedef obj*(*primitive_t)(const obj*, obj**, MemoryManager*);
