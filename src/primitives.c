@@ -6,6 +6,7 @@
  * set, env, lambda, and defmacro
  */
 
+#include <interpreter.h>
 #include <primitives.h>
 #include <evaluator.h>
 #include <environment.h>
@@ -37,11 +38,10 @@ const obj lisp_T;   // The true atom.
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "lambda", "defmacro", NULL };
 
-static const primitive_t primitive_functions[] = {&quote, &atom, &eq, &car, &cdr, &cons,
+static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
                                                   &cond, &set, &env, &lambda, &defmacro,  NULL };
 
 // Static function declarations
-static obj *ith_arg_value(const obj *args, obj **envp, int i, MemoryManager *mm);
 static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
 
 
@@ -91,10 +91,10 @@ static def_primitive(quote) {
  */
 static def_primitive(atom) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* result = eval(CAR(args), envp, mm);
-  if (is_list(result)) return is_nil(result) ? t(mm) : nil(mm);
-  if (is_atom(result)) return t(mm);
-  return is_number(result) ? t(mm) : nil(mm);
+  obj* result = eval(CAR(args), interpreter);
+  if (is_list(result)) return is_nil(result) ? t(&interpreter->mm) : nil(&interpreter->mm);
+  if (is_atom(result)) return t(&interpreter->mm);
+  return is_number(result) ? t(&interpreter->mm) : nil(&interpreter->mm);
 }
 
 /**
@@ -105,13 +105,13 @@ static def_primitive(atom) {
 static def_primitive(eq) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* first = ith_arg_value(args, envp, 0, mm);
+  obj* first = eval(ith(args, 0), interpreter);
   if (first == NULL) return NULL;
-  obj* second = ith_arg_value(args, envp, 1, mm);
+  obj* second = eval(ith(args, 1), interpreter);
   if (second == NULL) return NULL;
 
   bool same = compare(first, second);
-  return same ? t(mm) : nil(mm);
+  return same ? t(&interpreter->mm) : nil(&interpreter->mm);
 }
 
 /**
@@ -122,7 +122,7 @@ static def_primitive(eq) {
  */
 static def_primitive(car) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* arg_value = eval(CAR(args), envp, mm);
+  obj* arg_value = eval(CAR(args), interpreter);
   if (arg_value == NULL) {
     LOG_ERROR("Error evaluating argument");
     return NULL;
@@ -132,7 +132,7 @@ static def_primitive(car) {
     LOG_ERROR("Argument is not a list");
     return NULL;
   }
-  if (is_nil(arg_value)) return nil(mm);
+  if (is_nil(arg_value)) return nil(&interpreter->mm);
   return CAR(arg_value);
 }
 
@@ -144,7 +144,7 @@ static def_primitive(car) {
  */
 static def_primitive(cdr) {
   if (!CHECK_NARGS(args, 1)) return NULL;
-  obj* arg_value = eval(CAR(args), envp, mm);
+  obj* arg_value = eval(CAR(args), interpreter);
   if (arg_value == NULL) {
     LOG_ERROR("Error evaluating argument");
     return NULL;
@@ -155,8 +155,8 @@ static def_primitive(cdr) {
     return NULL;
   }
 
-  if (is_nil(arg_value)) return nil(mm);
-  if (CDR(arg_value) == NULL) return nil(mm);
+  if (is_nil(arg_value)) return nil(&interpreter->mm);
+  if (CDR(arg_value) == NULL) return nil(&interpreter->mm);
   return CDR(arg_value);
 }
 
@@ -175,13 +175,13 @@ static def_primitive(cons) {
   obj* y = ith(args, 1);
   assert(y != NULL);
 
-  obj *car = eval(CAR(args), envp, mm);
+  obj *car = eval(CAR(args), interpreter);
   if (car == NULL) {
     LOG_ERROR("Error evaluating first argument");
     return NULL;
   }
 
-  obj* cdr = eval(y, envp, mm);
+  obj* cdr = eval(y, interpreter);
   if (cdr == NULL) {
     LOG_ERROR("Error evaluating second argument");
     return NULL;
@@ -200,7 +200,7 @@ static def_primitive(cons) {
     return NULL;
   }
 
-  mm_add(mm, new_obj); // Record allocation
+  mm_add(&interpreter->mm, new_obj); // Record allocation
 
   CAR(new_obj) = car;
   CDR(new_obj) = cdr;
@@ -219,7 +219,7 @@ static def_primitive(cons) {
 static def_primitive(cond) {
 
   // recursive base case
-  if (args == NULL) return nil(mm);
+  if (args == NULL) return nil(&interpreter->mm);
 
   if (!is_list(args)) {
     LOG_ERROR("Arguments are not a list of pairs");
@@ -243,7 +243,7 @@ static def_primitive(cond) {
     return NULL;
   }
 
-  obj *predicate = eval(CAR(pair), envp, mm);
+  obj *predicate = eval(CAR(pair), interpreter);
   if (is_primitive(predicate)) {
     LOG_ERROR("Cannot cast primitive function as bool.");
     return NULL;
@@ -256,14 +256,14 @@ static def_primitive(cond) {
       LOG_ERROR("Predicate has no associated value");
       return NULL;
     }
-    obj *value = eval(e, envp, mm);
+    obj *value = eval(e, interpreter);
     if (value == NULL)
       LOG_ERROR("Error evaluating value for predicate");
     return value;
   }
 
   // tail recursion on the remaining predicate-expression pairs
-  return cond(CDR(args), envp, mm);
+  return cond(CDR(args), interpreter);
 }
 
 /**
@@ -276,7 +276,7 @@ static def_primitive(cond) {
 static def_primitive(set) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
-  obj* var_name = ith_arg_value(args, envp, 0, mm);
+  obj* var_name = eval(ith(args, 0), interpreter);
   if (is_nil(var_name)) {
     LOG_ERROR("Cannot set empty list");
     return NULL;
@@ -289,7 +289,7 @@ static def_primitive(set) {
     LOG_ERROR("Can only set atom types");
     return NULL;
   }
-  obj* value = ith_arg_value(args, envp, 1, mm);
+  obj* value = eval(ith(args, 1), interpreter);
   if (value == NULL) {
     LOG_ERROR("Error evaluating right-hand-side");
     return NULL;
@@ -303,13 +303,13 @@ static def_primitive(set) {
   }
 
   // Store the result in the environment (potentially over-writing)
-  obj** prev_value_p = lookup_entry(var_name, *envp); // previously bound value
+  obj** prev_value_p = lookup_entry(var_name, interpreter->env); // previously bound value
   if (prev_value_p == NULL) {
     // no previous value found in environment
     obj* pair_second = new_list_set(result_cpy, NULL);
     obj *var_name_copy = copy_recursive(var_name);
     obj *pair_first = new_list_set(var_name_copy, pair_second);
-    obj *new_link = new_list_set(pair_first, *envp);
+    obj *new_link = new_list_set(pair_first, interpreter->env);
 
     if (var_name_copy == NULL || pair_first == NULL ||
         pair_second == NULL || new_link == NULL) {
@@ -321,7 +321,7 @@ static def_primitive(set) {
       return NULL;
     }
 
-    *envp = new_link;
+    interpreter->env = new_link;
   } else {
     // Over-write previous value
     // Note: must copy the result into a temporary value *before* disposing of the
@@ -341,7 +341,7 @@ static def_primitive(set) {
  */
 static def_primitive(env) {
   if (!check_nargs(__func__, args, 0)) return NULL;
-  return *envp;
+  return interpreter->env;
 }
 
 /**
@@ -385,7 +385,7 @@ static def_primitive(lambda) {
 
   // Capture variables
   obj* captured = NULL; // Will store the captured variables
-  bool success = capture_variables(&captured, params, procedure, *envp);
+  bool success = capture_variables(&captured, params, procedure, interpreter->env);
   if (!success) {
     LOG_ERROR("Error while capturing lambda variables");
     dispose_recursive(params);
@@ -402,7 +402,7 @@ static def_primitive(lambda) {
     return NULL;
   }
 
-  mm_add_recursive(mm, o);
+  mm_add_recursive(&interpreter->mm, o);
   return o;
 }
 
@@ -414,19 +414,6 @@ static def_primitive(lambda) {
 static def_primitive(defmacro) {
   LOG_ERROR("Macros not yet supported");
   return NULL;
-}
-
-/**
- * Function: ith_arg_value
- * -----------------------
- * Gets the evaluation of the argument at the nth index of the argument list
- * @param args: The list to get the i'th evaluation of
- * @param envp: The environment to do the evaluation in
- * @param i: The index (starting at 0) of the element to evaluate in o
- * @return: The evaluation of the i'th element of o in the given environment
- */
-static obj *ith_arg_value(const obj *args, obj **envp, int i, MemoryManager *mm) {
-  return eval(ith(args, i), envp, mm);
 }
 
 /**

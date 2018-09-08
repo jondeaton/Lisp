@@ -80,7 +80,7 @@ void mm_add(MemoryManager *gc, const obj *o);
  * in a recursive manner (the entire object tree).
  * @param root: The root object to add to the list
  */
-void mm_add_recursive(MemoryManager *gc, const obj *root);
+void mm_add_recursive(MemoryManager *mm, const obj *root);
 
 /**
  * Function: mm_clear

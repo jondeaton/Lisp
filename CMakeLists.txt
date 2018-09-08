@@ -43,11 +43,11 @@ set(CLIB_SRC
         lib/ops.h                   lib/ops.c)
 
 set(LISP_SRC
+        include/interpreter.h       src/interpreter.c
         include/lisp-objects.h      src/lisp-objects.c
         include/evaluator.h         src/evaluator.c
         include/primitives.h        src/primitives.c
         include/closure.h           src/closure.c
-        include/interpreter.h       src/interpreter.c
         include/parser.h            src/parser.c
         include/list.h              src/list.c
         include/memory-manager.h    src/memory-manager.c

@@ -7,8 +7,11 @@
 #ifndef _LISP_PRIMITIVES_H_INCLUDED
 #define _LISP_PRIMITIVES_H_INCLUDED
 
+#include <interpreter.h>
 #include "lisp-objects.h"
 #include "memory-manager.h"
+#include "interpreter.h"
+
 #include <ops.h>
 
 /**
@@ -24,10 +27,10 @@
  * that were created during the application of the primitive
  * @return: A new lisp object which is the result of applying
  */
-#define def_primitive(name) obj *name(const obj *args UNUSED, obj **envp UNUSED, MemoryManager *mm UNUSED)
+#define def_primitive(name) obj *name(const obj *args UNUSED, LispInterpreter *interpreter UNUSED)
 
-// Function type definitions
-typedef obj*(*primitive_t)(const obj*, obj**, MemoryManager*);
+// function type definitions
+typedef obj*(*primitive_t)(const obj*, LispInterpreter *);
 
 /**
  * Function: get_primitive_env

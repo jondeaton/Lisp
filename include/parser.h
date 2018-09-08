@@ -7,7 +7,7 @@
 #ifndef _PARSER_H_INCLUDED
 #define _PARSER_H_INCLUDED
 
-#include "primitives.h"
+#include "lisp-objects.h"
 #include <stdlib.h>
 
 // The string representation of nil/empty list/false

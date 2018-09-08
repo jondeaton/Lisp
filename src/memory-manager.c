@@ -40,17 +40,17 @@ void mm_add(MemoryManager *mm, const obj *o) {
 #endif
 }
 
-void mm_add_recursive(MemoryManager *gc, const obj *root) {
+void mm_add_recursive(MemoryManager *mm, const obj *root) {
   if (root == NULL) return;
   if (is_list(root)) {
-    mm_add_recursive(gc, CAR(root));
-    mm_add_recursive(gc, CDR(root));
+    mm_add_recursive(mm, CAR(root));
+    mm_add_recursive(mm, CDR(root));
   } else if (is_closure(root)) {
-    mm_add_recursive(gc, PARAMETERS(root));
-    mm_add_recursive(gc, PROCEDURE(root));
-    mm_add_recursive(gc, CAPTURED(root));
+    mm_add_recursive(mm, PARAMETERS(root));
+    mm_add_recursive(mm, PROCEDURE(root));
+    mm_add_recursive(mm, CAPTURED(root));
   }
-  mm_add(gc, root);
+  mm_add(mm, root);
 }
 
 void mm_clear(MemoryManager *mm) {

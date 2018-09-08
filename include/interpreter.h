@@ -8,6 +8,7 @@
 #define _LISP_INTERPRETER_H_INCLUDED
 
 #include "parser.h"
+#include "memory-manager.h"
 #include <stdio.h>
 
 /**
