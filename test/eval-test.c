@@ -210,8 +210,8 @@ DEF_TEST(cons) {
   TEST_EVAL("(cons () ())", "(nil)",                  "cons nil nil");
 
   SERIES(one,
-         "(set 'x '(1 2 3)");
-  TEST_EVALS(one, "(cons x x))", "((1 2 3) 1 2 3)",            "cons with self");
+         "(set 'x '(a b c)");
+  TEST_EVALS(one, "(cons x x))", "((a b c) a b c)",            "cons with self");
 
   TEST_ERROR("(cons)",                               "no arguments error");
   TEST_ERROR("(cons one)",                           "one argument error");
@@ -233,8 +233,8 @@ DEF_TEST(cond) {
   TEST_EVAL("(cond ('() 1) (() 2))", NIL_STR,        "cond no true predicates");
 
 
-  TEST_EVAL("(cond (0 4) (t 5))", "4",                "zero is true");
-  TEST_EVAL("(cond ('(a) 4) (t 5)", "4",              "simple list is true");
+  TEST_EVAL("(cond (0 'a) (t 'b))", "a",              "zero is true");
+  TEST_EVAL("(cond ('(a) 'a) (t 'b)", "a",            "simple list is true");
 
   TEST_EVAL("(cond (t 'b) ())", "b",                 "Ignore malformed later predicate pairs");
   TEST_ERROR("(cond '())",                           "quote is not true");
@@ -245,7 +245,7 @@ DEF_TEST(cond) {
             "(y z !)",                                 "really long cond");
 
   TEST_ERROR("(cond ())",                           "empty predicate pair");
-  TEST_ERROR("(cond (() 42) ())",                   "empty predicate pair second");
+  TEST_ERROR("(cond (() 'hello) ())",                "empty predicate pair second");
   TEST_ERROR("(cond t)",                            "predicate pair is not a list");
   TEST_ERROR("(cond (t))",                          "true predicate without value");
   TEST_ERROR("(cond (()) ())",                      "false predicate without value");
@@ -304,33 +304,6 @@ DEF_TEST(math) {
 
   TEST_TRUE("(= 1 1)",                     "one equals one");
   TEST_FALSE("(= 1 0)",                    "one doesn't equal zero");
-
-  char expression[TEST_EXPR_SIZE];
-  char expected[TEST_RESULT_SIZE];
-  for (int a = -10; a < 10; a++) {
-    for (int b = -10; b < 10; b++) {
-
-      // Equals
-      int n = snprintf(expression, TEST_EXPR_SIZE, "(= %d %d)", a, b);
-      if (n < 0) continue;
-
-      if (a == b) {
-        TEST_TRUE(expression, expression);
-      } else {
-        TEST_FALSE(expression, expression);
-      }
-
-      // Plus
-      n = snprintf(expression, TEST_EXPR_SIZE, "(+ %d %d)", a, b);
-      if (n < 0) continue;
-
-      n = snprintf(expected, TEST_RESULT_SIZE, "%d", a + b);
-      TEST_EVAL(expression, expected, expression);
-
-      // todo: add more auto tests
-    }
-  }
-
 
   TEST_EVAL("(+ 1 1)", "2",                 "one plus one equals two");
   TEST_EVAL("(+ 20 -25)", "-5",             "add negative number");

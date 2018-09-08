@@ -12,20 +12,18 @@
 #include <lisp-objects.h>
 #include <closure.h>
 #include <memory-manager.h>
-
-#define LAMBDA_RESV "lambda"
+#include <interpreter.h>
 
 // Static function declarations
-static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, MemoryManager *gc);
-static obj *bind(obj *params, const obj *args, obj **envp, MemoryManager *gc);
+static obj *bind(obj *params, const obj *args, LispInterpreter *interpreter);
 
-obj *eval(const obj *o, obj **envp, MemoryManager *gc) {
+obj *eval(const obj *o, LispInterpreter *interpreter) {
   if (o == NULL) return NULL;
 
   // Atom type means its just a literal that needs to be looked up
   if (is_atom(o)) {
     if (is_t(o)) return (obj*) o;
-    obj* value = lookup(o, *envp);
+    obj* value = lookup(o, interpreter->env);
     if (value == NULL) {
       LOG_ERROR("Variable: \"%s\" not found in environment", ATOM(o));
       return NULL;
@@ -41,19 +39,19 @@ obj *eval(const obj *o, obj **envp, MemoryManager *gc) {
   if (is_list(o)) {
     if (is_nil(o)) return (obj*) o;                     // Empty list evaluates to itself
 
-    obj* oper = eval(CAR(o), envp, gc);
-    return apply(oper, CDR(o), envp, gc);
+    obj* oper = eval(CAR(o), interpreter);
+    return apply(oper, CDR(o), interpreter);
   }
   LOG_ERROR("Object of unknown type");
   return NULL;
 }
 
-obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc) {
+obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
   if (oper == NULL) return NULL;
 
   if (is_primitive(oper)) {
     primitive_t f = *PRIMITIVE(oper);
-    return f(args, envp, gc);
+    return f(args, interpreter);
   }
 
   if (is_closure(oper)) {
@@ -61,18 +59,23 @@ obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc) {
 
     // Partial closure application
     if (list_length(args) < NARGS(oper))
-      return closure_partial_application(oper, args, envp, gc);
+      return closure_partial_application(oper, args, interpreter);
 
     // The result of a closure application is the evaluation of the body of the closure in an environment
     // containing the captured variables from the closure, along with the values of the arguments
     // bound to the parameters of the closure.
 
-    obj* new_env = bind_args_and_captured(oper, args, envp, gc); // Append bound args, and captured vars
-    obj* old_env = *envp; // gotta keep one around in case points is modified in eval
-    obj* result = eval(PROCEDURE(oper), &new_env, gc); // Evaluate body in prepended environment
+    obj* tmp_env = bind(PARAMETERS(oper), args, interpreter); // Bind the parameters to the arguments
+    obj* capture_copy = copy_recursive(CAPTURED(oper));
+    obj* new_env = join_lists(capture_copy, tmp_env); // Prepend the captured list to the environment
+
+    obj* old_env = interpreter->env; // gotta keep one around in case points is modified in eval
+    interpreter->env = new_env;
+    obj* result = eval(PROCEDURE(oper), interpreter); // Evaluate body in prepended environment
+    interpreter->env = old_env;
 
     bool split = split_lists(new_env, old_env);
-    if (split) mm_add_recursive(gc, new_env); // Mark the bound elements for cleanup
+    if (split) mm_add_recursive(&interpreter->mm, new_env); // Mark the bound elements for cleanup
 
     return result;
   }
@@ -86,21 +89,6 @@ obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc) {
 }
 
 /**
- * Function: bind_args_and_captured
- * --------------------------------
- * Prepends a list of arguments bound to parameters, and captured variables to an environment
- * @param operator: The operator (closure object) containing the parameter names + captured variables
- * @param args: The arguments to bind to the operator's parameters
- * @param envp: Pointer to the environment to prepend the bound arguments to
- * @return: The new environment
- */
-static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **envp, MemoryManager *gc) {
-  obj* new_env = bind(PARAMETERS(operator), args, envp, gc); // Bind the parameters to the arguments
-  obj* capture_copy = copy_recursive(CAPTURED(operator));
-  return join_lists(capture_copy, new_env); // Prepend the captured list to the environment
-}
-
-/**
  * Function: bind
  * --------------
  * binds a list of arguments to parameters and prepends them on to an environment
@@ -109,7 +97,7 @@ static obj *bind_args_and_captured(const obj *operator, const obj *args, obj **e
  * @param envp: Environment to prepend the bound arguments to
  * @return: Environment now with bound arguments appended
  */
-static obj *bind(obj *params, const obj *args, obj **envp, MemoryManager *gc) {
-  obj* frame = associate(params, args, envp, gc);
-  return join_lists(frame, *envp);
+static obj *bind(obj *params, const obj *args, LispInterpreter *interpreter) {
+  obj* frame = associate(params, args, interpreter);
+  return join_lists(frame, interpreter->env);
 }

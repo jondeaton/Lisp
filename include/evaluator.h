@@ -9,6 +9,7 @@
 
 #include "lisp-objects.h"
 #include "memory-manager.h"
+#include "interpreter.h"
 
 /**
  * Function: eval
@@ -19,7 +20,7 @@
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the evaluation of the object
  */
-obj *eval(const obj *o, obj **envp, MemoryManager *gc);
+obj *eval(const obj *o, LispInterpreter *interpreter);
 
 /**
  * Function: apply
@@ -30,6 +31,6 @@ obj *eval(const obj *o, obj **envp, MemoryManager *gc);
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the application of the function to the arguments
  */
-obj *apply(const obj *oper, const obj *args, obj **envp, MemoryManager *gc);
+obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter);
 
 #endif // _EVALUATOR_H_INCLUDED

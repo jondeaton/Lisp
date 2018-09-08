@@ -148,7 +148,7 @@ as things which I have not yet accomplished. Please cross one off!
 - ~~Fix the way that errors are reported (no `return LOG_ERROR(...)`)~~
 - ~~Use flexible array member in lisp objects~~
 - Performance benchmarking
-- Pass full interpreter to primitives
+- ~Pass full interpreter to primitives~
 - Lexical scoping
 - Allow circular references by keeping track of freed pointers
 - Use a single truth and nil tuple

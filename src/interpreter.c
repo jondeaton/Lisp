@@ -63,7 +63,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
       break;
     }
     if (o == NULL) continue;
-    obj* result = eval(o, &interpreter->env, &interpreter->mm);
+    obj* result = eval(o, interpreter);
     if (result == NULL) {
       if (verbose) LOG_MSG("NULL");
       break;
@@ -83,7 +83,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
       LOG_ERROR("Invalid expression");
       continue;
     }
-    obj* result = eval(o, &(interpreter->env), &interpreter->mm);
+    obj* result = eval(o, interpreter);
     if (result == NULL && verbose) LOG_MSG("NULL");
     print_object(fd_out, result);
     mm_clear(&interpreter->mm);
@@ -95,7 +95,7 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
 
   obj* o = PARSE(expr);
   if (o == NULL) return NULL;
-  obj* result_obj = eval(o, &(interpreter->env), &interpreter->mm);
+  obj* result_obj = eval(o, interpreter);
   expression result = unparse(result_obj);
   mm_clear(&interpreter->mm); // frees the objects in result_obj that were allocated during eval
   dispose_recursive(o);
