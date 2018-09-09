@@ -6,7 +6,7 @@
 
 #include <closure.h>
 #include <lisp-objects.h>
-#include <memory-manager.h>
+#include <garbage-collector.h>
 #include <list.h>
 #include <environment.h>
 #include <evaluator.h>
@@ -29,7 +29,7 @@ obj *closure_partial_application(const obj *closure, const obj *args, LispInterp
   obj* captured = join_lists(new_bindings, copy_recursive(CAPTURED(closure)));
 
   obj* new_closure = new_closure_set(params, procedure, captured);
-  mm_add_recursive(&interpreter->mm, new_closure);
+  gc_add_recursive(&interpreter->gc, new_closure);
   return new_closure;
 }
 

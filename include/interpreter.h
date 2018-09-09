@@ -8,7 +8,7 @@
 #define _LISP_INTERPRETER_H_INCLUDED
 
 #include "parser.h"
-#include "memory-manager.h"
+#include "garbage-collector.h"
 #include <stdio.h>
 
 /**
@@ -16,7 +16,7 @@
  */
 typedef struct {
   obj* env;                             // Interpreter environment
-  MemoryManager mm;                     // Memory Manager
+  GarbageCollector gc;                     // Memory Manager
 } LispInterpreter;
 
 /**

@@ -53,21 +53,22 @@ obj* new_primitive(primitive_t primitive) {
   obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
   MALLOC_CHECK(o);
   o->objtype = primitive_obj;
+  o->reachable = false;
   memcpy(PRIMITIVE(o), &primitive, sizeof(primitive));
   return o;
 }
 
 // Allocate new truth atom
-obj *t(MemoryManager *mm) {
+obj *t(GarbageCollector *mm) {
   obj* t = new_atom("t");
-  mm_add(mm, t);
+  gc_add(mm, t);
   return t;
 }
 
 // Allocate new empty list
-obj *nil(MemoryManager *mm) {
+obj *nil(GarbageCollector *mm) {
   obj* list = new_list_set(NULL, NULL);
-  mm_add(mm, list);
+  gc_add(mm, list);
   return list;
 }
 
@@ -92,9 +93,9 @@ static def_primitive(quote) {
 static def_primitive(atom) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* result = eval(CAR(args), interpreter);
-  if (is_list(result)) return is_nil(result) ? t(&interpreter->mm) : nil(&interpreter->mm);
-  if (is_atom(result)) return t(&interpreter->mm);
-  return is_number(result) ? t(&interpreter->mm) : nil(&interpreter->mm);
+  if (is_list(result)) return is_nil(result) ? t(&interpreter->gc) : nil(&interpreter->gc);
+  if (is_atom(result)) return t(&interpreter->gc);
+  return is_number(result) ? t(&interpreter->gc) : nil(&interpreter->gc);
 }
 
 /**
@@ -111,7 +112,7 @@ static def_primitive(eq) {
   if (second == NULL) return NULL;
 
   bool same = compare(first, second);
-  return same ? t(&interpreter->mm) : nil(&interpreter->mm);
+  return same ? t(&interpreter->gc) : nil(&interpreter->gc);
 }
 
 /**
@@ -132,7 +133,7 @@ static def_primitive(car) {
     LOG_ERROR("Argument is not a list");
     return NULL;
   }
-  if (is_nil(arg_value)) return nil(&interpreter->mm);
+  if (is_nil(arg_value)) return nil(&interpreter->gc);
   return CAR(arg_value);
 }
 
@@ -155,8 +156,8 @@ static def_primitive(cdr) {
     return NULL;
   }
 
-  if (is_nil(arg_value)) return nil(&interpreter->mm);
-  if (CDR(arg_value) == NULL) return nil(&interpreter->mm);
+  if (is_nil(arg_value)) return nil(&interpreter->gc);
+  if (CDR(arg_value) == NULL) return nil(&interpreter->gc);
   return CDR(arg_value);
 }
 
@@ -200,7 +201,7 @@ static def_primitive(cons) {
     return NULL;
   }
 
-  mm_add(&interpreter->mm, new_obj); // Record allocation
+  gc_add(&interpreter->gc, new_obj); // Record allocation
 
   CAR(new_obj) = car;
   CDR(new_obj) = cdr;
@@ -219,7 +220,7 @@ static def_primitive(cons) {
 static def_primitive(cond) {
 
   // recursive base case
-  if (args == NULL) return nil(&interpreter->mm);
+  if (args == NULL) return nil(&interpreter->gc);
 
   if (!is_list(args)) {
     LOG_ERROR("Arguments are not a list of pairs");
@@ -404,7 +405,7 @@ static def_primitive(lambda) {
     return NULL;
   }
 
-  mm_add_recursive(&interpreter->mm, o);
+  gc_add_recursive(&interpreter->gc, o);
   return o;
 }
 

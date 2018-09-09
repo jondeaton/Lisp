@@ -50,7 +50,7 @@ set(LISP_SRC
         include/closure.h           src/closure.c
         include/parser.h            src/parser.c
         include/list.h              src/list.c
-        include/memory-manager.h    src/memory-manager.c
+        include/garbage-collector.h src/garbage-collector.c
         include/environment.h       src/environment.c
         include/math-lib.h          src/math-lib.c
         include/repl.h              src/repl.c
@@ -78,8 +78,10 @@ if (gtest)
 
     set(CLIB_TEST_SRC
             test/clib-test.cpp
-            test/permutation-test.hpp
-            test/cmap-test.hpp test/cset-test.hpp)
+            test/cmap-test.hpp
+            test/cset-test.hpp
+            test/cvec-test.hpp
+            test/permutation-test.hpp)
 
     add_executable(clib-test ${CLIB_SRC} ${CLIB_TEST_SRC})
     target_link_libraries(clib-test clib gtest pthread)

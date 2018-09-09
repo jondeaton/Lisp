@@ -27,7 +27,7 @@ static inline size_t index_of(const CVector* cv, const void* elementp);
 static void* el_at_index(const CVector *cv, int index);
 
 
-CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
+CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupFn fn) {
   CVector* cvec = malloc(sizeof(CVector));
   if (cvec == NULL) return NULL;
   bool success = cvec_init(cvec, elemsz, capacity_hint, fn);
@@ -38,7 +38,7 @@ CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
   return cvec;
 }
 
-bool cvec_init(CVector *cvec, size_t elemsz, size_t capacity_hint, CleanupElemFn fn) {
+bool cvec_init(CVector *cvec, size_t elemsz, size_t capacity_hint, CleanupFn fn) {
   assert(cvec != NULL);
   cvec->nelems = 0;
 
@@ -123,7 +123,7 @@ void cvec_clear(CVector* cv) {
   cv->nelems = 0;
 }
 
-int cvec_search(const CVector* cv, const void* key, CompareFn cmp, int start, bool sorted) {
+int cvec_search(const CVector* cv, const void* key, CmpFn cmp, int start, bool sorted) {
   assert(cv != NULL);
   assert(start >= 0 && start <= cv->nelems);
 
@@ -139,9 +139,39 @@ int cvec_search(const CVector* cv, const void* key, CompareFn cmp, int start, bo
   else return (int) index_of(cv, found_elem);
 }
 
-void cvec_sort(CVector* cv, CompareFn cmp) {
+void cvec_sort(CVector* cv, CmpFn cmp) {
+  assert(cv != NULL);
+  assert(cmp != NULL);
   qsort(cv->elems, (size_t) cv->nelems, cv->elemsz, cmp);
 }
+
+void cvec_filter(CVector *cv, PredicateFn predicate) {
+  assert(cv != NULL);
+  assert(predicate != NULL);
+
+  int num_removed = 0;
+  int num_kept = 0;
+
+  void *removed_start = cv->elems;
+  void *remaining = cv->elems;
+
+  while (num_kept + num_removed < cv->nelems) {
+    if (predicate(remaining)) { // keep this element
+      if (num_removed > 0)
+        memcpy(removed_start, remaining, cv->elemsz);
+      removed_start = (char *) removed_start + cv->elemsz;
+      num_kept++;
+    } else {                // remove this element
+      if (cv->cleanup) cv->cleanup(remaining);
+      num_removed++;
+    }
+    remaining = (char *) remaining + cv->elemsz;
+  }
+
+  cv->nelems = num_kept;
+}
+
+
 
 void* cvec_first(const CVector* cv) {
   return cv->nelems > 0 ? cv->elems : NULL;

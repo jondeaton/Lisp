@@ -5,13 +5,12 @@
  */
 
 #include <math-lib.h>
-#include <memory-manager.h>
-#include <parser.h>
-#include <list.h>
-#include <environment.h>
+#include <interpreter.h>
+#include <primitives.h>
 #include <evaluator.h>
+#include <environment.h>
 #include <stack-trace.h>
-#include <lisp-objects.h>
+
 
 // function typedefs for Z^2 --> Z, and R^2 --> R
 typedef int (*intArithmeticFuncPtr)(int, int);
@@ -49,9 +48,9 @@ static float mod_floats(float x, float y) { // This one needs it's own special d
 }
 
 // Function definitions for integer and floating point allocators
-#define def_number_allocator(T) static obj* allocate_ ## T (T value, MemoryManager* mm) {\
+#define def_number_allocator(T) static obj* allocate_ ## T (T value, GarbageCollector* gc) {\
   obj* o = new_int(value); \
-  mm_add(mm, o); \
+  gc_add(gc, o); \
   return o; }
 
 def_number_allocator(int)
@@ -84,8 +83,8 @@ def_math_op_primitive(mod)
     return NULL; \
   } \
   if (is_int(first) && is_int(second)) \
-    return get_int(first) op get_int(second) ? t(&interpreter->mm) : nil(&interpreter->mm); \
-  return get_float(first) op get_float(second) ? t(&interpreter->mm) : nil(&interpreter->mm); \
+    return get_int(first) op get_int(second) ? t(&interpreter->gc) : nil(&interpreter->gc); \
+  return get_float(first) op get_float(second) ? t(&interpreter->gc) : nil(&interpreter->gc); \
 }
 def_math_compare_primitive(equal, ==)
 def_math_compare_primitive(gt, >)
@@ -123,9 +122,9 @@ static obj *apply_arithmetic(const obj *args, intArithmeticFuncPtr int_op,
 
   if (first->objtype == float_obj || second->objtype == float_obj ) {
     float value = float_op(get_float(first), get_float(second));
-    return allocate_float(value, &interpreter->mm);
+    return allocate_float(value, &interpreter->gc);
   } else {
     int value = int_op(get_int(first), get_int(second));
-    return allocate_int(value, &interpreter->mm);
+    return allocate_int(value, &interpreter->gc);
   }
 }

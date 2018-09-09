@@ -16,6 +16,7 @@ obj* new_atom(atom_t name) {
   obj* o = malloc(sizeof(obj) + name_size + 1);
   MALLOC_CHECK(o);
   o->objtype = atom_obj;
+  o->reachable = false;
   strcpy((char*) ATOM(o), name);
   return o;
 }
@@ -24,6 +25,7 @@ obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
   MALLOC_CHECK(o);
   o->objtype = list_obj;
+  o->reachable = false;
   CAR(o) = NULL;
   CDR(o) = NULL;
   return o;
@@ -33,6 +35,7 @@ obj* new_closure() {
   obj* o = malloc(sizeof(obj) + sizeof(closure_t));
   MALLOC_CHECK(o);
   o->objtype = closure_obj;
+  o->reachable = false;
   return o;
 }
 
@@ -72,6 +75,7 @@ obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
   MALLOC_CHECK(o);
   o->objtype = int_obj;
+  o->reachable = false;
   int *contents = (int*) CONTENTS(o);
   *contents = value;
   return o;
@@ -81,6 +85,7 @@ obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
   MALLOC_CHECK(o);
   o->objtype = float_obj;
+  o->reachable = false;
   float *contents = (float*) CONTENTS(o);
   *contents = value;
   return o;

@@ -1,6 +1,8 @@
 #ifndef LISP_OPS_H
 #define LISP_OPS_H
 
+#include <stdbool.h>
+
 #ifndef UNUSED
 #define UNUSED __attribute__((unused))
 #endif
@@ -16,7 +18,9 @@ extern "C" {
 typedef void (*CleanupFn)(void *addr);
 
 // Strict Total Order comparison function
-typedef int (*CmpFn)(const void *keyA, const void *keyB, size_t keysize);
+typedef int (*CmpFn)(const void *keyA, const void *keyB);
+
+typedef bool (*PredicateFn)(const void *element);
 
 /**
  * String comparison function for pointers to C-strings (i.e. char**)
@@ -26,7 +30,7 @@ typedef int (*CmpFn)(const void *keyA, const void *keyB, size_t keysize);
  * @param keysize unused parameter. the keysize of sizeof(char*)
  * @return the string comparison of `a` and `b`
  */
-int cmp_cstr(const void *a, const void *b, size_t keysize UNUSED);
+int cmp_cstr(const void *a, const void *b);
 
 /**
  * Integer comparison function
@@ -35,7 +39,7 @@ int cmp_cstr(const void *a, const void *b, size_t keysize UNUSED);
  * @param keysize unused. The keysize is known to be sizeof(int)
  * @return 1 if *intp1 > *intp2, -1 *intp2 > *intp1, zero otherwise.
  */
-int cmp_int(const void *intp1, const void *intp2, size_t keysize UNUSED);
+int cmp_int(const void *intp1, const void *intp2);
 
 /**
  * Pointer comparison
@@ -44,7 +48,7 @@ int cmp_int(const void *intp1, const void *intp2, size_t keysize UNUSED);
  * @param keysize unused. keysize is known to be sizeof(void*)
  * @return 1 if *ptr1 > *ptr2, -1 if *ptr2 > *ptr1, zero is pointers are equal.
  */
-int cmp_ptr(const void *ptr1, const void *ptr2, size_t keysize UNUSED);
+int cmp_ptr(const void *ptr1, const void *ptr2);
 
 #ifdef __cplusplus
 }

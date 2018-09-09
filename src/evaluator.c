@@ -11,7 +11,7 @@
 #include <string.h>
 #include <lisp-objects.h>
 #include <closure.h>
-#include <memory-manager.h>
+#include <garbage-collector.h>
 #include <interpreter.h>
 
 // Static function declarations
@@ -75,7 +75,7 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
     interpreter->env = old_env;
 
     bool split = split_lists(new_env, old_env);
-    if (split) mm_add_recursive(&interpreter->mm, new_env); // Mark the bound elements for cleanup
+    if (split) gc_add_recursive(&interpreter->gc, new_env); // Mark the bound elements for cleanup
 
     return result;
   }

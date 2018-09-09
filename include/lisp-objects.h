@@ -37,7 +37,7 @@ typedef const char* atom_t;
  */
 typedef struct {
   enum type objtype;    // what type of object
-  bool trash : 1;       // is trash (for GC)
+  bool reachable;       // is trash (for GC)
   char data[];          // the actual object's data
 } obj;
 
