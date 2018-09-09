@@ -39,7 +39,7 @@ static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr"
                                              "cond", "set", "env", "lambda", "defmacro", NULL };
 
 static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
-                                                  &cond, &set, &env, &lambda, &defmacro,  NULL };
+                                                   &cond, &set, &env, &lambda, &defmacro,  NULL };
 
 // Static function declarations
 static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
@@ -174,7 +174,10 @@ static def_primitive(cons) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* y = ith(args, 1);
-  assert(y != NULL);
+  if (y == NULL) {
+    LOG_ERROR("Could not get second argument");
+    return NULL;
+  }
 
   obj *car = eval(CAR(args), interpreter);
   if (car == NULL) {
@@ -195,12 +198,11 @@ static def_primitive(cons) {
   }
 
   // Allocate new slot to hold x in result list
-  obj* new_obj = new_list();
+  obj *new_obj = new_list();
   if (new_obj == NULL) {
     LOG_ERROR("could not allocate list element");
     return NULL;
   }
-
   gc_add(&interpreter->gc, new_obj); // Record allocation
 
   CAR(new_obj) = car;

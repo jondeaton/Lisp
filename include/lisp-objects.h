@@ -11,12 +11,12 @@
 
 // The different types of lists
 enum type {
-    atom_obj,             // Atom object
-    list_obj,             // List object
-    primitive_obj,        // Primitive function object
-    closure_obj,          // Closure/procedure object
-    int_obj,              // Integer object
-    float_obj             // Floating point number object
+  atom_obj,             // Atom object
+  list_obj,             // List object
+  primitive_obj,        // Primitive function object
+  closure_obj,          // Closure/procedure object
+  int_obj,              // Integer object
+  float_obj             // Floating point number object
 };
 
 typedef const char* atom_t;
