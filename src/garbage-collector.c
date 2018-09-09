@@ -101,5 +101,6 @@ void gc_dispose(GarbageCollector *gc) {
  * @param op: Pointer to a pointer to the object to dispose of
  */
 static void obj_cleanup(obj** op) {
+  assert(op != NULL);
   dispose(*op);
 }

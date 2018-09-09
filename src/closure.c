@@ -22,14 +22,21 @@ obj *closure_partial_application(const obj *closure, const obj *args, LispInterp
 
   int nargs = list_length(args);
 
-  obj* params = copy_recursive(sublist(PARAMETERS(closure), nargs));
-  obj* procedure = copy_recursive(PROCEDURE(closure));
+  obj *params = copy_recursive(sublist(PARAMETERS(closure), nargs));
+  gc_add_recursive(&interpreter->gc, params);
 
-  obj* new_bindings = associate(PARAMETERS(closure), args, interpreter);
-  obj* captured = join_lists(new_bindings, copy_recursive(CAPTURED(closure)));
+  obj *procedure = copy_recursive(PROCEDURE(closure));
+  gc_add_recursive(&interpreter->gc, procedure);
+
+  obj *capt_copy = copy_recursive(CAPTURED(closure));
+  gc_add_recursive(&interpreter->gc, capt_copy);
+
+  obj *new_bindings = associate(PARAMETERS(closure), args, interpreter);
+
+  obj* captured = join_lists(new_bindings, capt_copy);
 
   obj* new_closure = new_closure_set(params, procedure, captured);
-  gc_add_recursive(&interpreter->gc, new_closure);
+  gc_add(&interpreter->gc, new_closure);
   return new_closure;
 }
 
@@ -52,8 +59,13 @@ obj* copy_closure_recursive(const obj* closure) {
 obj *associate(obj *names, const obj *args, LispInterpreter *interpreter) {
   if (!is_list(names) || !is_list(args)) return NULL;
 
-  obj* value = eval(CAR(args), interpreter);
-  obj* pair = make_pair(CAR(names), value, true);
+  obj *value = eval(CAR(args), interpreter);
+  obj *pair = make_pair(CAR(names), value, true);
+  gc_add(&interpreter->gc, pair);
+  gc_add(&interpreter->gc, CDR(pair));
+
   obj* cdr = associate(CDR(names), CDR(args), interpreter);
-  return new_list_set(pair, cdr);
+  obj *nested_pair = new_list_set(pair, cdr);
+  gc_add(&interpreter->gc, nested_pair);
+  return nested_pair;
 }

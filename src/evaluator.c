@@ -67,15 +67,13 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
 
     obj* tmp_env = bind(PARAMETERS(oper), args, interpreter); // Bind the parameters to the arguments
     obj* capture_copy = copy_recursive(CAPTURED(oper));
+    gc_add_recursive(&interpreter->gc, capture_copy);
     obj* new_env = join_lists(capture_copy, tmp_env); // Prepend the captured list to the environment
 
     obj* old_env = interpreter->env; // gotta keep one around in case points is modified in eval
     interpreter->env = new_env;
     obj* result = eval(PROCEDURE(oper), interpreter); // Evaluate body in prepended environment
     interpreter->env = old_env;
-
-    bool split = split_lists(new_env, old_env);
-    if (split) gc_add_recursive(&interpreter->gc, new_env); // Mark the bound elements for cleanup
 
     return result;
   }

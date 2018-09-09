@@ -9,6 +9,7 @@
 #include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 obj* new_atom(atom_t name) {
   if (name == NULL) return NULL;
@@ -68,6 +69,7 @@ bool compare(const obj* a, const obj* b) {
 }
 
 void dispose(obj* o) {
+  assert(o != NULL);
   free(o);
 }
 
