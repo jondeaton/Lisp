@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 
 #define KMAG  "\x1B[35m"
@@ -35,6 +36,8 @@ static bool is_white_space(char character);
 static int distance_to_next_element(const_expression e);
 
 obj* parse_expression(const_expression e, size_t *num_parsed_p) {
+  assert(e != NULL);
+
   ssize_t start = distance_to_next_element(e);
   if (start == -1) {
     if (num_parsed_p != NULL) *num_parsed_p = strlen(e);

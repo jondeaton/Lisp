@@ -22,6 +22,7 @@ int run_all_tests() {
 
   int nf, nt;
   RUN_TEST(parser);
+  RUN_TEST(syntax);
   RUN_TEST(quote);
   RUN_TEST(car_cdr);
   RUN_TEST(atom);

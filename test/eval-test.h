@@ -33,6 +33,14 @@ bool test_multi_eval(const_expression setup_expressions[],
                      const char *test_name_format, ...);
 
 /**
+ * Function: test_syntax
+ * ---------------------
+ * Tests to make sure that basic syntax is working correctly in the lisp interpreter
+ * @return: True if all the tests pass false otherwise
+ */
+DEF_TEST(syntax);
+
+/**
  * Function: test_quote
  * --------------------
  * Tests if the quote language feature works correctly

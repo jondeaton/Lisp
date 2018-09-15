@@ -91,6 +91,8 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
 }
 
 expression interpret_expression(LispInterpreter *interpreter, const_expression expr) {
+  assert(interpreter != NULL);
+
   if (expr == NULL) return NULL;
 
   obj* o = PARSE(expr);

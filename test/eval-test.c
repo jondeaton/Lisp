@@ -34,7 +34,7 @@
  */
 bool test_single_eval(const_expression expr, const_expression expected,
                       const char *test_name_format, ...) {
-
+  
   // Get the result: create a new lisp interpreter to evaluate expression in
   LispInterpreter interpreter;
   bool success = interpreter_init(&interpreter);
@@ -114,6 +114,14 @@ bool test_multi_eval(const_expression setup_expressions[],
 
   free(result_exp);
   return test_result;
+}
+
+DEF_TEST(syntax) {
+  TEST_INIT();
+
+  TEST_ERROR("(((())))",    "nested parens");
+
+  TEST_REPORT();
 }
 
 DEF_TEST(quote) {
