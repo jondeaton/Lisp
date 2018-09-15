@@ -3,13 +3,13 @@
 #include <string.h>
 #include <assert.h>
 
-int cmp_cstr(const void *a, const void *b, size_t keysize UNUSED) {
+int cmp_cstr(const void *a, const void *b) {
   assert(a != NULL);
   assert(b != NULL);
   return strcmp(*(const char **) a, *(const char **) b);
 }
 
-int cmp_int(const void *intp1, const void *intp2, size_t keysize UNUSED) {
+int cmp_int(const void *intp1, const void *intp2) {
   assert(intp1 != NULL);
   assert(intp2 != NULL);
 
@@ -23,7 +23,7 @@ int cmp_int(const void *intp1, const void *intp2, size_t keysize UNUSED) {
   return 0;
 }
 
-int cmp_ptr(const void *ptr1, const void *ptr2, size_t keysize UNUSED) {
+int cmp_ptr(const void *ptr1, const void *ptr2) {
   assert(ptr1 != NULL);
   assert(ptr2 != NULL);
 

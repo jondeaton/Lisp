@@ -31,8 +31,7 @@ BENCHMARK(BM_map_repeated_insertion)->RangeMultiplier(2)->Range(1 << 8, 1 << 16)
 
 static void BM_map_insert_delete(benchmark::State &state) {
   CMap *cm = cmap_create(sizeof(int), sizeof(int),
-                         roberts_hash, memcmp,
-                         NULL, NULL,
+                         roberts_hash, NULL, NULL, NULL,
                          (unsigned int) state.range(1));
 
   for (int i = - state.range(0) / 2; i < 0; i++)

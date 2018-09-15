@@ -73,6 +73,7 @@ static inline void move(CMap *cm, struct entry *entry1, struct entry *entry2);
 static void erase(CMap *cm, struct entry *e);
 static void delete(CMap *cm, unsigned int start, unsigned int stop);
 static int lookup_index(const CMap *cm, const void *key);
+static int compare(const CMap *cm, const void *keyA, const void *keyB);
 
 CMap *cmap_create(size_t key_size, size_t value_size,
                   CMapHashFn hash, CmpFn cmp,
@@ -89,7 +90,7 @@ CMap *cmap_create(size_t key_size, size_t value_size,
   cm->cleanupKey = cleanupKey;
   cm->cleanupValue = cleanupValue;
   cm->hash = hash == NULL ? roberts_hash : hash;
-  cm->cmp = cmp == NULL ? memcmp : cmp;
+  cm->cmp = cmp;
 
   // Allocate array for key-value entries
   cm->capacity = capacity > 0 ? capacity : DEFAULT_CAPACITY;
@@ -263,7 +264,7 @@ static struct entry *lookup_key(const CMap *cm, const void *key) {
     if (e->hash != hash) continue;
 
     // only dereference to compare full keys if you have to
-    if (cm->cmp(&e->kv, key, cm->key_size) == 0)
+    if (compare(cm, &e->kv, key) == 0)
       return e;
   }
   return NULL; // Went all the way around
@@ -339,8 +340,16 @@ static int lookup_index(const CMap *cm, const void *key) {
     if (e->hash != hash) continue;
 
     // Only dereference to compare full keys if you have to
-    if (cm->cmp(&e->kv, key, cm->key_size) == 0)
+    if (compare(cm, &e->kv, key) == 0)
       return (hash + i) % cm->capacity;
   }
   return -1;
+}
+
+static int compare(const CMap *cm, const void *keyA, const void *keyB) {
+  assert(cm != NULL);
+  assert(keyA != NULL);
+  assert(keyB != NULL);
+  if (cm->cmp == NULL) return memcmp(keyA, keyB, cm->key_size);
+  return cm->cmp(keyA, keyB);
 }

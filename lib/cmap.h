@@ -21,8 +21,7 @@ extern "C" {
 #include <ops.h>
 
 // macro for defining map of simple types that need no cleanup (i.e. int -> int)
-#define simple_map(key_size, value_size) cmap_create(key_size, value_size, roberts_hash, \
-                                                      memcmp, NULL, NULL, 0)
+#define simple_map(key_size, value_size) cmap_create(key_size, value_size, roberts_hash, NULL, NULL, NULL, 0)
 
 typedef struct CMapImplementation CMap;
 

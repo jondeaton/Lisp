@@ -284,7 +284,7 @@ DEF_TEST(set) {
          "(set 'x '(1 2 3 4 5))",
          "(set 'x (cdr x))");
   TEST_EVALS(self_ref,
-            "x", "(2 3 4 5)",              "self-referential over-write");
+             "x", "(2 3 4 5)",              "self-referential over-write");
 
   SERIES(consy,
          "(set 'x '(1 2 3))",
@@ -452,46 +452,46 @@ DEF_TEST(lambda) {
 DEF_TEST(closure) {
   TEST_INIT();
 
-   SERIES(one,
-          "(set 'f (lambda (x y) (+ x y)))",
-          "(set 'add-5 (f 5)");
-   TEST_EVALS(one, "(add-5 100)", "105",          "simple variable capture");
+  SERIES(one,
+         "(set 'f (lambda (x y) (+ x y)))",
+         "(set 'add-5 (f 5)");
+  TEST_EVALS(one, "(add-5 100)", "105",          "simple variable capture");
 
 
-   SERIES(two,
-           "(set 'x 8)",
-           "(set 'double (lambda (x) (+ x x)))");
-   TEST_EVALS(two, "(double 7)", "14",              "variable capture from environment");
+  SERIES(two,
+         "(set 'x 8)",
+         "(set 'double (lambda (x) (+ x x)))");
+  TEST_EVALS(two, "(double 7)", "14",              "variable capture from environment");
 
-   TEST_REPORT();
+  TEST_REPORT();
 }
 
 DEF_TEST(recursion) {
   TEST_INIT();
 
-   SERIES(factorial,
-          "(set 'factorial (lambda (x) "
-            "(cond "
-            "((= x 0) 1) "
-            "(t (* x (factorial (- x 1)))))))");
-   TEST_EVALS(factorial, "(factorial 5)", "120",        "factorial 5");
-   TEST_EVALS(factorial, "(factorial 8)", "40320",      "factorial 8");
-   TEST_EVALS(factorial, "(factorial 0)", "1",          "factorial 0");
+  SERIES(factorial,
+         "(set 'factorial (lambda (x) "
+         "(cond "
+         "((= x 0) 1) "
+         "(t (* x (factorial (- x 1)))))))");
+  TEST_EVALS(factorial, "(factorial 5)", "120",        "factorial 5");
+  TEST_EVALS(factorial, "(factorial 8)", "40320",      "factorial 8");
+  TEST_EVALS(factorial, "(factorial 0)", "1",          "factorial 0");
 
-   // ith element
-   SERIES(ith,
-          "(set 'ith (lambda (x i)"
-            "(cond"
-            "((= i 0) (car x))"
-            "(t (ith (cdr x) (- i 1))))))");
-   TEST_EVALS(ith, "(ith '(1 2 3 4 5) 2)", "3",       "recursive i'th function");
+  // ith element
+  SERIES(ith,
+         "(set 'ith (lambda (x i)"
+         "(cond"
+         "((= i 0) (car x))"
+         "(t (ith (cdr x) (- i 1))))))");
+  TEST_EVALS(ith, "(ith '(1 2 3 4 5) 2)", "3",       "recursive i'th function");
 
-   SERIES(repeat,
-          "(set 'repeat (lambda (item n)"
-            "(cond"
-            "((= n 1) item)"
-            "(t (cons (car item) (repeat item (- n 1)))))))");
-   TEST_EVALS(repeat, "(repeat '(3) 7)", "(3 3 3 3 3 3 3)",     "recursive repetition function");
+  SERIES(repeat,
+         "(set 'repeat (lambda (item n)"
+         "(cond"
+         "((= n 1) item)"
+         "(t (cons (car item) (repeat item (- n 1)))))))");
+  TEST_EVALS(repeat, "(repeat '(3) 7)", "(3 3 3 3 3 3 3)",     "recursive repetition function");
 
   TEST_REPORT();
 }
@@ -532,7 +532,7 @@ DEF_TEST(Y_combinator) {
   TEST_EVALS(yc_factorial, "((Y F) 0)", "1",                   "Factorial 0 Y-Combinator");
   TEST_EVALS(yc_factorial, "((Y F) 1)", "1",                   "Factorial 1 Y-Combinator");
   TEST_EVALS(yc_factorial, "((Y F) 5)", "120",                 "Factorial 5 Y-Combinator");
-  
+
   TEST_REPORT();
 }
 

@@ -7,37 +7,12 @@
 #ifndef _CVECTOR_H_INCLUDED
 #define _CVECTOR_H_INCLUDED
 
+#include <ops.h>
+
 #include <stdbool.h>
 #include <stddef.h>
 
-/**
- * Type: CompareFn
- * ---------------
- * CompareFn is the typename for a pointer to a client-supplied
- * comparator function. A CVector requires the client to provide a
- * comparator to sort or search the CVector. A comparator takes two
- * const void* pointers, each of which points to an element of the type
- * stored in the CVector, and returns an integer. The integer indicates the
- * ordering of the two elements using the same convention as strcmp:
- *
- *   If element at addr1 < element at addr2, return a negative number
- *   If element at addr1 > element at addr2, return a positive number
- *   If element at addr1 = element at addr2, return zero
- */
-typedef int (*CompareFn)(const void *addr1, const void *addr2);
-
-
-/**
- * Type: CleanupElemFn
- * -------------------
- * CleanupElemFn is the typename for a pointer to a client-supplied
- * cleanup function. The client passes a cleanup function to cvec_create
- * and the CVector will apply that function to an element that is being
- * removed/replaced/disposed. The cleanup function takes one void* pointer
- * that points to the element.
- */
-typedef void (*CleanupElemFn)(void *addr);
-
+#define for_vector(cv, el) for((el) = cvec_first(cv); (el) != NULL; (el) = cvec_next(cv, el))
 
 /* Type: struct CVector
  * ----------------------------------
@@ -52,7 +27,7 @@ typedef struct CVector {
   int nelems;             // Number of elements currently in the CVector
   int capacity;           // The maximum number of elements that could be stored
   size_t elemsz;          // The size of each element in bytes
-  CleanupElemFn cleanup;  // Callback function for cleaning up an element
+  CleanupFn cleanup;      // Callback function for cleaning up an element
 } CVector;
 
 /**
@@ -60,7 +35,7 @@ typedef struct CVector {
  * ------------------
  * Allocate a new CVector
  */
-CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupElemFn fn);
+CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupFn fn);
 
 /**
  * Function: cvec_init
@@ -89,7 +64,7 @@ CVector *new_cvec(size_t elemsz, size_t capacity_hint, CleanupElemFn fn);
  * pointer). The client can pass NULL for fn if elements don't require any cleanup.
  * @return Pointer to new CVector
  */
-bool cvec_init(CVector *cvec, size_t elemsz, size_t capacity_hint, CleanupElemFn fn);
+bool cvec_init(CVector *cvec, size_t elemsz, size_t capacity_hint, CleanupFn fn);
 
 /**
  * Function: cvec_dispose
@@ -226,7 +201,19 @@ void cvec_clear(CVector *cv);
  * else -1 is returned. If more than one match exists, any of the
  * matching indexes can be returned.
  */
-int cvec_search(const CVector *cv, const void *keyaddr, CompareFn cmp, int start, bool sorted);
+int cvec_search(const CVector *cv, const void *keyaddr, CmpFn cmp, int start, bool sorted);
+
+/**
+ * Function: cvec_filter
+ * ---------------------
+ * Filters out elements of the CVector that do not match the predicate. The cleanup
+ * function will be called for each element for which `predicate` does not return true.
+ * Note: the vector will be in an invalid state for the duration of this function call. That means
+ * don't use a `predicate` function that tries to access the CVector, it won't work.
+ * Time complexity: O(n), Space complexity: O(1)
+ * @param cv The CVector to filter elements out of
+ */
+void cvec_filter(CVector *cv, PredicateFn predicate);
 
 /**
  * Function: cvec_sort
@@ -236,26 +223,12 @@ int cvec_search(const CVector *cv, const void *keyaddr, CompareFn cmp, int start
  *
  * Assumes: cmp fn is valid
  */
-void cvec_sort(CVector *cv, CompareFn cmp);
+void cvec_sort(CVector *cv, CmpFn cmp);
 
 /**
  * Function: cvec_first
  * --------------------
- * Provide iteration over the elements in conjunction with cvec_next. The client
- * starts an iteration with a call to cvec_first which returns a pointer
- * to the first (0th) element of the CVector or NULL if the CVector is empty.
- * The client loop calls cvec_next passing the pointer to the previous
- * element and receives a pointer to the next element in the iteration
- * or NULL if there are no more elements. Elements are iterated in order
- * of increasing index (from 0 to N-1). A pointer returned by cvec_first
- * or cvec_next points to the memory location where the element value is stored
- * within the internals of the CVector.The argument to cvec_next is expected to
- * be a valid pointer to an element as returned by a previous call to
- * cvec_first/cvec_next. CVector supports multiple simultaneous iterations without
- * cross-interference. The client must not add/remove/rearrange CVector elements
- * in the midst of iterating. The functions operate in constant-time.
- * Assumes: address of prev is valid
- *
+ * Provide iteration over the elements in conjunction with cvec_next.
  * @param cv: The CVector to get the first element of
  * @return: Pointer to the first element
  */

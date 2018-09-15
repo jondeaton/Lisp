@@ -53,7 +53,7 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
   obj* o;
   size_t expr_size;
 
-  if (expr_start[0] == '\'') { // Expression starts with quote charactere
+  if (expr_start[0] == '\'') { // Expression starts with quote character
     o = get_quote_list();
     obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
     expr_size += 1; // for the quote character

@@ -9,7 +9,7 @@
 
 #include <interpreter.h>
 #include "lisp-objects.h"
-#include "memory-manager.h"
+#include "garbage-collector.h"
 #include "interpreter.h"
 
 #include <ops.h>
@@ -57,7 +57,7 @@ obj *new_primitive(primitive_t primitive);
  * memory and must be freed
  * @return: A pointer to a new truth atom in dynamically allocated memory
  */
-obj *t(MemoryManager *mm);
+obj *t(GarbageCollector *mm);
 
 /**
  * Function: nil
@@ -67,6 +67,6 @@ obj *t(MemoryManager *mm);
  * memory and must be freed
  * @return: A pointer to the a new empty list in dynamically allocated memory
  */
-obj *nil(MemoryManager *mm);
+obj *nil(GarbageCollector *mm);
 
 #endif // _LISP_PRIMITIVES_H_INCLUDED

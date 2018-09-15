@@ -34,8 +34,8 @@ obj* create_environment(atom_t const *primitive_names, primitive_t const *primit
 
 obj *make_pair(obj *key, obj *value, bool copy) {
   if (copy) {
-    obj *second = new_list_set(copy_recursive(value), NULL);
-    return new_list_set(copy_recursive(key), second);
+    obj *second = new_list_set(value, NULL);
+    return new_list_set(key, second);
   } else {
     obj* second = new_list_set(value, NULL);
     return new_list_set(key, second);

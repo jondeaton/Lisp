@@ -7,7 +7,7 @@
 
 #include <interpreter.h>
 #include "lisp-objects.h"
-#include "memory-manager.h"
+#include "garbage-collector.h"
 
 /**
  * Function: closure_partial_application

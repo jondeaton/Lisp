@@ -5,7 +5,7 @@
  */
 
 #include <interpreter.h>
-#include <memory-manager.h>
+#include <garbage-collector.h>
 #include <environment.h>
 #include <evaluator.h>
 #include <stack-trace.h>
@@ -42,7 +42,7 @@ bool interpreter_init(LispInterpreter *interpreter) {
   interpreter->env = init_env();
   if (interpreter->env == NULL) return false;
 
-  bool success = mm_init(&interpreter->mm);
+  bool success = gc_init(&interpreter->gc);
   if (!success) {
     dispose_recursive(interpreter->env);
     return false;
@@ -69,7 +69,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
       break;
     }
     if (verbose) print_object(stdout, result);
-    mm_clear(&interpreter->mm); // collect garbage
+    collect_garbage(&interpreter->gc, interpreter->env);
   }
   fclose(fd);
 }
@@ -86,7 +86,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
     obj* result = eval(o, interpreter);
     if (result == NULL && verbose) LOG_MSG("NULL");
     print_object(fd_out, result);
-    mm_clear(&interpreter->mm);
+    collect_garbage(&interpreter->gc, interpreter->env);
   }
 }
 
@@ -96,16 +96,20 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
   if (expr == NULL) return NULL;
 
   obj* o = PARSE(expr);
-  if (o == NULL) return NULL;
+  if (o == NULL) {
+    LOG_ERROR("Error parsing expression: %s", expr);
+    return NULL;
+  }
+
+  gc_add_recursive(&interpreter->gc, o);
   obj* result_obj = eval(o, interpreter);
   expression result = unparse(result_obj);
-  mm_clear(&interpreter->mm); // frees the objects in result_obj that were allocated during eval
-  dispose_recursive(o);
+  collect_garbage(&interpreter->gc, interpreter->env); // frees the objects in result_obj that were allocated during eval
   return result;
 }
 
 void interpreter_dispose(LispInterpreter *interpreter) {
-  mm_dispose(&interpreter->mm);
+  gc_dispose(&interpreter->gc);
   dispose_recursive(interpreter->env);
 }
 

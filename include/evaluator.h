@@ -8,7 +8,7 @@
 #define _EVALUATOR_H_INCLUDED
 
 #include "lisp-objects.h"
-#include "memory-manager.h"
+#include "garbage-collector.h"
 #include "interpreter.h"
 
 /**

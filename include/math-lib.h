@@ -9,7 +9,7 @@
 
 #include "interpreter.h"
 #include "list.h"
-#include "memory-manager.h"
+#include "garbage-collector.h"
 
 /**
  * Function: get_math_library

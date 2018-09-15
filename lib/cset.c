@@ -88,7 +88,7 @@ int set_rank(CSet *set, const void *data) {
   int rank = 0;
   while (true) {
     if (node == NULL) return CSET_ERROR;
-    int comparison = set->cmp(node->data, data, set->data_size);
+    int comparison = set->cmp(node->data, data);
     if (comparison == 0) return rank + node->nleft;
     if (comparison < 0) {
       rank += 1 + node->nleft;
@@ -139,7 +139,7 @@ static const struct Node *lookup(const CSet *set, const struct Node *node, const
   while (true) {
 
     if (node == NULL) return NULL;
-    int cmp = set->cmp(node->data, data, set->data_size);
+    int cmp = set->cmp(node->data, data);
     if (cmp == 0) return node;
     enum Direction dir = get_direction(cmp);
 
@@ -152,7 +152,7 @@ static struct Node *insert_at(CSet *set, struct Node *node, const void *data) {
   if (node == NULL)
     return new_node(data, set->data_size);
 
-  int comparison = set->cmp(node->data, data, set->data_size);
+  int comparison = set->cmp(node->data, data);
   if (comparison == 0) return node; // already there!
 
   enum Direction dir = get_direction(comparison);
@@ -171,7 +171,7 @@ static struct Node *remove_at(CSet *set, struct Node *node, const void *data, st
     return NULL; // not found in set
   }
 
-  int comparison = set->cmp(node->data, data, set->data_size);
+  int comparison = set->cmp(node->data, data);
   if (comparison == 0) {
     if (removed != NULL) *removed = node;
     return remove_node(set, node);

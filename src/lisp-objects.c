@@ -9,6 +9,7 @@
 #include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 obj* new_atom(atom_t name) {
   if (name == NULL) return NULL;
@@ -16,6 +17,7 @@ obj* new_atom(atom_t name) {
   obj* o = malloc(sizeof(obj) + name_size + 1);
   MALLOC_CHECK(o);
   o->objtype = atom_obj;
+  o->reachable = false;
   strcpy((char*) ATOM(o), name);
   return o;
 }
@@ -24,6 +26,7 @@ obj* new_list() {
   obj* o = malloc(sizeof(obj) + sizeof(list_t));
   MALLOC_CHECK(o);
   o->objtype = list_obj;
+  o->reachable = false;
   CAR(o) = NULL;
   CDR(o) = NULL;
   return o;
@@ -33,6 +36,7 @@ obj* new_closure() {
   obj* o = malloc(sizeof(obj) + sizeof(closure_t));
   MALLOC_CHECK(o);
   o->objtype = closure_obj;
+  o->reachable = false;
   return o;
 }
 
@@ -65,6 +69,7 @@ bool compare(const obj* a, const obj* b) {
 }
 
 void dispose(obj* o) {
+  assert(o != NULL);
   free(o);
 }
 
@@ -72,7 +77,8 @@ obj* new_int(int value) {
   obj* o = malloc(sizeof(obj) + sizeof(int));
   MALLOC_CHECK(o);
   o->objtype = int_obj;
-  int* contents = (int*) CONTENTS(o);
+  o->reachable = false;
+  int *contents = (int*) CONTENTS(o);
   *contents = value;
   return o;
 }
@@ -81,7 +87,8 @@ obj* new_float(float value) {
   obj* o = malloc(sizeof(obj) + sizeof(float));
   MALLOC_CHECK(o);
   o->objtype = float_obj;
-  float* contents = (float*) CONTENTS(o);
+  o->reachable = false;
+  float *contents = (float*) CONTENTS(o);
   *contents = value;
   return o;
 }
@@ -129,7 +136,7 @@ bool is_t(const obj* o) {
 
 float get_float(const obj* o) {
   if (is_int(o)) return (float) get_int(o);
-  if (is_float(o)) return *(float*) ((char*) o + sizeof(obj));
+  if (is_float(o)) return *(float*) CONTENTS(o);
 
   LOG_ERROR("Object is not a number");
   return 0;
@@ -137,7 +144,7 @@ float get_float(const obj* o) {
 
 int get_int(const obj* o) {
   if (is_float(o)) return (int) get_float(o);
-  if (is_int(o)) return *(int*) ((char*) o + sizeof(obj));
+  if (is_int(o)) return *(int*) CONTENTS(o);
   LOG_ERROR("Object is not a number");
   return 0;
 }
