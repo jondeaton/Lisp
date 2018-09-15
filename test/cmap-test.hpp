@@ -19,7 +19,7 @@ namespace {
    * @return the value of N (always!)
    */
   template <unsigned int N>
-  constexpr unsigned int hash_to_n(const void *key UNUSED, size_t keysize UNUSED) {
+  constexpr unsigned int hash_to(const void *key UNUSED, size_t keysize UNUSED) {
     return N;
   }
 
@@ -55,13 +55,13 @@ namespace {
 
   typedef MapTest<int, int> MapIntIntTest;
   TEST_F(MapIntIntTest, create) {
-    SetUp(hash_to_n<0>, (CmpFn) cmp_int, 0);
+    SetUp(hash_to<0>, (CmpFn) cmp_int, 0);
     EXPECT_EQ(cmap_count(cm), 0);
   }
 
   typedef MapTest<int, int> MapIntIntTest;
   TEST_F(MapIntIntTest, InsertOne) {
-    SetUp(hash_to_n<0>, (CmpFn) cmp_int, 0);
+    SetUp(hash_to<0>, (CmpFn) cmp_int, 0);
 
     int i = 42;
     cmap_insert(cm, &i, &i);
@@ -223,6 +223,60 @@ namespace {
       auto vp = static_cast<const int *>(cmap_lookup(cm, &i));
       ASSERT_NE(vp, nullptr);
       EXPECT_EQ(*vp, second_value);
+    }
+  }
+
+  //
+  TEST_F(MapIntIntTest, GrowFromZero) {
+    const int initial_capacity = 2;
+    const int num_inserted = 4;
+
+    SetUp(murmur_hash, cmp_int, initial_capacity);
+    for (int i = 0; i < num_inserted; i++)
+      EXPECT_NE(cmap_insert(cm, &i, &i), nullptr);
+
+    EXPECT_EQ(cmap_count(cm), num_inserted);
+
+    for (int i = 0; i < num_inserted; i++) {
+      auto valuep = static_cast<const int *>(cmap_lookup(cm, &i));
+      ASSERT_NE(valuep, nullptr);
+      EXPECT_EQ(*valuep, i);
+    }
+  }
+
+  // make sure that you can insert more elements than the initial capacity
+  TEST_F(MapIntIntTest, Grow) {
+    const int initial_capacity = 64;
+    const int num_inserted = initial_capacity + 10;
+
+    SetUp(murmur_hash, cmp_int, initial_capacity);
+    for (int i = 0; i < num_inserted; i++)
+      EXPECT_NE(cmap_insert(cm, &i, &i), nullptr);
+
+    EXPECT_EQ(cmap_count(cm), num_inserted);
+
+    for (int i = 0; i < num_inserted; i++) {
+      auto valuep = static_cast<const int *>(cmap_lookup(cm, &i));
+      ASSERT_NE(valuep, nullptr);
+      EXPECT_EQ(*valuep, i);
+    }
+  }
+
+  // make sure that you can insert way more elements than initial capacity
+  TEST_F(MapIntIntTest, GrowMultiple) {
+    const int initial_capacity = 64;
+    const int num_inserted = 10 * initial_capacity;
+
+    SetUp(murmur_hash, cmp_int, initial_capacity);
+    for (int i = 0; i < num_inserted; i++)
+      EXPECT_NE(cmap_insert(cm, &i, &i), nullptr);
+
+    EXPECT_EQ(cmap_count(cm), num_inserted);
+
+    for (int i = 0; i < num_inserted; i++) {
+      auto valuep = static_cast<const int *>(cmap_lookup(cm, &i));
+      ASSERT_NE(valuep, nullptr);
+      EXPECT_EQ(*valuep, i);
     }
   }
 

@@ -6,6 +6,8 @@
 #ifndef _CMAP_H
 #define _CMAP_H
 
+#define LOAD_FACTOR_LIMIT 0.9
+
 #ifdef __cplusplus
 #include <cstddef>
 #include <cstdbool>

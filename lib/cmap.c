@@ -74,6 +74,10 @@ static void erase(CMap *cm, struct entry *e);
 static void delete(CMap *cm, unsigned int start, unsigned int stop);
 static int lookup_index(const CMap *cm, const void *key);
 static int compare(const CMap *cm, const void *keyA, const void *keyB);
+static bool expand_rehash(CMap *cm);
+static inline float load_factor(unsigned int count, unsigned int capacity);
+static inline bool allocate_entries(CMap *cm, unsigned int capacity);
+static void set_entries_free(CMap *cm);
 
 CMap *cmap_create(size_t key_size, size_t value_size,
                   CMapHashFn hash, CmpFn cmp,
@@ -92,21 +96,11 @@ CMap *cmap_create(size_t key_size, size_t value_size,
   cm->hash = hash == NULL ? roberts_hash : hash;
   cm->cmp = cmp;
 
-  // Allocate array for key-value entries
-  cm->capacity = capacity > 0 ? capacity : DEFAULT_CAPACITY;
-  cm->entries = malloc(cm->capacity * entry_size(cm));
-  if (cm->entries == NULL) {
+  bool success = allocate_entries(cm, capacity > 0 ? capacity : DEFAULT_CAPACITY);
+  if (!success) {
     free(cm); // wouldn't wanna leak memory while running out of it eh?
     return NULL;
   }
-
-  // Set all the entries to free
-  for (unsigned int i = 0; i < cm->capacity; ++i) {
-    struct entry *e = get_entry(cm, i);
-    assert(e != NULL);
-    set_free(e, true);
-  }
-
   return cm;
 }
 
@@ -127,9 +121,10 @@ void *cmap_insert(CMap *cm, const void *key, const void *value) {
   assert(key != NULL);
   assert(value != NULL);
 
-  // there is no vacancy
-  if (cm->size == cm->capacity)
-    return NULL;
+  if (load_factor(cm->size + 1, cm->capacity) >= LOAD_FACTOR_LIMIT) {
+    bool success = expand_rehash(cm);
+    if (!success) return NULL;
+  }
 
   unsigned int hash = cm->hash(key, cm->key_size) % cm->capacity;
 
@@ -352,4 +347,61 @@ static int compare(const CMap *cm, const void *keyA, const void *keyB) {
   assert(keyB != NULL);
   if (cm->cmp == NULL) return memcmp(keyA, keyB, cm->key_size);
   return cm->cmp(keyA, keyB);
+}
+
+static bool expand_rehash(CMap *cm) {
+  assert(cm != NULL);
+
+  // expand
+  struct entry *old_entries = cm->entries;
+  unsigned int old_capacity = cm->capacity;
+  unsigned int new_capacity = old_capacity > 0 ? 2 * old_capacity : DEFAULT_CAPACITY;
+
+  bool success = allocate_entries(cm, new_capacity);
+  if (!success) return false;
+
+  cm->size = 0;
+
+  // rehash
+  struct entry *e = old_entries;
+  for (unsigned int i = 0; i < old_capacity; ++i) {
+
+    if (!is_free(e)) {
+      const void *key = key_of(e);
+      const void *value = value_of(cm, e);
+      cmap_insert(cm, key, value);
+    }
+
+    e = (struct entry *) ((char *) e + entry_size(cm));
+  }
+
+  return true;
+}
+
+static inline float load_factor(unsigned int count, unsigned int capacity) {
+  if (capacity == 0) return 1;
+  return count / ((float) capacity);
+}
+
+static inline bool allocate_entries(CMap *cm, unsigned int capacity) {
+  assert(cm != NULL);
+  struct entry *new_entries = malloc(capacity * entry_size(cm));
+  if (new_entries == NULL) return false;
+
+  // important not to change entries in the case of failure
+  cm->entries = new_entries;
+  cm->capacity = capacity;
+
+  set_entries_free(cm);
+  return true;
+}
+
+// Set all the entries to free
+static void set_entries_free(CMap *cm) {
+  assert(cm != NULL);
+  for (unsigned int i = 0; i < cm->capacity; ++i) {
+    struct entry *e = get_entry(cm, i);
+    assert(e != NULL);
+    set_free(e, true);
+  }
 }
