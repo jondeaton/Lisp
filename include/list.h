@@ -122,4 +122,11 @@ int list_length(const obj* o);
  */
 bool list_contains(const obj* list, const obj* query);
 
+/**
+ * Function: list_last
+ * @param list the list to get the last element of
+ * @return the last element of the list
+ */
+obj *list_last(obj *list);
+
 #endif // _LIST_H_INCLUDED

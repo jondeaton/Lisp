@@ -13,10 +13,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 // Static function declarations
 static obj* copy_list_recursive(const obj *o);
 static obj* copy_primitive(const obj* o);
+
 
 obj* new_list_set(const obj *car, const obj *cdr) {
   obj* list = new_list();
@@ -113,6 +115,13 @@ bool list_contains(const obj* list, const obj* query) {
   if (list == NULL || query == NULL) return false;
   if (compare_recursive(CAR(list), query)) return true;
   return list_contains(CDR(list), query);
+}
+
+obj *list_last(obj *list) {
+  assert(list != NULL);
+  while (CDR(list) != NULL)
+    list = CDR(list);
+  return list;
 }
 
 /**
