@@ -43,7 +43,7 @@ static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cd
 
 // Static function declarations
 static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
-
+static bool capture(obj **capturedp, const obj *binding);
 
 obj* get_primitive_library() {
   return create_environment(primitive_reserved_names, primitive_functions);
@@ -442,23 +442,32 @@ static bool capture_variables(obj **capturedp, const obj *params,
     // Don't capture parameters (those get bound at apply-time)
     if (list_contains(params, procedure)) return true;
 
-    obj* matching_pair = lookup_pair(procedure, env);
-    if (matching_pair == NULL) return true; // No value to be captured
+    obj* binding = lookup_pair(procedure, env);
+    if (binding == NULL) return true; // No value to be captured
 
-    obj *pair_copy = copy_recursive(matching_pair);
-    if (pair_copy == NULL) return false;
-
-    obj *new_list = new_list_set(pair_copy, *capturedp); // Prepend to capture list
-    if (new_list == NULL) {
-      dispose_recursive(pair_copy);
-      return false;
-    }
-    *capturedp = new_list;
+    bool success = capture(capturedp, binding);
+    if (!success) return false;
 
   } else if (is_list(procedure)) { // depth-first search
     bool success = capture_variables(capturedp, params, CAR(procedure), env);
     if (!success) return false;
     return capture_variables(capturedp, params, CDR(procedure), env); // tail recursion
   }
+  return true;
+}
+
+static bool capture(obj **capturedp, const obj *binding) {
+  assert(capturedp != NULL);
+  assert(binding != NULL);
+
+  obj *pair_copy = copy_recursive(binding);
+  if (pair_copy == NULL) return false;
+
+  obj *new_list = new_list_set(pair_copy, *capturedp); // Prepend to capture list
+  if (new_list == NULL) {
+    dispose_recursive(pair_copy);
+    return false;
+  }
+  *capturedp = new_list;
   return true;
 }
