@@ -7,6 +7,8 @@
 #include <lisp-objects.h>
 #include <primitives.h>
 #include <stack-trace.h>
+#include <hash.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -66,6 +68,12 @@ bool compare(const obj* a, const obj* b) {
   if (is_closure(a))
     return memcmp(CLOSURE(a), CLOSURE(b), sizeof(closure_t)) == 0;
   return false;
+}
+
+unsigned int atom_hash(const obj *o, size_t keysize UNUSED) {
+  assert(o != NULL);
+  assert(is_atom(o));
+  return string_hash(ATOM(o), keysize);
 }
 
 void dispose(obj* o) {

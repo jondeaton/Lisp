@@ -8,6 +8,7 @@
 #define _LISP_OBJECTS_H_INCLUDED
 
 #include <stdbool.h>
+#include <ops.h>
 
 // The different types of lists
 enum type {
@@ -140,6 +141,16 @@ obj* copy_list(const obj *o);
  * @return: True if both objects are the same, false otherwise
  */
 bool compare(const obj* a, const obj* b);
+
+/**
+ * Function: atom_hash
+ * -------------------
+ * hashes an atom (only the string part of it)
+ * @param o the atom to hash
+ * @param keysize unused
+ * @return the hash of the atom's string
+ */
+unsigned int atom_hash(const obj *o, size_t keysize UNUSED);
 
 /**
  * Function: is_atom

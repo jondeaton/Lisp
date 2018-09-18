@@ -62,8 +62,14 @@ int cvec_count(const CVector *cv) {
 }
 
 void* cvec_nth(const CVector* cv, int index) {
+  assert(cv != NULL);
   assert(index >= 0 && index < cv->nelems);
   return el_at_index(cv, index);
+}
+
+void *cvec_last(const CVector* cv) {
+  assert(cv != NULL);
+  return cvec_nth(cv, cvec_count(cv) - 1);
 }
 
 void cvec_insert(CVector* cv, const void* source, int index) {
@@ -110,6 +116,12 @@ void cvec_remove(CVector* cv, int index) {
   for(void* next = cvec_next(cv, el); next != NULL; next = cvec_next(cv, next))
     memcpy((char*) next - cv->elemsz, next, cv->elemsz);
   cv->nelems--;
+}
+
+void cvec_pop(CVector *cv) {
+  assert(cv != NULL);
+  if (cvec_count(cv) == 0) return;
+  cvec_remove(cv, cvec_count(cv) - 1);
 }
 
 void cvec_clear(CVector* cv) {

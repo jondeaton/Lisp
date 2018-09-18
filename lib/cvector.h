@@ -104,6 +104,15 @@ int cvec_count(const CVector *cv);
 void *cvec_nth(const CVector *cv, int index);
 
 /**
+ * Function: cvec_last
+ * -------------------
+ * Gets the last element of the cvector
+ * @param cv the cvector to get the last element of
+ * @return Pointer to the last element
+ */
+void *cvec_last(const CVector* cv);
+
+/**
  * Function: cvec_insert
  * ---------------------
  * Inserts a new element into the CVector, placing it at the given index
@@ -165,6 +174,14 @@ void cvec_replace(CVector *cv, const void *addr, int index);
  * Usage: cvec_remove(v, 0)
  */
 void cvec_remove(CVector *cv, int index);
+
+/**
+ * Function: cvec_pop
+ * ------------------
+ * Removes the last element from the vector
+ * @param cv the Cvector to remove the last element from
+ */
+void cvec_pop(CVector *cv);
 
 /**
  * Function: cvec_clear

@@ -10,6 +10,99 @@
 #include <math-lib.h>
 #include <parser.h>
 #include <string.h>
+#include <assert.h>
+
+struct environment {
+  CMap *global_scope;
+  struct CVector *stack;
+};
+
+static int cmp_atoms(const obj **ap, const obj **bp) {
+  assert(ap != NULL);
+  assert(bp != NULL);
+  return strcmp(ATOM(*ap), ATOM(*bp));
+}
+
+static unsigned int hash_atom(const obj **ap, size_t keysize UNUSED) {
+  assert(ap != NULL);
+  return atom_hash(*ap, keysize);
+}
+
+
+static CMap *new_scope() {
+  return cmap_create(sizeof(obj*), sizeof(obj*),
+                     (CMapHashFn) hash_atom, (CmpFn) cmp_atoms,
+                     NULL, NULL, 0);;
+}
+
+struct environment *new_environment() {
+  struct environment *env = malloc(sizeof(struct environment));
+  if (env == NULL) return NULL;
+
+  env->stack = new_cvec(sizeof(CMap *), 0, (CleanupFn) cmap_dispose);
+  if (env->stack == NULL) {
+    free(env);
+    return NULL;
+  }
+
+  env->global_scope = new_scope();
+  if (env->global_scope == NULL) {
+    free(env->stack);
+    free(env);
+    return NULL;
+  }
+
+  return env;
+}
+
+bool def_global(struct environment *env, const obj *name, const obj *value) {
+  assert(env != NULL);
+  assert(name != NULL);
+  void *kv = cmap_insert(env->global_scope, &name, &value);
+  return kv != NULL;
+}
+
+bool def_local(struct environment *env, const obj *name, const obj *value) {
+  assert(env != NULL);
+  assert(name != NULL);
+
+  CMap **scope = cvec_last(env->stack);
+  if (scope == NULL) return false;
+
+  void *kv = cmap_insert(*scope, &name, &value);
+  return kv != NULL;
+}
+
+
+bool push_scope(struct environment *env) {
+  assert(env != NULL);
+  CMap *scope = new_scope();
+  if (scope == NULL) return false;
+  cvec_append(env->stack, &scope);
+  return true;
+}
+
+void pop_scope(struct environment *env) {
+  assert(env != NULL);
+  cvec_pop(env->stack);
+}
+
+obj *env_lookup(struct environment *env, const obj *name) {
+  assert(env != NULL);
+  assert(name != NULL);
+
+  obj **value;
+  if (cvec_count(env->stack) > 0) {
+    CMap **scope = cvec_last(env->stack);
+    assert(scope != NULL);
+    value = cmap_lookup(*scope, &name);
+    if (value != NULL) return *value;
+  }
+  value = cmap_lookup(env->global_scope, &name);
+  if (value == NULL) return NULL;
+  return *value;
+}
+
 
 // Static function declarations
 static bool pair_matches_key(const obj *pair, const obj *key);

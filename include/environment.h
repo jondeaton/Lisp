@@ -8,6 +8,17 @@
 #define _ENVIRONMENT_H_INCLUDED
 
 #include "primitives.h"
+#include <cmap.h>
+#include <cvector.h>
+
+struct environment;
+
+struct environment *new_environment();
+bool def_global(struct environment *env, const obj *name, const obj *value);
+bool def_local(struct environment *env, const obj *name, const obj *value);
+bool push_scope(struct environment *env);
+void pop_scope(struct environment *env);
+obj *env_lookup(struct environment *env, const obj *name);
 
 /**
  * Function: init_env

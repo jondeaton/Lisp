@@ -1,7 +1,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include <murmur3.h>
-
+#include <ops.h>
 
 unsigned int roberts_hash(const void *key, size_t keysize) {
   const unsigned long MULTIPLIER = 2630849305L;
