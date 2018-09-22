@@ -71,7 +71,18 @@ static bool is_reachable(const void *objp) {
   return o->reachable;
 }
 
-void collect_garbage(GarbageCollector *gc, obj* env) {
+// marks all reachable objects within a variable scope
+static void mark_reachable(struct Map *scope) {
+  assert(scope != NULL);
+  obj *var_name;
+  for_map_keys(scope, var_name) {
+    obj *value = get_value(scope, var_name);
+    mark_recursive(var_name);
+    mark_recursive(value);
+  }
+}
+
+void collect_garbage(GarbageCollector *gc, struct environment *env) {
   assert(gc != NULL);
 
   // reset all the flags to not reached
@@ -82,8 +93,13 @@ void collect_garbage(GarbageCollector *gc, obj* env) {
     o->reachable = false;
   }
 
-  // mark and sweep
-  mark_recursive(env);
+  // Mark everything that is reachable in the environment
+  mark_reachable(&env->global_scope);
+  struct Map *scope;
+  for_vector(&env->stack, scope)
+    mark_reachable(scope);
+
+  // sweep
   cvec_filter(&gc->allocated, is_reachable);
 }
 

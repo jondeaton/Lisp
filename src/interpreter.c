@@ -39,12 +39,12 @@ static void update_net_balance(char next_character, int* netp);
 bool interpreter_init(LispInterpreter *interpreter) {
   assert(interpreter != NULL);
 
-  interpreter->env = init_env();
-  if (interpreter->env == NULL) return false;
+  bool success = init_env(&interpreter->env);
+  if (!success) return false;
 
-  bool success = gc_init(&interpreter->gc);
+  success = gc_init(&interpreter->gc);
   if (!success) {
-    dispose_recursive(interpreter->env);
+    env_dispose(&interpreter->env);
     return false;
   }
   return true;
@@ -69,7 +69,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
       break;
     }
     if (verbose) print_object(stdout, result);
-    collect_garbage(&interpreter->gc, interpreter->env);
+    collect_garbage(&interpreter->gc, &interpreter->env);
   }
   fclose(fd);
 }
@@ -86,7 +86,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
     obj* result = eval(o, interpreter);
     if (result == NULL && verbose) LOG_MSG("NULL");
     print_object(fd_out, result);
-    collect_garbage(&interpreter->gc, interpreter->env);
+    collect_garbage(&interpreter->gc, &interpreter->env);
   }
 }
 
@@ -104,13 +104,16 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
   gc_add_recursive(&interpreter->gc, o);
   obj* result_obj = eval(o, interpreter);
   expression result = unparse(result_obj);
-  collect_garbage(&interpreter->gc, interpreter->env); // frees the objects in result_obj that were allocated during eval
+
+  // free the objects in result_obj that were allocated during eval
+  collect_garbage(&interpreter->gc, &interpreter->env);
+
   return result;
 }
 
 void interpreter_dispose(LispInterpreter *interpreter) {
   gc_dispose(&interpreter->gc);
-  dispose_recursive(interpreter->env);
+  env_dispose(&interpreter->env);
 }
 
 /**
@@ -168,7 +171,7 @@ static expression get_expression_from_prompt(bool* eof) {
   while (true) {
     bool valid = is_valid(e);
     bool balanced = is_balanced(e);
-    
+
     if (valid && balanced) return e;
     if (!valid || *eof) return NULL;
 

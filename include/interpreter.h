@@ -15,7 +15,7 @@
  * @struct Lisp interpreter object
  */
 typedef struct {
-  obj* env;                             // Interpreter environment
+  struct environment env;                  // Interpreter environment
   GarbageCollector gc;                     // Memory Manager
 } LispInterpreter;
 

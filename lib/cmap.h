@@ -22,10 +22,29 @@ extern "C" {
 #include <hash.h>
 #include <ops.h>
 
+/**
+* @struct CMapImplementation
+* @brief Definition of HashTable implementation
+*/
+struct Map {
+  void *entries;                // Pointer to key-value pair array
+  void *end;                    // End of buckets array
+  unsigned int capacity;        // maximum number of values that can be stored
+  unsigned int size;            // The number of elements stored in the hash table
+
+  size_t key_size;              // The size of each key
+  size_t value_size;            // The size of each value
+
+  CleanupFn cleanupKey;         // Callback for key disposal
+  CleanupFn cleanupValue;       // Callback for value disposal
+  CMapHashFn hash;              // hash function callback
+  CmpFn cmp;                    // key comparison function
+};
+
+typedef struct Map Map;
+
 // macro for defining map of simple types that need no cleanup (i.e. int -> int)
 #define simple_map(key_size, value_size) cmap_create(key_size, value_size, roberts_hash, NULL, NULL, NULL, 0)
-
-typedef struct CMapImplementation CMap;
 
 /**
  * Create a HashTable in a dynamically allocated region of memory.
@@ -36,25 +55,44 @@ typedef struct CMapImplementation CMap;
  * @param cleanupKey Cleanup function for keys, may be NULL
  * @param cleanupValue Cleanup function for values for, may be NULL
  * @param capacity number of values that maybe stored in table
- * @return Pointer to a hash table in dynamically allocated memory
+ * @return Pointer to a hash table in dynamically allocated memory, if
+ * creation was successful otherwise NULL
  */
-CMap *cmap_create(size_t key_size, size_t value_size,
-                  CMapHashFn hash, CmpFn cmp,
-                  CleanupFn cleanupKey, CleanupFn cleanupValue,
-                  unsigned int capacity_hint);
+Map *new_cmap(size_t key_size, size_t value_size,
+              CMapHashFn hash, CmpFn cmp,
+              CleanupFn cleanupKey, CleanupFn cleanupValue,
+              unsigned int capacity_hint);
+
 
 /**
- * Dispose of a Hash Table created from cmap_create
+ * Initialize a new hash table
+ * @param key_size size of all keys stored in HashTable
+ * @param value_size size of all values stored in the HashTable
+ * @param hash Hash function used to hash keys, may be NULL
+ * @param cmp Comparison function between keys, may be NULL
+ * @param cleanupKey Cleanup function for keys, may be NULL
+ * @param cleanupValue Cleanup function for values for, may be NULL
+ * @param capacity number of values that maybe stored in table
+ * @return true if successful, false otherwise
+ */
+bool cmap_init(Map *cm, size_t key_size, size_t value_size,
+               CMapHashFn hash, CmpFn cmp,
+               CleanupFn cleanupKey, CleanupFn cleanupValue,
+               unsigned int capacity);
+/**
+ * Dispose of a Hash Table initialized from cmap_init.
+ * @note will not call free on the hash table. If you allocated
+ * the hash table using new_cmap, then you should call free on it yourself
  * @param cm Pointer to hash table
  */
-void cmap_dispose(CMap *cm);
+void cmap_dispose(Map *cm);
 
 /**
  * The number of key value pairs currently stored in the table
  * @param cm Pointer to hash table
  * @return Number of elements stored in the hash table
  */
-unsigned int cmap_count(const CMap *cm);
+unsigned int cmap_count(const Map *cm);
 
 /**
  * @breif Inserts a key-value pair into the hash table
@@ -65,7 +103,7 @@ unsigned int cmap_count(const CMap *cm);
  * @param valuesize The size of the value to insert
  * @return Pointer to the inserted key, if successfully inserted, othersie NULL.
  */
-void *cmap_insert(CMap *cm, const void *key, const void *value);
+void *cmap_insert(Map *cm, const void *key, const void *value);
 
 /**
  * @breif looks up a key-value pair in in the hash table
@@ -74,20 +112,24 @@ void *cmap_insert(CMap *cm, const void *key, const void *value);
  * @return Pointer to the value stored in the hash table. If there
  * is no such key in the hash table then NULL.
  */
-void *cmap_lookup(const CMap *cm, const void *key);
+void *cmap_lookup(const Map *cm, const void *key);
 
 /**
  * @breif Removes a key-value pair from the hash table
  * @param cm Hash table to remove the key value pair from
  * @param key The key to remove
  */
-void cmap_remove(CMap *cm, const void *key);
+void cmap_remove(Map *cm, const void *key);
 
 /**
  * @breif Removes all of the elements from the hash tabls
  * @param cm The CMap to remove all the elements from
  */
-void cmap_clear(CMap *cm);
+void cmap_clear(Map *cm);
+
+#define for_map_keys(cm, key) for ((key) = cmap_first(cm); \
+                                   (key) != NULL; \
+                                   (key) = cmap_next(cm, key))
 
 /**
  * @brief Returns the value associated with a given key that was
@@ -99,14 +141,14 @@ void cmap_clear(CMap *cm);
  * @return Pointer to the value stored within the cmap which is
  * associated with the given key
  */
-const void *get_value(const CMap *cm, const void *key);
+const void *get_value(const Map *cm, const void *key);
 
 /**
  * @brief Get a reference to the first key-value pair stored in the
  * @param cm The cmap to get the first element of
  * @return Pointer to a key
  */
-const void *cmap_first(const CMap *cm);
+const void *cmap_first(const Map *cm);
 
 /**
  * Gets a pointer to the next key, given some current key
@@ -114,7 +156,7 @@ const void *cmap_first(const CMap *cm);
  * @param prevkey The previous key
  * @return pointer to the next key, if there is one.
  */
-const void *cmap_next(const CMap *cm, const void *prevkey);
+const void *cmap_next(const Map *cm, const void *prevkey);
 
 #ifdef __cplusplus
 }

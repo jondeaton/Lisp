@@ -46,11 +46,11 @@ namespace {
     MapTest() : cm(nullptr) { }
     using Test::SetUp;
     void SetUp(CMapHashFn hash, CmpFn cmp, unsigned int capacity_hint) {
-      cm = cmap_create(sizeof(K), sizeof(V), hash, cmp, nullptr, nullptr, capacity_hint);
+      cm = new_cmap(sizeof(K), sizeof(V), hash, cmp, nullptr, nullptr, capacity_hint);
       ASSERT_NE(cm, nullptr);
     }
     void TearDown() { cmap_dispose(cm); }
-    CMap *cm;
+    Map *cm;
   };
 
   typedef MapTest<int, int> MapIntIntTest;
@@ -288,7 +288,7 @@ namespace {
     PermutationMapTest() : p(nullptr), cm(nullptr) { }
     using Test::SetUp;
     void SetUp(const char * str, CMapHashFn hash, CmpFn cmp, unsigned int capacity_hint) {
-      cm = cmap_create(sizeof(const char *), sizeof(int), hash, cmp, str_cleanup, nullptr, capacity_hint);
+      cm = new_cmap(sizeof(const char *), sizeof(int), hash, cmp, str_cleanup, nullptr, capacity_hint);
       ASSERT_NE(cm, nullptr);
       p = new_cstring_permuter(str);
       ASSERT_NE(p, nullptr);
@@ -305,7 +305,7 @@ namespace {
       cmap_dispose(cm);
     }
     permuter *p;
-    CMap *cm;
+    Map *cm;
   };
 
   TEST_F(PermutationMapTest, Permute1234) {

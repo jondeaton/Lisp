@@ -27,6 +27,8 @@
 #define _LISP_MEMORY_MANAGER_H
 
 #include "lisp-objects.h"
+
+#include <environment.h>
 #include <cvector.h>
 
 
@@ -79,7 +81,7 @@ void gc_add_recursive(GarbageCollector *gc, obj *root);
  * call this function after each call to repl_eval, after the object returned from
  * eval has been completely processed (e.g. copied into environment, serialized, etc...).
  */
-void collect_garbage(GarbageCollector *gc, obj *env);
+void collect_garbage(GarbageCollector *gc, struct environment *env);
 
 /**
  * Function: gc_dispose

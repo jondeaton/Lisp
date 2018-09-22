@@ -18,25 +18,7 @@
 
 // a suggested value to use when given capacity_hint is 0
 #define DEFAULT_CAPACITY 1024
-
-/**
- * @struct CMapImplementation
- * @brief Definition of HashTable implementation
- */
-struct CMapImplementation {
-  void *entries;                // Pointer to key-value pair array
-  void *end;                    // End of buckets array
-  unsigned int capacity;        // maximum number of values that can be stored
-  unsigned int size;            // The number of elements stored in the hash table
-
-  size_t key_size;              // The size of each key
-  size_t value_size;            // The size of each value
-
-  CleanupFn cleanupKey;         // Callback for key disposal
-  CleanupFn cleanupValue;       // Callback for value disposal
-  CMapHashFn hash;              // hash function callback
-  CmpFn cmp;                // key comparison function
-};
+#define DEFAULT_HASH murmur_hash
 
 /**
  * @struct entry
@@ -64,59 +46,71 @@ static inline void set_free(struct entry *e, bool free) {
 
 // static function declarations
 static inline struct entry *entry_of(const void *key);
-static inline size_t entry_size(const CMap *cm);
-static inline struct entry *get_entry(const CMap *cm, unsigned int index);
-static struct entry *lookup_key(const CMap *cm, const void *key);
-static inline void *value_of(const CMap *cm, const struct entry *entry);
+static inline size_t entry_size(const Map *cm);
+static inline struct entry *get_entry(const Map *cm, unsigned int index);
+static struct entry *lookup_key(const Map *cm, const void *key);
+static inline void *value_of(const Map *cm, const struct entry *entry);
 static inline void *key_of(const struct entry *entry);
-static inline void move(CMap *cm, struct entry *entry1, struct entry *entry2);
-static void erase(CMap *cm, struct entry *e);
-static void delete(CMap *cm, unsigned int start, unsigned int stop);
-static int lookup_index(const CMap *cm, const void *key);
-static int compare(const CMap *cm, const void *keyA, const void *keyB);
-static bool expand_rehash(CMap *cm);
+static inline void move(Map *cm, struct entry *entry1, struct entry *entry2);
+static void erase(Map *cm, struct entry *e);
+static void delete(Map *cm, unsigned int start, unsigned int stop);
+static int lookup_index(const Map *cm, const void *key);
+static int compare(const Map *cm, const void *keyA, const void *keyB);
+static bool expand_rehash(Map *cm);
 static inline float load_factor(unsigned int count, unsigned int capacity);
-static inline bool allocate_entries(CMap *cm, unsigned int capacity);
-static void set_entries_free(CMap *cm);
+static inline bool allocate_entries(Map *cm, unsigned int capacity);
+static void set_entries_free(Map *cm);
 
-CMap *cmap_create(size_t key_size, size_t value_size,
-                  CMapHashFn hash, CmpFn cmp,
-                  CleanupFn cleanupKey, CleanupFn cleanupValue,
-                  unsigned int capacity) {
-  if (key_size <= 0 || value_size <= 0) return NULL;
+Map *new_cmap(size_t key_size, size_t value_size,
+              CMapHashFn hash, CmpFn cmp,
+              CleanupFn cleanupKey, CleanupFn cleanupValue,
+              unsigned int capacity) {
 
-  CMap* cm = malloc(sizeof(CMap));
+  Map* cm = malloc(sizeof(Map));
   if (cm == NULL) return NULL;
+
+  bool success = cmap_init(cm, key_size, value_size, hash, cmp,
+                           cleanupKey, cleanupValue, capacity);
+
+  if (!success) {
+    free(cm);
+    return false;
+  }
+
+  return cm;
+}
+
+bool cmap_init(Map *cm, size_t key_size, size_t value_size,
+               CMapHashFn hash, CmpFn cmp,
+               CleanupFn cleanupKey, CleanupFn cleanupValue,
+               unsigned int capacity) {
+  assert(cm != NULL);
 
   cm->key_size = key_size;
   cm->value_size = value_size;
   cm->size = 0;
   cm->cleanupKey = cleanupKey;
   cm->cleanupValue = cleanupValue;
-  cm->hash = hash == NULL ? roberts_hash : hash;
+  cm->hash = hash == NULL ? DEFAULT_HASH : hash;
   cm->cmp = cmp;
 
   bool success = allocate_entries(cm, capacity > 0 ? capacity : DEFAULT_CAPACITY);
-  if (!success) {
-    free(cm); // wouldn't wanna leak memory while running out of it eh?
-    return NULL;
-  }
-  return cm;
+  if (!success) return false;
+  return true;
 }
 
-void cmap_dispose(CMap* cm) {
+void cmap_dispose(Map* cm) {
   assert(cm != NULL);
   cmap_clear(cm);
   free(cm->entries);
-  free(cm);
 }
 
-unsigned int cmap_count(const CMap* cm) {
+unsigned int cmap_count(const Map* cm) {
   assert(cm != NULL);
   return cm->size;
 }
 
-void *cmap_insert(CMap *cm, const void *key, const void *value) {
+void *cmap_insert(Map *cm, const void *key, const void *value) {
   assert(cm != NULL);
   assert(key != NULL);
   assert(value != NULL);
@@ -148,7 +142,7 @@ void *cmap_insert(CMap *cm, const void *key, const void *value) {
   return entry;
 }
 
-void *cmap_lookup(const CMap *cm, const void *key) {
+void *cmap_lookup(const Map *cm, const void *key) {
   assert(cm != NULL);
   assert(key != NULL);
 
@@ -157,7 +151,7 @@ void *cmap_lookup(const CMap *cm, const void *key) {
   return value_of(cm, entry);
 }
 
-void cmap_remove(CMap *cm, const void *key) {
+void cmap_remove(Map *cm, const void *key) {
   assert(cm != NULL);
   assert(key != NULL);
 
@@ -171,7 +165,7 @@ void cmap_remove(CMap *cm, const void *key) {
   cm->size--;
 }
 
-void cmap_clear(CMap *cm) {
+void cmap_clear(Map *cm) {
   assert(cm != NULL);
 
   unsigned int num_cleared = 0;
@@ -189,13 +183,13 @@ void cmap_clear(CMap *cm) {
   cm->size = 0;
 }
 
-const void *get_value(const CMap *cm, const void *key) {
+const void *get_value(const Map *cm, const void *key) {
   assert(cm != NULL);
   assert(key != NULL);
   return value_of(cm, key);
 }
 
-const void *cmap_first(const CMap *cm) {
+const void *cmap_first(const Map *cm) {
   assert(cm != NULL);
 
   if (cm == NULL) return NULL;
@@ -208,7 +202,7 @@ const void *cmap_first(const CMap *cm) {
   return NULL;
 }
 
-const void *cmap_next(const CMap *cm, const void *prevkey) {
+const void *cmap_next(const Map *cm, const void *prevkey) {
   assert(cm != NULL);
   assert(prevkey != NULL);
 
@@ -226,14 +220,14 @@ static inline struct entry *entry_of(const void *key) {
   return (struct entry *) ((char *) key - offsetof(struct entry, kv));
 }
 
-static inline size_t entry_size(const CMap *cm) {
+static inline size_t entry_size(const Map *cm) {
   assert(cm != NULL);
   return sizeof(struct entry) + cm->key_size + cm->value_size;
 }
 
-static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
+static inline struct entry *get_entry(const Map *cm, unsigned int index) {
   assert(cm != NULL);
-  assert(index < cm->capacity);
+  assert(index <= cm->capacity);
   void *entry = (char *) cm->entries + index * entry_size(cm);
   return (struct entry *) entry;
 }
@@ -245,7 +239,7 @@ static inline struct entry *get_entry(const CMap *cm, unsigned int index) {
  * @return pointer to the hash table entry that contains the key and value
  * if the key exists in the hash table, else NULL
  */
-static struct entry *lookup_key(const CMap *cm, const void *key) {
+static struct entry *lookup_key(const Map *cm, const void *key) {
   assert(cm != NULL);
   assert(key != NULL);
   if (cm->size == 0) return NULL;
@@ -265,7 +259,7 @@ static struct entry *lookup_key(const CMap *cm, const void *key) {
   return NULL; // Went all the way around
 }
 
-static inline void *value_of(const CMap *cm, const struct entry *entry) {
+static inline void *value_of(const Map *cm, const struct entry *entry) {
   assert(cm != NULL);
   assert(entry != NULL);
   return (char *) &entry->kv + cm->key_size;
@@ -276,14 +270,14 @@ static inline void *key_of(const struct entry *entry) {
   return (void *) (&entry->kv);
 }
 
-static inline void move(CMap *cm, struct entry *entry1, struct entry *entry2) {
+static inline void move(Map *cm, struct entry *entry1, struct entry *entry2) {
   assert(cm != NULL);
   assert(entry1 != NULL);
   assert(entry2 != NULL);
   memcpy(entry1, entry2, entry_size(cm));
 }
 
-static void erase(CMap *cm, struct entry *e) {
+static void erase(Map *cm, struct entry *e) {
   assert(cm != NULL);
   assert(e != NULL);
 
@@ -296,7 +290,7 @@ static void erase(CMap *cm, struct entry *e) {
   set_free(e, true);
 }
 
-static void delete(CMap *cm, unsigned int start, unsigned int stop) {
+static void delete(Map *cm, unsigned int start, unsigned int stop) {
   assert(cm != NULL);
   while (true) {
     // the entry to delete
@@ -321,7 +315,7 @@ static void delete(CMap *cm, unsigned int start, unsigned int stop) {
   }
 }
 
-static int lookup_index(const CMap *cm, const void *key) {
+static int lookup_index(const Map *cm, const void *key) {
   assert(cm != NULL);
   assert(key != NULL);
 
@@ -341,7 +335,7 @@ static int lookup_index(const CMap *cm, const void *key) {
   return -1;
 }
 
-static int compare(const CMap *cm, const void *keyA, const void *keyB) {
+static int compare(const Map *cm, const void *keyA, const void *keyB) {
   assert(cm != NULL);
   assert(keyA != NULL);
   assert(keyB != NULL);
@@ -349,7 +343,7 @@ static int compare(const CMap *cm, const void *keyA, const void *keyB) {
   return cm->cmp(keyA, keyB);
 }
 
-static bool expand_rehash(CMap *cm) {
+static bool expand_rehash(Map *cm) {
   assert(cm != NULL);
 
   // expand
@@ -383,7 +377,7 @@ static inline float load_factor(unsigned int count, unsigned int capacity) {
   return count / ((float) capacity);
 }
 
-static inline bool allocate_entries(CMap *cm, unsigned int capacity) {
+static inline bool allocate_entries(Map *cm, unsigned int capacity) {
   assert(cm != NULL);
   struct entry *new_entries = malloc(capacity * entry_size(cm));
   if (new_entries == NULL) return false;
@@ -391,13 +385,14 @@ static inline bool allocate_entries(CMap *cm, unsigned int capacity) {
   // important not to change entries in the case of failure
   cm->entries = new_entries;
   cm->capacity = capacity;
+  cm->end = get_entry(cm, capacity);
 
   set_entries_free(cm);
   return true;
 }
 
 // Set all the entries to free
-static void set_entries_free(CMap *cm) {
+static void set_entries_free(Map *cm) {
   assert(cm != NULL);
   for (unsigned int i = 0; i < cm->capacity; ++i) {
     struct entry *e = get_entry(cm, i);
