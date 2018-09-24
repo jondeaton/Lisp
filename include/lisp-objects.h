@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <ops.h>
+#include <cvector.h>
 
 // The different types of lists
 enum type {
@@ -43,15 +44,16 @@ typedef struct {
 } obj;
 
 typedef struct {
-  obj* car;
-  obj* cdr;
+  obj *car;
+  obj *cdr;
 } list_t;
 
 typedef struct {
-  obj* parameters;
-  obj* procedure;
-  obj* captured;
   int nargs;
+  obj *parameters;
+  obj *procedure;
+
+  CVector captured;
 } closure_t;
 
 #define CONTENTS(o)   ((o)->data)
@@ -61,8 +63,8 @@ typedef struct {
 #define CLOSURE(o)    ((closure_t *)   CONTENTS(o))
 
 // Useful for extracting elements from the lisp object
-#define CAR(o) LIST(o)->car
-#define CDR(o) LIST(o)->cdr
+#define CAR(o)        LIST(o)->car
+#define CDR(o)        LIST(o)->cdr
 #define PARAMETERS(o) CLOSURE(o)->parameters
 #define PROCEDURE(o)  CLOSURE(o)->procedure
 #define CAPTURED(o)   CLOSURE(o)->captured

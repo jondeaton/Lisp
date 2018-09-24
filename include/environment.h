@@ -24,6 +24,7 @@ bool def_global(struct environment *env, const obj *name, const obj *value);
 bool def_local(struct environment *env, const obj *name, const obj *value);
 bool push_scope(struct environment *env);
 void pop_scope(struct environment *env);
+bool bind_closure(struct environment *env, const obj *closure, const obj *args);
 obj *env_lookup(struct environment *env, const obj *name);
 void env_dispose(struct environment *env);
 

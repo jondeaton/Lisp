@@ -53,7 +53,11 @@ void gc_add_recursive(GarbageCollector *gc, obj *root) {
 static void mark_recursive(obj *o) {
   if (o == NULL) return;
   if (o->reachable) return;    // already seen
+
+  // mark
   o->reachable = true;
+
+  // recurse
   if (is_list(o)) {
     mark_recursive(CAR(o));
     mark_recursive(CDR(o));
@@ -64,9 +68,9 @@ static void mark_recursive(obj *o) {
   }
 }
 
-static bool is_reachable(const void *objp) {
+static bool is_reachable(const obj **objp) {
   assert(objp != NULL);
-  obj *o = *(obj **) objp;
+  const obj *o = *objp;
   assert(o != NULL);
   return o->reachable;
 }
@@ -93,14 +97,14 @@ void collect_garbage(GarbageCollector *gc, struct environment *env) {
     o->reachable = false;
   }
 
-  // Mark everything that is reachable in the environment
+  // Mark all reachable objects in environment
   mark_reachable(&env->global_scope);
   struct Map *scope;
   for_vector(&env->stack, scope)
     mark_reachable(scope);
 
   // sweep
-  cvec_filter(&gc->allocated, is_reachable);
+  cvec_filter(&gc->allocated, (PredicateFn) is_reachable);
 }
 
 void gc_dispose(GarbageCollector *gc) {

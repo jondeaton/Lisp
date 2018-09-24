@@ -15,6 +15,11 @@
 #include <stdlib.h>
 #include <interpreter.h>
 
+struct binding {
+  obj *name;
+  obj *value;
+};
+
 // Static function declarations
 
 obj *closure_partial_application(const obj *closure, const obj *args, LispInterpreter *interpreter) {

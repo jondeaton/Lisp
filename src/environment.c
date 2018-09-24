@@ -9,9 +9,10 @@
 #include <list.h>
 #include <math-lib.h>
 #include <parser.h>
+#include <stack-trace.h>
+
 #include <string.h>
 #include <assert.h>
-
 
 
 static int cmp_atoms(const obj **ap, const obj **bp) {
@@ -69,18 +70,17 @@ bool def_local(struct environment *env, const obj *name, const obj *value) {
   assert(env != NULL);
   assert(name != NULL);
 
-  Map **scope = cvec_last(&env->stack);
+  struct Map *scope = cvec_last(&env->stack);
   if (scope == NULL) return false;
 
-  void *kv = cmap_insert(*scope, &name, &value);
+  void *kv = cmap_insert(scope, &name, &value);
   return kv != NULL;
 }
 
-
 bool push_scope(struct environment *env) {
   assert(env != NULL);
-  Map *scope = init_scope();
-  if (scope == NULL) return false;
+  struct Map scope;
+  init_scope(&scope);
   cvec_append(&env->stack, &scope);
   return true;
 }
@@ -88,6 +88,47 @@ bool push_scope(struct environment *env) {
 void pop_scope(struct environment *env) {
   assert(env != NULL);
   cvec_pop(&env->stack);
+}
+
+bool bind_closure(struct environment *env, const obj *closure, const obj *args) {
+  assert(env != NULL);
+  assert(closure != NULL);
+  assert(is_closure(closure));
+  assert(args != NULL);
+  assert(is_list(args));
+  assert(list_length(args) == NARGS(closure));
+
+  // bind in the top scope
+  struct Map *scope = cvec_last(&env->stack);
+
+  // bind arguments to parameters
+  obj *param_list = PARAMETERS(closure);
+  while (param_list != NULL && args != NULL) {
+    obj *parameter = CAR(param_list);
+    if (!is_atom(parameter)) {
+      LOG_ERROR("Cannot bind argument");
+      cmap_dispose(scope);
+      return false;
+    }
+
+    cmap_insert(scope, &parameter, &CAR(args));
+
+    param_list = CDR(param_list);
+    args = CDR(args);
+  }
+
+  // set captured variable in scope
+  struct binding* bound;
+  for_vector(&CAPTURED(closure), bound) {
+    cmap_insert(scope,
+                bound.n,
+                &CLOSURE(closure)->captured_values[i]);
+  }
+  }
+  for (int i = 0; i < CLOSURE(closure)->num_captured; i++) {
+
+
+  return true;
 }
 
 obj *env_lookup(struct environment *env, const obj *name) {

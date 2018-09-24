@@ -92,6 +92,8 @@ void cvec_insert(CVector* cv, const void* source, int index) {
 }
 
 void cvec_append(CVector* cv, const void* addr) {
+  assert(cv != NULL);
+  assert(addr != NULL);
   if (cv->capacity == cv->nelems) cvec_double_size(cv);
 
   void* destination = (char*) cv->elems + cv->nelems * cv->elemsz;

@@ -65,15 +65,13 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
     // containing the captured variables from the closure, along with the values of the arguments
     // bound to the parameters of the closure.
 
-    obj* tmp_env = bind(PARAMETERS(oper), args, interpreter); // Bind the parameters to the arguments
-    obj* capture_copy = copy_recursive(CAPTURED(oper));
-    gc_add_recursive(&interpreter->gc, capture_copy);
-    obj* new_env = join_lists(capture_copy, tmp_env); // Prepend the captured list to the environment
+    push_scope(&interpreter->env);
+    bind_closure(&interpreter->env, oper, args);
 
-    obj* old_env = interpreter->env; // gotta keep one around in case points is modified in eval
-    interpreter->env = new_env;
-    obj* result = eval(PROCEDURE(oper), interpreter); // Evaluate body in prepended environment
-    interpreter->env = old_env;
+    // Evaluate body in new environment
+    obj* result = eval(PROCEDURE(oper), interpreter);
+
+    pop_scope(&interpreter->env);
 
     return result;
   }
