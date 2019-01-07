@@ -74,7 +74,7 @@ target_link_libraries(test-lisp readline clib)
 
 find_library(gtest gtest)
 if (gtest)
-    include_directories(test ${gtest_INCLUDE_DIR})
+    include_directories(test ${GTEST_INCLUDE_DIR})
 
     set(CLIB_TEST_SRC
             test/clib-test.cpp
@@ -93,9 +93,9 @@ endif()
 
 # Performance Benchmarking
 # Make sure to install Google Benchmark
-find_package(benchmark)
-if(benchmark_FOUND)
-    include_directories(bench lib ${benchmark_INCLUDE_DIR})
+find_library(benchmark benchmark)
+if(benchmark)
+    include_directories(bench lib ${BENCHMARK_INCLUDE_DIR})
 
     set(CLIB_BENCH_SRC
             bench/clib-bench.cpp bench/cmap-bench.hpp)
