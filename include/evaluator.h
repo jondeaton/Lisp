@@ -20,7 +20,7 @@
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the evaluation of the object
  */
-obj *eval(const obj *o, LispInterpreter *interpreter);
+obj *eval(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Function: apply
@@ -31,6 +31,6 @@ obj *eval(const obj *o, LispInterpreter *interpreter);
  * @param envp: Environment to evaluate the expression in
  * @return: The result of the application of the function to the arguments
  */
-obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter);
+obj *apply(const obj *oper, const obj *args, struct LispInterpreter *interpreter);
 
 #endif // _EVALUATOR_H_INCLUDED

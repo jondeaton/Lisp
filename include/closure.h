@@ -17,7 +17,7 @@
  * @param args: The (unevaluated) argument list to apply to the closure
  * @return: A newly allocated closure with arguments bound
  */
-obj *closure_partial_application(const obj *closure, const obj *args, LispInterpreter *interpreter);
+obj *closure_partial_application(const obj *closure, const obj *args, struct LispInterpreter *interpreter);
 
 /**
  * Function: new_closure_set
@@ -49,6 +49,6 @@ obj* copy_closure_recursive(const obj* closure);
  * @param envp: Pointer to the environment to associate the
  * @return: A list of name-value pairs (names are copied)
  */
-obj *associate(obj *names, const obj *args, LispInterpreter *interpreter);
+obj *associate(obj *names, const obj *args, struct LispInterpreter *interpreter);
 
 #endif // _CLOSURE_H_INCLUDED

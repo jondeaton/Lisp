@@ -10,7 +10,6 @@
 #include <interpreter.h>
 #include "lisp-objects.h"
 #include "garbage-collector.h"
-#include "interpreter.h"
 
 #include <ops.h>
 
@@ -27,10 +26,10 @@
  * that were created during the application of the primitive
  * @return: A new lisp object which is the result of applying
  */
-#define def_primitive(name) obj *name(const obj *args UNUSED, LispInterpreter *interpreter UNUSED)
+#define def_primitive(name) obj *name(const obj *args UNUSED, struct LispInterpreter *interpreter UNUSED)
 
 // function type definitions
-typedef obj*(*primitive_t)(const obj*, LispInterpreter *);
+typedef obj*(*primitive_t)(const obj*, struct LispInterpreter *);
 
 /**
  * Function: get_primitive_env
@@ -57,7 +56,7 @@ obj *new_primitive(primitive_t primitive);
  * memory and must be freed
  * @return: A pointer to a new truth atom in dynamically allocated memory
  */
-obj *t(GarbageCollector *mm);
+obj *t(struct GarbageCollector *mm);
 
 /**
  * Function: nil
@@ -67,6 +66,6 @@ obj *t(GarbageCollector *mm);
  * memory and must be freed
  * @return: A pointer to the a new empty list in dynamically allocated memory
  */
-obj *nil(GarbageCollector *mm);
+obj *nil(struct GarbageCollector *mm);
 
 #endif // _LISP_PRIMITIVES_H_INCLUDED

@@ -49,7 +49,8 @@ void dispose_recursive(obj *o) {
   } else if (is_closure(o)) {
     dispose_recursive(PARAMETERS(o));
     dispose_recursive(PROCEDURE(o));
-    dispose_recursive(CAPTURED(o));
+    // todo: ?
+    //    dispose_recursive(CAPTURED(o));
   }
   dispose(o);
 }

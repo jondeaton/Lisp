@@ -8,16 +8,17 @@
 #define _LISP_INTERPRETER_H_INCLUDED
 
 #include "parser.h"
+#include "environment.h"
 #include "garbage-collector.h"
 #include <stdio.h>
 
 /**
  * @struct Lisp interpreter object
  */
-typedef struct {
+struct LispInterpreter {
   struct environment env;                  // Interpreter environment
-  GarbageCollector gc;                     // Memory Manager
-} LispInterpreter;
+  struct GarbageCollector gc;              // Memory Manager
+};
 
 /**
  * Function: repl_init
@@ -26,7 +27,7 @@ typedef struct {
  * the global environment and the vector of allocated
  * objects.
  */
-bool interpreter_init(LispInterpreter *interpreter);
+bool interpreter_init(struct LispInterpreter *interpreter);
 
 /**
  * Function: repl_run_program
@@ -35,14 +36,14 @@ bool interpreter_init(LispInterpreter *interpreter);
  * in the environment initialized in repl_init
  * @param program_file: The file containing the program to run
  */
-void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose);
+void interpret_program(struct LispInterpreter *interpreter, const char *program_file, bool verbose);
 
 /**
  * Function: repl_run
  * ------------------
  * Run the interactive REPL prompt
  */
-void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose);
+void interpret_fd(struct LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose);
 
 /**
  * Function: repl_eval
@@ -53,13 +54,13 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
  * the passed expression, in dynamically allocated memory that must
  * be freed
  */
-expression interpret_expression(LispInterpreter *interpreter, const_expression expr);
+expression interpret_expression(struct LispInterpreter *interpreter, const_expression expr);
 
 /**
  * Function: repl_dispose
  * ----------------------
  * Dispose of the global environment and vector of allocated objects.
  */
-void interpreter_dispose(LispInterpreter *interpreter);
+void interpreter_dispose(struct LispInterpreter *interpreter);
 
 #endif //_LISP_INTERPRETER_H_INCLUDED

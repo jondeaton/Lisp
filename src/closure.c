@@ -22,8 +22,15 @@ struct binding {
 
 // Static function declarations
 
-obj *closure_partial_application(const obj *closure, const obj *args, LispInterpreter *interpreter) {
+obj *closure_partial_application(const obj *closure, const obj *args, struct LispInterpreter *interpreter) {
   if (closure == NULL) return NULL;
+  (void) closure;
+  (void) args;
+  (void) interpreter;
+  return NULL;
+  /*
+
+   TODO: gotta fix this...
 
   int nargs = list_length(args);
 
@@ -42,35 +49,49 @@ obj *closure_partial_application(const obj *closure, const obj *args, LispInterp
 
   obj* new_closure = new_closure_set(params, procedure, captured);
   gc_add(&interpreter->gc, new_closure);
+
+  copy_closure_recursive()
+
   return new_closure;
+  */
 }
 
 obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
+  // todo: wat a dis?
   obj* o = new_closure();
   PARAMETERS(o) = params;
   PROCEDURE(o)  = procedure;
-  CAPTURED(o)   = captured;
+  (void) captured;
+//  CAPTURED(o)   = captured;
   NARGS(o)      = is_nil(params) ? 0 : list_length(params);
   return o;
 }
 
 obj* copy_closure_recursive(const obj* closure) {
-  obj *params = copy_recursive(PARAMETERS(closure));
-  obj *proc = copy_recursive(PROCEDURE(closure));
-  obj *capt = copy_recursive(CAPTURED(closure));
-  return new_closure_set(params, proc, capt);
+  // todo: wat a dis?
+  (void) closure;
+//  obj *params = copy_recursive(PARAMETERS(closure));
+//  obj *proc = copy_recursive(PROCEDURE(closure));
+//  obj *capt = copy_recursive(CAPTURED(closure));
+//  return new_closure_set(params, proc, capt);
+  return NULL;
 }
 
-obj *associate(obj *names, const obj *args, LispInterpreter *interpreter) {
+obj *associate(obj *names, const obj *args, struct LispInterpreter *interpreter) {
+//  assert(interpreter != NULL);
+
   if (!is_list(names) || !is_list(args)) return NULL;
 
-  obj *value = eval(CAR(args), interpreter);
-  obj *pair = make_pair(CAR(names), value, true);
-  gc_add(&interpreter->gc, pair);
-  gc_add(&interpreter->gc, CDR(pair));
-
-  obj* cdr = associate(CDR(names), CDR(args), interpreter);
-  obj *nested_pair = new_list_set(pair, cdr);
-  gc_add(&interpreter->gc, nested_pair);
-  return nested_pair;
+  // todo: wat a dis?
+  (void) interpreter;
+//  obj *value = eval(CAR(args), interpreter);
+//  obj *pair = make_pair(CAR(names), value, true);
+//  gc_add(&interpreter->gc, pair);
+//  gc_add(&interpreter->gc, CDR(pair));
+//
+//  obj* cdr = associate(CDR(names), CDR(args), interpreter);
+//  obj *nested_pair = new_list_set(pair, cdr);
+//  gc_add(&interpreter->gc, nested_pair);
+//  return nested_pair;
+  return NULL;
 }

@@ -172,7 +172,7 @@ static expression unparse_closure(const obj* o) {
 
   closure_t* closure = CLOSURE(o);
   expression para = unparse(closure->parameters);
-  int num_capt = list_length(closure->captured);
+  int num_capt = cvec_count(&closure->captured);
 
   char buf[256];
   sprintf(buf, "<closure:%s, %d vars captured>", para, num_capt);

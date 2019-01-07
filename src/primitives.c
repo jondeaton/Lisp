@@ -38,15 +38,18 @@ const obj lisp_T;   // The true atom.
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "lambda", "defmacro", NULL };
 
-static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
-                                                   &cond, &set, &env, &lambda, &defmacro,  NULL };
+static primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
+                                             &cond, &set, &env, &lambda, &defmacro,  NULL };
 
 // Static function declarations
-static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
+static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const struct environment *env);
 static bool capture(obj **capturedp, const obj *binding);
 
 obj* get_primitive_library() {
-  return create_environment(primitive_reserved_names, primitive_functions);
+  // todo: what is this for?
+
+  //  return create_environment(primitive_reserved_names, primitive_functions);
+  return NULL;
 }
 
 obj* new_primitive(primitive_t primitive) {
@@ -59,14 +62,14 @@ obj* new_primitive(primitive_t primitive) {
 }
 
 // Allocate new truth atom
-obj *t(GarbageCollector *mm) {
+obj *t(struct GarbageCollector *mm) {
   obj* t = new_atom("t");
   gc_add(mm, t);
   return t;
 }
 
 // Allocate new empty list
-obj *nil(GarbageCollector *mm) {
+obj *nil(struct GarbageCollector *mm) {
   obj* list = new_list_set(NULL, NULL);
   gc_add(mm, list);
   return list;
@@ -305,6 +308,11 @@ static def_primitive(set) {
     return NULL;
   }
 
+  LOG_ERROR("SET DOESN'T WORK RIGHT NOW!");
+
+  /*
+   TODO: RE-WRITE ALL THIS PART
+
   // Store the result in the environment (potentially over-writing)
   obj** prev_value_p = lookup_entry(var_name, interpreter->env); // previously bound value
   if (prev_value_p == NULL) {
@@ -334,17 +342,10 @@ static def_primitive(set) {
     *prev_value_p = result_cpy;               // store new value in environment
     value = result_cpy;
   }
-  return value;
-}
 
-/**
- * Primitive: env
- * --------------
- * Simply returns the environment
- */
-static def_primitive(env) {
-  if (!check_nargs(__func__, args, 0)) return NULL;
-  return interpreter->env;
+  */
+
+  return value;
 }
 
 /**
@@ -390,7 +391,7 @@ static def_primitive(lambda) {
 
   // Capture variables
   obj* captured = NULL; // Will store the captured variables
-  bool success = capture_variables(&captured, params, procedure, interpreter->env);
+  bool success = capture_variables(&captured, params, procedure, &interpreter->env);
   if (!success) {
     LOG_ERROR("Error while capturing lambda variables");
     dispose_recursive(params);
@@ -434,7 +435,7 @@ static def_primitive(defmacro) {
  * @return true if variables were captures successfully, false otherwise
  */
 static bool capture_variables(obj **capturedp, const obj *params,
-                              const obj *procedure, const obj *env) {
+                              const obj *procedure, const struct environment *env) {
   if (procedure == NULL) return true;
 
   if (is_atom(procedure)) {

@@ -13,17 +13,21 @@
 #include <closure.h>
 #include <garbage-collector.h>
 #include <interpreter.h>
+#include <primitives.h>
 
 // Static function declarations
-static obj *bind(obj *params, const obj *args, LispInterpreter *interpreter);
+static obj *bind(obj *params, const obj *args, struct LispInterpreter *interpreter);
 
-obj *eval(const obj *o, LispInterpreter *interpreter) {
+obj *eval(const obj *o, struct LispInterpreter *interpreter) {
   if (o == NULL) return NULL;
+
+  // Truth, nil, numbers, primitives and closures evaluate to themselves
+  if (is_t(o) || is_nil(o) || is_number(o) || is_primitive(o) || is_closure(o))
+    return (obj*) o;
 
   // Atom type means its just a literal that needs to be looked up
   if (is_atom(o)) {
-    if (is_t(o)) return (obj*) o;
-    obj* value = lookup(o, interpreter->env);
+    obj* value = env_lookup(&interpreter->env, o);
     if (value == NULL) {
       LOG_ERROR("Variable: \"%s\" not found in environment", ATOM(o));
       return NULL;
@@ -31,14 +35,9 @@ obj *eval(const obj *o, LispInterpreter *interpreter) {
     return value;
   }
 
-  // Numbers, primitives and closures evaluate to themselves
-  if (is_number(o) || is_primitive(o) || is_closure(o)) return (obj*) o;
-
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
   if (is_list(o)) {
-    if (is_nil(o)) return (obj*) o;                     // Empty list evaluates to itself
-
     obj* oper = eval(CAR(o), interpreter);
     return apply(oper, CDR(o), interpreter);
   }
@@ -46,10 +45,11 @@ obj *eval(const obj *o, LispInterpreter *interpreter) {
   return NULL;
 }
 
-obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
+obj *apply(const obj *oper, const obj *args, struct LispInterpreter *interpreter) {
   if (oper == NULL) return NULL;
 
   if (is_primitive(oper)) {
+
     primitive_t f = *PRIMITIVE(oper);
     return f(args, interpreter);
   }
@@ -93,7 +93,9 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
  * @param envp: Environment to prepend the bound arguments to
  * @return: Environment now with bound arguments appended
  */
-static obj *bind(obj *params, const obj *args, LispInterpreter *interpreter) {
+static obj *bind(obj *params, const obj *args, struct LispInterpreter *interpreter) {
   obj* frame = associate(params, args, interpreter);
-  return join_lists(frame, interpreter->env);
+  // todo: idk this isn't right
+  return NULL;
+//  return join_lists(frame, interpreter->env);
 }

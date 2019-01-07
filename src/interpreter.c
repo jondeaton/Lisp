@@ -36,7 +36,7 @@ static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
-bool interpreter_init(LispInterpreter *interpreter) {
+bool interpreter_init(struct LispInterpreter *interpreter) {
   assert(interpreter != NULL);
 
   bool success = init_env(&interpreter->env);
@@ -50,7 +50,7 @@ bool interpreter_init(LispInterpreter *interpreter) {
   return true;
 }
 
-void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose) {
+void interpret_program(struct LispInterpreter *interpreter, const char *program_file, bool verbose) {
   if (!program_file) return; // no program to interpret
   FILE* fd = fopen(program_file, "r");
 
@@ -74,7 +74,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
   fclose(fd);
 }
 
-void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose) {
+void interpret_fd(struct LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool verbose) {
   bool eof = false;
   while (!eof) {
     obj* o = read_expression(fd_in, true, &eof, NULL);
@@ -90,7 +90,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
   }
 }
 
-expression interpret_expression(LispInterpreter *interpreter, const_expression expr) {
+expression interpret_expression(struct LispInterpreter *interpreter, const_expression expr) {
   assert(interpreter != NULL);
 
   if (expr == NULL) return NULL;
@@ -111,7 +111,7 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
   return result;
 }
 
-void interpreter_dispose(LispInterpreter *interpreter) {
+void interpreter_dispose(struct LispInterpreter *interpreter) {
   gc_dispose(&interpreter->gc);
   env_dispose(&interpreter->env);
 }

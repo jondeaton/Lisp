@@ -7,16 +7,17 @@
 #ifndef _ENVIRONMENT_H_INCLUDED
 #define _ENVIRONMENT_H_INCLUDED
 
-#include "primitives.h"
+#include "lisp-objects.h"
 #include <cmap.h>
 #include <cvector.h>
 
 #include <stdbool.h>
 
 struct environment {
-  Map global_scope;
+  struct Map global_scope;
   struct CVector stack;
 };
+
 
 struct environment *new_environment();
 bool init_env(struct environment *env);

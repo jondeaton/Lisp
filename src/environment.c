@@ -30,8 +30,8 @@ static unsigned int hash_atom(const obj **ap, size_t keysize UNUSED) {
 static bool init_scope(Map *scope) {
   assert(scope != NULL);
   return cmap_init(scope, sizeof(obj *), sizeof(obj *),
-            (CMapHashFn) hash_atom, (CmpFn) cmp_atoms,
-            NULL, NULL, 0);
+                   (CMapHashFn) hash_atom, (CmpFn) cmp_atoms,
+                   NULL, NULL, 0);
 }
 
 struct environment *new_environment() {
@@ -120,13 +120,14 @@ bool bind_closure(struct environment *env, const obj *closure, const obj *args) 
   // set captured variable in scope
   struct binding* bound;
   for_vector(&CAPTURED(closure), bound) {
-    cmap_insert(scope,
-                bound.n,
+    cmap_insert(scope, bound,
                 &CLOSURE(closure)->captured_values[i]);
   }
-  }
+
+  // TODO: WHATEVER THIS WAS SUPPOSED TO BE
   for (int i = 0; i < CLOSURE(closure)->num_captured; i++) {
 
+  }
 
   return true;
 }

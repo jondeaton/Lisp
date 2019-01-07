@@ -27,21 +27,20 @@
 #define _LISP_MEMORY_MANAGER_H
 
 #include "lisp-objects.h"
+#include "environment.h"
 
-#include <environment.h>
 #include <cvector.h>
 
-
-typedef struct GarbageCollector {
+struct GarbageCollector {
   CVector allocated;
-} GarbageCollector;
+};
 
 /**
  * Function: gc_new
  * ----------------
  * Creates a new garbage collector.
  */
-GarbageCollector *new_gc();
+struct GarbageCollector *new_gc();
 
 /**
  * Function: gc_init
@@ -52,7 +51,7 @@ GarbageCollector *new_gc();
  * to eval are made. Calling eval without first calling this method results in
  * undefined behavior.
  */
-bool gc_init(GarbageCollector *gc);
+bool gc_init(struct GarbageCollector *gc);
 
 /**
  *  Function: gc_add
@@ -62,7 +61,7 @@ bool gc_init(GarbageCollector *gc);
  * internal to eval that allocates Lisp objects in dynamically allocated memory.
  * @param o: A pointer to a lisp object that needs to be free'd
  */
-void gc_add(GarbageCollector *gc, const obj *o);
+void gc_add(struct GarbageCollector *gc, const obj *o);
 
 /**
  * Function: gc_add_recursive
@@ -72,7 +71,7 @@ void gc_add(GarbageCollector *gc, const obj *o);
  * in a recursive manner (the entire object tree).
  * @param root: The root object to add to the list
  */
-void gc_add_recursive(GarbageCollector *gc, obj *root);
+void gc_add_recursive(struct GarbageCollector *gc, obj *root);
 
 /**
  * Function: collect_garbage
@@ -81,7 +80,7 @@ void gc_add_recursive(GarbageCollector *gc, obj *root);
  * call this function after each call to repl_eval, after the object returned from
  * eval has been completely processed (e.g. copied into environment, serialized, etc...).
  */
-void collect_garbage(GarbageCollector *gc, struct environment *env);
+void collect_garbage(struct GarbageCollector *gc, struct environment *env);
 
 /**
  * Function: gc_dispose
@@ -90,6 +89,6 @@ void collect_garbage(GarbageCollector *gc, struct environment *env);
  * all calls to eval are completed to free the memory used to store the
  * CVector of allocated objects.
  */
-void gc_dispose(GarbageCollector *gc);
+void gc_dispose(struct GarbageCollector *gc);
 
 #endif //_LISP_MEMORY_MANAGER_H
