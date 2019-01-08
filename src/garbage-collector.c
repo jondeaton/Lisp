@@ -14,8 +14,8 @@
 
 static void obj_cleanup(obj** op);
 
-GarbageCollector *new_gc() {
-  GarbageCollector *gc = (GarbageCollector*) malloc(sizeof(GarbageCollector));
+struct GarbageCollector *new_gc() {
+  struct GarbageCollector *gc = (struct GarbageCollector*) malloc(sizeof(struct GarbageCollector));
   if (gc == NULL) return NULL;
   bool success = gc_init(gc);
   if (!success) {
@@ -25,17 +25,17 @@ GarbageCollector *new_gc() {
   return gc;
 }
 
-bool gc_init(GarbageCollector *gc) {
+bool gc_init(struct GarbageCollector *gc) {
   size_t elemsz = sizeof(obj*);
   CleanupFn cleanup_fn = (CleanupFn) &obj_cleanup;
   return cvec_init(&gc->allocated, elemsz, 0, cleanup_fn);
 }
 
-void gc_add(GarbageCollector *gc, const obj *o) {
+void gc_add(struct GarbageCollector *gc, const obj *o) {
   cvec_append(&gc->allocated, &o);
 }
 
-void gc_add_recursive(GarbageCollector *gc, obj *root) {
+void gc_add_recursive(struct GarbageCollector *gc, obj *root) {
   if (root == NULL) return;
   root->reachable = true;
   if (is_list(root)) {
@@ -44,7 +44,8 @@ void gc_add_recursive(GarbageCollector *gc, obj *root) {
   } else if (is_closure(root)) {
     gc_add_recursive(gc, PARAMETERS(root));
     gc_add_recursive(gc, PROCEDURE(root));
-    gc_add_recursive(gc, CAPTURED(root));
+    // todo: ???
+//    gc_add_recursive(gc, CAPTURED(root));
   }
   gc_add(gc, root);
 }
@@ -63,7 +64,8 @@ static void mark_recursive(obj *o) {
     mark_recursive(CDR(o));
   } else if (is_closure(o)) {
     mark_recursive(PARAMETERS(o));
-    mark_recursive(CAPTURED(o));
+    // todo: ??
+//    mark_recursive(CAPTURED(o));
     mark_recursive(PROCEDURE(o));
   }
 }
@@ -78,15 +80,16 @@ static bool is_reachable(const obj **objp) {
 // marks all reachable objects within a variable scope
 static void mark_reachable(struct Map *scope) {
   assert(scope != NULL);
-  obj *var_name;
-  for_map_keys(scope, var_name) {
-    obj *value = get_value(scope, var_name);
+  obj * const * varp;
+  for_map_keys(scope, varp) {
+    obj *var_name = *varp;
+    obj * const * valuep = get_value(scope, var_name);
     mark_recursive(var_name);
-    mark_recursive(value);
+    mark_recursive(*valuep);
   }
 }
 
-void collect_garbage(GarbageCollector *gc, struct environment *env) {
+void collect_garbage(struct GarbageCollector *gc, struct environment *env) {
   assert(gc != NULL);
 
   // reset all the flags to not reached
@@ -107,7 +110,7 @@ void collect_garbage(GarbageCollector *gc, struct environment *env) {
   cvec_filter(&gc->allocated, (PredicateFn) is_reachable);
 }
 
-void gc_dispose(GarbageCollector *gc) {
+void gc_dispose(struct GarbageCollector *gc) {
   assert(gc != NULL);
   cvec_dispose(&gc->allocated);
 }

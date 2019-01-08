@@ -70,6 +70,57 @@ bool compare(const obj* a, const obj* b) {
   return false;
 }
 
+int cmp_obj(const void *ap, const void *bp) {
+  const obj *a = (const obj *) ap;
+  const obj *b = (const obj *) bp;
+
+  if (a == NULL) {
+    if (b == NULL) return 0;
+    else return -1;
+  } else if (b == NULL) return 1;
+
+  if (a->objtype != b->objtype) {
+    return a->objtype - b->objtype;
+  }
+
+  if (is_int(a))
+    return get_int(a) - get_int(b);
+
+  if (is_float(a)) {
+    if (get_float(a) > get_float(b)) return 1;
+    else if (get_float(a) < get_float(b)) return -1;
+    return 0;
+  }
+
+  if (is_primitive(a))
+    return memcmp(PRIMITIVE(a), PRIMITIVE(b), sizeof(primitive_t));
+
+  if (is_list(a)) {
+    int cmp_car = cmp_obj(CAR(a), CAR(b));
+    if (cmp_car != 0) return cmp_car;
+    return cmp_obj(CDR(a), CDR(b));
+  }
+
+  if (is_atom(a))
+    return strcmp(ATOM(a), ATOM(b)) == 0;
+
+  if (is_closure(a)) {
+    if (CLOSURE(a)->nargs != CLOSURE(b)->nargs)
+      return CLOSURE(a)->nargs - CLOSURE(b)->nargs;
+
+    int cmp_params = cmp_obj(CLOSURE(a)->parameters, CLOSURE(b)->parameters);
+    if (cmp_params != 0) return cmp_params;
+
+    int cmp_procs = cmp_obj(CLOSURE(a)->procedure, CLOSURE(b)->procedure);
+    if (cmp_procs != 0) return cmp_procs;
+
+    return cvec_compare(&CLOSURE(a)->captured, &CLOSURE(b)->captured, cmp_obj);
+  }
+
+  LOG_ERROR("Unknown comparison of objects");
+  return -1;
+}
+
 unsigned int atom_hash(const obj *o, size_t keysize UNUSED) {
   assert(o != NULL);
   assert(is_atom(o));

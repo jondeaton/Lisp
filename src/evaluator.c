@@ -15,9 +15,6 @@
 #include <interpreter.h>
 #include <primitives.h>
 
-// Static function declarations
-static obj *bind(obj *params, const obj *args, struct LispInterpreter *interpreter);
-
 obj *eval(const obj *o, struct LispInterpreter *interpreter) {
   if (o == NULL) return NULL;
 
@@ -82,20 +79,4 @@ obj *apply(const obj *oper, const obj *args, struct LispInterpreter *interpreter
   }
   LOG_ERROR("Non-procedure cannot be applied");
   return NULL;
-}
-
-/**
- * Function: bind
- * --------------
- * binds a list of arguments to parameters and prepends them on to an environment
- * @param params: List of parameters
- * @param args: List of arguments to bind to the parameters
- * @param envp: Environment to prepend the bound arguments to
- * @return: Environment now with bound arguments appended
- */
-static obj *bind(obj *params, const obj *args, struct LispInterpreter *interpreter) {
-  obj* frame = associate(params, args, interpreter);
-  // todo: idk this isn't right
-  return NULL;
-//  return join_lists(frame, interpreter->env);
 }

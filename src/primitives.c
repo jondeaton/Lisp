@@ -38,11 +38,11 @@ const obj lisp_T;   // The true atom.
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "env", "lambda", "defmacro", NULL };
 
-static primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
-                                             &cond, &set, &env, &lambda, &defmacro,  NULL };
+static primitive_t const primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
+                                                   &cond, &set, &env, &lambda, &defmacro,  NULL };
 
 // Static function declarations
-static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const struct environment *env);
+static bool capture_variables(CVector *captured, const obj *params, const obj *procedure, const struct environment *env);
 static bool capture(obj **capturedp, const obj *binding);
 
 obj* get_primitive_library() {
@@ -389,20 +389,11 @@ static def_primitive(lambda) {
     return NULL;
   }
 
-  // Capture variables
-  obj* captured = NULL; // Will store the captured variables
-  bool success = capture_variables(&captured, params, procedure, &interpreter->env);
+  // Create new closure object
+  obj* o = new_closure_set(params, procedure);
+  bool success =  capture_variables(&CLOSURE(o)->captured, params, procedure, &interpreter->env);
   if (!success) {
     LOG_ERROR("Error while capturing lambda variables");
-    dispose_recursive(params);
-    dispose_recursive(procedure);
-    return NULL;
-  }
-
-  // Create new closure object
-  obj* o = new_closure_set(params, procedure, captured);
-  if (o == NULL) {
-    LOG_ERROR("Error allocating closure object");
     dispose_recursive(params);
     dispose_recursive(procedure);
     return NULL;
@@ -428,31 +419,36 @@ static def_primitive(defmacro) {
  * Creates a captured variable list by searching for variable names that exist in both the procedure
  * and the environment. Creates a list of key-value pairs extracted (copied) from the environment.
  * Variable names in the parameter list will not be captured.
- * @param capturedp: Pointer to where the captured list reference should be stored
+ * @param captured: Pointer to where the captured list reference should be stored
  * @param params: Parameters to the lambda function (these will not be captured
  * @param procedure: Procedure body of the lambda function to search for variables to bind in
  * @param env: Environment to search for values to capture
  * @return true if variables were captures successfully, false otherwise
  */
-static bool capture_variables(obj **capturedp, const obj *params,
+static bool capture_variables(CVector *captured, const obj *params,
                               const obj *procedure, const struct environment *env) {
-  if (procedure == NULL) return true;
+  assert(captured != NULL);
+  assert(params != NULL);
+  assert(env != NULL);
+
+  if (procedure == NULL) return true;   // reached leaf
 
   if (is_atom(procedure)) {
-    if (lookup_pair(procedure, *capturedp)) return true; // Already captured
+    obj *binding = env_lookup(env, procedure);
+    if (binding == NULL) return true; // No value to be captured
+
+    if (cvec_contains(captured, binding, cmp_obj, true))
+      return true; // already captured
+
     // Don't capture parameters (those get bound at apply-time)
     if (list_contains(params, procedure)) return true;
 
-    obj* binding = lookup_pair(procedure, env);
-    if (binding == NULL) return true; // No value to be captured
-
-    bool success = capture(capturedp, binding);
-    if (!success) return false;
+    cvec_insert_sorted(captured, &procedure, cmp_obj);
 
   } else if (is_list(procedure)) { // depth-first search
-    bool success = capture_variables(capturedp, params, CAR(procedure), env);
+    bool success = capture_variables(captured, params, CAR(procedure), env);
     if (!success) return false;
-    return capture_variables(capturedp, params, CDR(procedure), env); // tail recursion
+    return capture_variables(captured, params, CDR(procedure), env); // tail recursion
   }
   return true;
 }

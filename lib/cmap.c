@@ -192,7 +192,6 @@ const void *get_value(const Map *cm, const void *key) {
 const void *cmap_first(const Map *cm) {
   assert(cm != NULL);
 
-  if (cm == NULL) return NULL;
   if (cm->size == 0) return NULL;
 
   for (unsigned int i = 0; i < cm->capacity; ++i) {

@@ -144,6 +144,8 @@ obj* copy_list(const obj *o);
  */
 bool compare(const obj* a, const obj* b);
 
+int cmp_obj(const void *a, const void *b);
+
 /**
  * Function: atom_hash
  * -------------------

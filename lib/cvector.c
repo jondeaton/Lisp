@@ -61,7 +61,7 @@ int cvec_count(const CVector *cv) {
   return cv->nelems;
 }
 
-void* cvec_nth(const CVector* cv, int index) {
+void *cvec_nth(const CVector* cv, int index) {
   assert(cv != NULL);
   assert(index >= 0 && index < cv->nelems);
   return el_at_index(cv, index);
@@ -72,7 +72,7 @@ void *cvec_last(const CVector* cv) {
   return cvec_nth(cv, cvec_count(cv) - 1);
 }
 
-void cvec_insert(CVector* cv, const void* source, int index) {
+void cvec_insert(CVector* cv, const void *source, int index) {
   assert(cv != NULL);
   assert(index >= 0 && index <= cv->nelems);
   
@@ -82,40 +82,64 @@ void cvec_insert(CVector* cv, const void* source, int index) {
 
   // Loop through the elements after the target backwards, copying them forward
   for (int i = cv->nelems; i > index; i--) {
-    void* next_target = el_at_index(cv, i);
-    void* next_source = el_at_index(cv, i - 1);
+    void *next_target = el_at_index(cv, i);
+    void *next_source = el_at_index(cv, i - 1);
     memcpy(next_source, next_target, cv->elemsz);
   }
-  void* target = el_at_index(cv, index);
+  void *target = el_at_index(cv, index);
   memcpy(target, source, cv->elemsz); // insert the
   cv->nelems++;
 }
 
-void cvec_append(CVector* cv, const void* addr) {
+void cvec_insert_sorted(CVector *cv, const void *source, CmpFn cmp) {
+  assert(cv != NULL);
+  assert(source != NULL);
+  // todo: yeah idk
+  (void) cv;
+  (void) source;
+  (void) cmp;
+  assert(false);
+//  int i = cvec_find(cv, source, cmp, true);
+//  cvec_insert(cv, source, i);
+}
+
+int cvec_find(const CVector *cv, const void *source, CmpFn cmp, bool sorted) {
+  assert(cv != NULL);
+  assert(source != NULL);
+  (void) cv;
+  (void) source;
+  (void) cmp;
+  // todo?  idk
+  assert(false);
+
+  return 0;
+}
+
+void cvec_append(CVector* cv, const void *addr) {
   assert(cv != NULL);
   assert(addr != NULL);
   if (cv->capacity == cv->nelems) cvec_double_size(cv);
 
-  void* destination = (char*) cv->elems + cv->nelems * cv->elemsz;
+  void *destination = (char*) cv->elems + cv->nelems * cv->elemsz;
   memcpy(destination, addr, cv->elemsz);
   cv->nelems++;
 }
 
-void cvec_replace(CVector* cv, const void* addr, int index) {
+void cvec_replace(CVector* cv, const void *addr, int index) {
   assert(cv != NULL);
-  void* destination = cvec_nth(cv, index);
+  void *destination = cvec_nth(cv, index);
   if (cv->cleanup != NULL) (*cv).cleanup(destination);
   memcpy(destination, addr, cv->elemsz);
 }
 
 void cvec_remove(CVector* cv, int index) {
   assert(cv != NULL);
-  void* el = cvec_nth(cv, index);
+  void *el = cvec_nth(cv, index);
   
   if (cv->cleanup != NULL) 
       cv->cleanup(el);
   
-  for(void* next = cvec_next(cv, el); next != NULL; next = cvec_next(cv, next))
+  for(void *next = cvec_next(cv, el); next != NULL; next = cvec_next(cv, next))
     memcpy((char*) next - cv->elemsz, next, cv->elemsz);
   cv->nelems--;
 }
@@ -132,18 +156,18 @@ void cvec_clear(CVector* cv) {
     cv->nelems = 0;
     return;
   }
-  for (void* el = cvec_first(cv); el != NULL; el = cvec_next(cv, el))
+  for (void *el = cvec_first(cv); el != NULL; el = cvec_next(cv, el))
     cv->cleanup(el);
   cv->nelems = 0;
 }
 
-int cvec_search(const CVector* cv, const void* key, CmpFn cmp, int start, bool sorted) {
+int cvec_search(const CVector* cv, const void *key, CmpFn cmp, int start, bool sorted) {
   assert(cv != NULL);
   assert(start >= 0 && start <= cv->nelems);
 
-  void* start_loc = (char*) cv->elems + start * cv->elemsz;
+  void *start_loc = (char*) cv->elems + start * cv->elemsz;
   size_t nitems = (size_t) cv->nelems - start;
-  void* found_elem;
+  void *found_elem;
 
   // search with binary or linear search if sorted or not, respectively
   if (sorted) found_elem = bsearch(key, start_loc, nitems, cv->elemsz, cmp);
@@ -158,6 +182,13 @@ void cvec_sort(CVector* cv, CmpFn cmp) {
   assert(cmp != NULL);
   qsort(cv->elems, (size_t) cv->nelems, cv->elemsz, cmp);
 }
+
+bool cvec_contains(const CVector *cv, const void *key, CmpFn cmp, bool sorted) {
+  assert(cv != NULL);
+  assert(key != NULL);
+  return cvec_search(cv, key, cmp, 0, sorted) != SEARCH_NOT_FOUND;
+}
+
 
 void cvec_filter(CVector *cv, PredicateFn predicate) {
   assert(cv != NULL);
@@ -185,13 +216,29 @@ void cvec_filter(CVector *cv, PredicateFn predicate) {
   cv->nelems = num_kept;
 }
 
+int cvec_compare(const CVector *v1, const CVector *v2, CmpFn cmp) {
+  assert(v1 != NULL);
+  assert(v2 != NULL);
 
+  if (v1->nelems != v2->nelems)
+    return v1->nelems - v2->nelems;
 
-void* cvec_first(const CVector* cv) {
+  const void *el;
+  int i = 0;
+  for_vector(v1, el) {
+    int c = cmp(el, cvec_nth(v2, i));
+    if (c != 0) return c;
+    i++;
+  }
+
+  return 0;
+}
+
+void *cvec_first(const CVector* cv) {
   return cv->nelems > 0 ? cv->elems : NULL;
 }
 
-void* cvec_next(const CVector* cv, const void* prev) {
+void *cvec_next(const CVector* cv, const void *prev) {
   assert(cv != NULL);
   assert(prev != NULL);
 
@@ -208,7 +255,7 @@ void* cvec_next(const CVector* cv, const void* prev) {
 static void cvec_double_size(CVector* cv) {
   // Recall capacity is the number of elements that could be stored
   int new_capacity = 2 * cv->capacity;
-  void* new_element_loc = realloc(cv->elems, cv->elemsz * new_capacity);
+  void *new_element_loc = realloc(cv->elems, cv->elemsz * new_capacity);
 
   assert(new_element_loc != NULL); // Assert memory allocation success
 
@@ -216,10 +263,10 @@ static void cvec_double_size(CVector* cv) {
   cv->capacity = new_capacity;
 }
 
-static inline size_t index_of(const CVector* cv, const void* elementp) {
+static inline size_t index_of(const CVector* cv, const void *elementp) {
   return ((char*) elementp - (char*) cv->elems) / cv->elemsz;
 }
 
-static void* el_at_index(const CVector *cv, int index) {
+static void *el_at_index(const CVector *cv, int index) {
   return (char*) cv->elems + index * cv->elemsz;
 }

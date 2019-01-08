@@ -131,6 +131,12 @@ void *cvec_last(const CVector* cv);
  */
 void cvec_insert(CVector *cv, const void *source, int index);
 
+// todo: document
+void cvec_insert_sorted(CVector *cv, const void *source, CmpFn cmp);
+
+// todo: document
+int cvec_find(const CVector *cv, const void *source, CmpFn cmp, bool sorted);
+
 /**
  * Function: cvec_append
  * ---------------------
@@ -220,6 +226,18 @@ void cvec_clear(CVector *cv);
  */
 int cvec_search(const CVector *cv, const void *keyaddr, CmpFn cmp, int start, bool sorted);
 
+
+/**
+ * Function: cvec_contiains
+ * Searches the vector for an element
+ * @param cv the vector to search
+ * @param key the element to search for
+ * @param cmp comparison function
+ * @param sorted whether the vector is sorted
+ * @return true if the vector contains an equal object, false otherwise
+ */
+bool cvec_contains(const CVector *cv, const void *key, CmpFn cmp, bool sorted);
+
 /**
  * Function: cvec_filter
  * ---------------------
@@ -231,6 +249,9 @@ int cvec_search(const CVector *cv, const void *keyaddr, CmpFn cmp, int start, bo
  * @param cv The CVector to filter elements out of
  */
 void cvec_filter(CVector *cv, PredicateFn predicate);
+
+// todo: document
+int cvec_compare(const CVector *v1, const CVector *v2, CmpFn cmp);
 
 /**
  * Function: cvec_sort

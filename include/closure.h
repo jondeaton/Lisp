@@ -28,7 +28,7 @@ obj *closure_partial_application(const obj *closure, const obj *args, struct Lis
  * @param captured: Captured argument list of the closure (will not be copied)
  * @return: A new closure object with the specified parameters, procedure, and captured vars list.
  */
-obj *new_closure_set(obj *params, obj *procedure, obj *captured);
+obj *new_closure_set(obj *params, obj *procedure);
 
 /**
  * Function: copy_closure_recursive

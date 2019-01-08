@@ -36,7 +36,7 @@ bool test_single_eval(const_expression expr, const_expression expected,
                       const char *test_name_format, ...) {
   
   // Get the result: create a new lisp interpreter to evaluate expression in
-  LispInterpreter interpreter;
+  struct LispInterpreter interpreter;
   bool success = interpreter_init(&interpreter);
   if (!success) return false;
 
@@ -84,7 +84,7 @@ bool test_multi_eval(const_expression setup_expressions[],
   assert(expected != NULL);
 
   // Create a lisp interpreter to evaluate the list of expressions
-  LispInterpreter interpreter;
+  struct LispInterpreter interpreter;
   bool success = interpreter_init(&interpreter);
   if (!success) return false;
 

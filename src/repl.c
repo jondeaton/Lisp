@@ -20,7 +20,7 @@
 static bool check_read_permissions(const char* path);
 static void int_handler(int signal);
 
-static LispInterpreter* interpreter;
+static struct LispInterpreter *interpreter;
 
 int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl,
              const char *history_file, bool verbose) {
@@ -30,7 +30,7 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
 
   if (verbose) LOG_MSG("Initializing interpreter.");
 
-  LispInterpreter interpreter;
+  struct LispInterpreter interpreter;
   bool success = interpreter_init(&interpreter);
   if (!success) {
     LOG_ERROR("Error initializing interpreter");

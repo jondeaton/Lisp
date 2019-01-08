@@ -56,13 +56,10 @@ obj *closure_partial_application(const obj *closure, const obj *args, struct Lis
   */
 }
 
-obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
-  // todo: wat a dis?
+obj *new_closure_set(obj *params, obj *procedure) {
   obj* o = new_closure();
   PARAMETERS(o) = params;
   PROCEDURE(o)  = procedure;
-  (void) captured;
-//  CAPTURED(o)   = captured;
   NARGS(o)      = is_nil(params) ? 0 : list_length(params);
   return o;
 }

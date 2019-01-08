@@ -18,18 +18,20 @@ typedef float (*floatArithmeticFuncPtr)(float, float);
 
 // Static declarations
 static obj *apply_arithmetic(const obj *args, intArithmeticFuncPtr int_op,
-                             floatArithmeticFuncPtr float_op, LispInterpreter *interpreter);
+                             floatArithmeticFuncPtr float_op, struct LispInterpreter *interpreter);
 
 // List of reserved words in the lisp language
 static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%",
-                                              "=", ">", ">=", "<", "<=", NULL };
+                                        "=", ">", ">=", "<", "<=", NULL };
 
 // List of the primitives associated with each of the reserved words
 static const primitive_t math_primitives[]= { &add, &sub, &mul, &divide, &mod,
                                               &equal, &gt, &gte, &lt, &lte, NULL };
 
 obj* get_math_library() {
-  return create_environment(math_reserved_atoms, math_primitives);
+  // todo: whatever this should be
+  //  return create_environment(math_reserved_atoms, math_primitives);
+  return NULL;
 }
 
 // Define basic functions for arithmetic operations on two numbers
@@ -48,7 +50,7 @@ static float mod_floats(float x, float y) { // This one needs it's own special d
 }
 
 // Function definitions for integer and floating point allocators
-#define def_number_allocator(T) static obj* allocate_ ## T (T value, GarbageCollector* gc) {\
+#define def_number_allocator(T) static obj* allocate_ ## T (T value, struct GarbageCollector* gc) {\
   obj* o = new_int(value); \
   gc_add(gc, o); \
   return o; }
@@ -103,7 +105,7 @@ def_math_compare_primitive(lte, <=)
  * @return: The result of applying the arithmetic operation to the values of the arguments
  */
 static obj *apply_arithmetic(const obj *args, intArithmeticFuncPtr int_op,
-                             floatArithmeticFuncPtr float_op, LispInterpreter *interpreter) {
+                             floatArithmeticFuncPtr float_op, struct LispInterpreter *interpreter) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
   obj* first = eval(ith(args, 0), interpreter);

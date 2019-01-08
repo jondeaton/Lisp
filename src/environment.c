@@ -48,7 +48,7 @@ struct environment *new_environment() {
 bool init_env(struct environment *env) {
   assert(env != NULL);
 
-  bool success = cvec_init(&env->stack, sizeof(Map), 0, (CleanupFn) cmap_dispose)
+  bool success = cvec_init(&env->stack, sizeof(Map), 0, (CleanupFn) cmap_dispose);
   if (!success) return false;
 
   success = init_scope(&env->global_scope);
@@ -120,19 +120,19 @@ bool bind_closure(struct environment *env, const obj *closure, const obj *args) 
   // set captured variable in scope
   struct binding* bound;
   for_vector(&CAPTURED(closure), bound) {
-    cmap_insert(scope, bound,
-                &CLOSURE(closure)->captured_values[i]);
+//    cmap_insert(scope, bound,
+//                &CLOSURE(closure)->captured_values[i]);
   }
 
   // TODO: WHATEVER THIS WAS SUPPOSED TO BE
-  for (int i = 0; i < CLOSURE(closure)->num_captured; i++) {
-
-  }
+//  for (int i = 0; i < CLOSURE(closure)->num_captured; i++) {
+//
+//  }
 
   return true;
 }
 
-obj *env_lookup(struct environment *env, const obj *name) {
+obj *env_lookup(const struct environment *env, const obj *name) {
   assert(env != NULL);
   assert(name != NULL);
 

@@ -27,7 +27,7 @@ obj* get_math_library();
  * @param envp: The environment to evaluate the addition
  * @return: A newly allocated number/float object containing the result of the addition
  */
-obj *add(const obj *args, LispInterpreter *interpreter);
+obj *add(const obj *args, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: sub
@@ -37,7 +37,7 @@ obj *add(const obj *args, LispInterpreter *interpreter);
  * @param env: The environment to evaluate the subtraction
  * @return: A newly allocated number/float object containing the result of the subtraction
  */
-obj *sub(const obj *o, LispInterpreter *interpreter);
+obj *sub(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: mul
@@ -47,7 +47,7 @@ obj *sub(const obj *o, LispInterpreter *interpreter);
  * @param env: The environment to evaluate the multiplication
  * @return: A newly allocated number/float object containing the result of the multiplication
  */
-obj *mul(const obj *o, LispInterpreter *interpreter);
+obj *mul(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: divide
@@ -57,7 +57,7 @@ obj *mul(const obj *o, LispInterpreter *interpreter);
  * @param env: The environment to evaluate the division
  * @return: A newly allocated number/float object containing the result of the division
  */
-obj *divide(const obj *o, LispInterpreter *interpreter);
+obj *divide(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: mod
@@ -67,7 +67,7 @@ obj *divide(const obj *o, LispInterpreter *interpreter);
  * @param env: The environment to evaluate the modulus
  * @return: A newly allocated number/float object containing the result of the modulus
  */
-obj *mod(const obj *o, LispInterpreter *interpreter);
+obj *mod(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: equal
@@ -78,7 +78,7 @@ obj *mod(const obj *o, LispInterpreter *interpreter);
  * @param gc
  * @return
  */
-obj *equal(const obj *o, LispInterpreter *interpreter);
+obj *equal(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: gt
@@ -89,7 +89,7 @@ obj *equal(const obj *o, LispInterpreter *interpreter);
  * @param gc
  * @return
  */
-obj *gt(const obj *o, LispInterpreter *interpreter);
+obj *gt(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: gte
@@ -100,7 +100,7 @@ obj *gt(const obj *o, LispInterpreter *interpreter);
  * @param gc
  * @return
  */
-obj *gte(const obj *o, LispInterpreter *interpreter);
+obj *gte(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: lt
@@ -111,7 +111,7 @@ obj *gte(const obj *o, LispInterpreter *interpreter);
  * @param gc
  * @return
  */
-obj *lt(const obj *o, LispInterpreter *interpreter);
+obj *lt(const obj *o, struct LispInterpreter *interpreter);
 
 /**
  * Primitive: lte
@@ -122,6 +122,6 @@ obj *lt(const obj *o, LispInterpreter *interpreter);
  * @param gc
  * @return
  */
-obj *lte(const obj *o, LispInterpreter *interpreter);
+obj *lte(const obj *o, struct LispInterpreter *interpreter);
 
 #endif // _LISP_MATH_H_INCLUDED
