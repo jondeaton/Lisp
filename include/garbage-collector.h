@@ -14,6 +14,8 @@ typedef struct GarbageCollector {
   obj **objects;
   int count;
   int capacity;
+  obj *nil_cached;
+  obj *t_cached;
 } GarbageCollector;
 
 GarbageCollector *new_gc(void);

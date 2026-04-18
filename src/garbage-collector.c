@@ -6,6 +6,7 @@
 
 #include <lisp-objects.h>
 #include <garbage-collector.h>
+#include <list.h>
 
 #include <stdlib.h>
 #include <assert.h>
@@ -28,6 +29,10 @@ bool gc_init(GarbageCollector *gc) {
   if (gc->objects == NULL) return false;
   gc->count = 0;
   gc->capacity = GC_INITIAL_CAPACITY;
+  gc->nil_cached = new_list_set(NULL, NULL);
+  gc->nil_cached->reachable = true;
+  gc->t_cached = new_atom("t");
+  gc->t_cached->reachable = true;
   return true;
 }
 
@@ -99,6 +104,8 @@ void gc_dispose(GarbageCollector *gc) {
     dispose(gc->objects[i]);
   }
   free(gc->objects);
+  dispose(gc->nil_cached);
+  dispose(gc->t_cached);
   gc->objects = NULL;
   gc->count = 0;
   gc->capacity = 0;

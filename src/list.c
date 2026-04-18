@@ -7,8 +7,6 @@
 #include <list.h>
 #include <stack-trace.h>
 #include <lisp-objects.h>
-#include <closure.h>
-#include <primitives.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -18,29 +16,6 @@ obj* new_list_set(const obj *car, const obj *cdr) {
   CAR(list) = (obj *) car;
   CDR(list) = (obj *) cdr;
   return list;
-}
-
-obj* copy_recursive(const obj *o) {
-  if (!o) return NULL;
-
-  if (is_atom(o))      return new_atom(ATOM(o));
-  if (is_int(o))       return new_int(get_int(o));
-  if (is_float(o))     return new_float(get_float(o));
-  if (is_primitive(o)) return new_primitive(PRIMITIVE(o));
-  if (is_closure(o) || is_macro(o)) {
-    obj *params = copy_recursive(PARAMETERS(o));
-    obj *proc = copy_recursive(PROCEDURE(o));
-    obj *capt = copy_recursive(CAPTURED(o));
-    obj *copy = new_closure_set(params, proc, capt);
-    if (is_macro(o)) copy->objtype = macro_obj;
-    return copy;
-  }
-  if (is_list(o)) {
-    obj* car = copy_recursive(CAR(o));
-    obj* cdr = copy_recursive(CDR(o));
-    return new_list_set(car, cdr);
-  }
-  return NULL;
 }
 
 bool is_nil(const obj *o) {
@@ -89,8 +64,3 @@ int list_length(const obj* o) {
   return i;
 }
 
-bool list_contains(const obj* list, const obj* query) {
-  if (list == NULL || query == NULL) return false;
-  if (compare_recursive(CAR(list), query)) return true;
-  return list_contains(CDR(list), query);
-}

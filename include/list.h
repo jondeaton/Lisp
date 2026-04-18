@@ -17,13 +17,11 @@
   _l = CDR(_l), (_el) = _l != NULL ? CAR(_l) : NULL)
 
 obj* new_list_set(const obj *car, const obj *cdr);
-obj* copy_recursive(const obj *o);
 bool is_nil(const obj *o);
 bool compare_recursive(const obj *x, const obj *y);
 obj* ith(const obj* o, int i);
 obj* sublist(const obj* o, int i);
 obj* join_lists(obj *list1, obj *list2);
 int list_length(const obj* o);
-bool list_contains(const obj* list, const obj* query);
 
 #endif // _LIST_H_INCLUDED

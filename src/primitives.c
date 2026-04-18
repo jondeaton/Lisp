@@ -31,9 +31,6 @@ static def_primitive(lisp_list);
 static def_primitive(env);
 static def_primitive(lambda);
 
-const obj lisp_NIL;
-const obj lisp_T;
-
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "defmacro",
                                              "list", "env", "lambda", NULL };
@@ -61,17 +58,8 @@ obj* new_primitive(primitive_t primitive) {
   return o;
 }
 
-obj *t(GarbageCollector *gc) {
-  obj* t = new_atom("t");
-  gc_add(gc, t);
-  return t;
-}
-
-obj *nil(GarbageCollector *gc) {
-  obj* list = new_list_set(NULL, NULL);
-  gc_add(gc, list);
-  return list;
-}
+obj *t(GarbageCollector *gc) { return gc->t_cached; }
+obj *nil(GarbageCollector *gc) { return gc->nil_cached; }
 
 static def_primitive(quote) {
   if (!CHECK_NARGS(args, 1)) return NULL;

@@ -60,7 +60,7 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
 
     // Lexical scoping: evaluate args in caller's env, then bind params
     // in the closure's definition-time env (CAPTURED)
-    obj* frame = associate(PARAMETERS(oper), args, interpreter);
+    obj* frame = associate(PARAMETERS(oper), args, interpreter, true);
     obj* new_env = join_lists(frame, CAPTURED(oper));
 
     obj* old_env = interpreter->env;
@@ -76,7 +76,7 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
 
     // Macros: bind raw (unevaluated) args to params, eval body to get expansion,
     // then eval expansion in the caller's env
-    obj* frame = associate_raw(PARAMETERS(oper), args, &interpreter->gc);
+    obj* frame = associate(PARAMETERS(oper), args, interpreter, false);
     obj* macro_env = join_lists(frame, CAPTURED(oper));
 
     obj* old_env = interpreter->env;

@@ -23,7 +23,7 @@ obj *closure_partial_application(const obj *closure, const obj *args, LispInterp
   obj *params = sublist(PARAMETERS(closure), nargs);
   obj *procedure = PROCEDURE(closure);
 
-  obj *new_bindings = associate(PARAMETERS(closure), args, interpreter);
+  obj *new_bindings = associate(PARAMETERS(closure), args, interpreter, true);
   obj *captured = join_lists(new_bindings, CAPTURED(closure));
 
   obj *new_closure = new_closure_set(params, procedure, captured);
@@ -40,29 +40,16 @@ obj *new_closure_set(obj *params, obj *procedure, obj *captured) {
   return o;
 }
 
-obj *associate(obj *names, const obj *args, LispInterpreter *interpreter) {
+obj *associate(obj *names, const obj *args, LispInterpreter *interpreter, bool eval_args) {
   if (!is_list(names) || !is_list(args)) return NULL;
 
-  obj *value = eval(CAR(args), interpreter);
+  obj *value = eval_args ? eval(CAR(args), interpreter) : CAR(args);
   obj *pair = make_pair(CAR(names), value);
   gc_add(&interpreter->gc, pair);
   gc_add(&interpreter->gc, CDR(pair));
 
-  obj* cdr = associate(CDR(names), CDR(args), interpreter);
+  obj* cdr = associate(CDR(names), CDR(args), interpreter, eval_args);
   obj *nested_pair = new_list_set(pair, cdr);
   gc_add(&interpreter->gc, nested_pair);
-  return nested_pair;
-}
-
-obj *associate_raw(obj *names, const obj *args, GarbageCollector *gc) {
-  if (!is_list(names) || !is_list(args)) return NULL;
-
-  obj *pair = make_pair(CAR(names), CAR(args));
-  gc_add(gc, pair);
-  gc_add(gc, CDR(pair));
-
-  obj* cdr = associate_raw(CDR(names), CDR(args), gc);
-  obj *nested_pair = new_list_set(pair, cdr);
-  gc_add(gc, nested_pair);
   return nested_pair;
 }
