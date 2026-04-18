@@ -8,6 +8,7 @@
 #define _LISP_OBJECTS_H_INCLUDED
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifndef UNUSED
 #define UNUSED __attribute__((unused))
@@ -21,7 +22,9 @@ enum type {
   closure_obj,          // Closure/procedure object
   macro_obj,            // Macro object (like closure, but different application)
   int_obj,              // Integer object
-  float_obj             // Floating point number object
+  float_obj,            // Floating point number object
+  string_obj,           // String object
+  vector_obj            // Vector (fixed-size array) object
 };
 
 typedef const char* atom_t;
@@ -47,6 +50,8 @@ struct obj {
     struct { obj *parameters, *procedure, *captured; int nargs; } closure;  // closure_obj
     int intval;                                                       // int_obj
     float floatval;                                                   // float_obj
+    struct { char *data; size_t len; } string;                         // string_obj
+    struct { obj **items; int len; } vector;                          // vector_obj
   };
 };
 
@@ -59,12 +64,18 @@ struct obj {
 #define PROCEDURE(o)  ((o)->closure.procedure)
 #define CAPTURED(o)   ((o)->closure.captured)
 #define NARGS(o)      ((o)->closure.nargs)
+#define STRING(o)     ((o)->string.data)
+#define STRING_LEN(o) ((o)->string.len)
+#define VECTOR(o)     ((o)->vector.items)
+#define VECTOR_LEN(o) ((o)->vector.len)
 
 obj* new_atom(atom_t name);
 obj* new_list(void);
 obj* new_closure(void);
 obj* new_int(int value);
 obj* new_float(float value);
+obj* new_string(const char *value);
+obj* new_vector(int len);
 
 bool compare(const obj* a, const obj* b);
 
@@ -76,6 +87,8 @@ bool is_macro(const obj* o);
 bool is_int(const obj* o);
 bool is_float(const obj* o);
 bool is_number(const obj* o);
+bool is_string(const obj* o);
+bool is_vector(const obj* o);
 bool is_t(const obj* o);
 
 int get_int(const obj* o);

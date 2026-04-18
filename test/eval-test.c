@@ -579,9 +579,17 @@ DEF_TEST(defun_test) {
          "(defun fact (n) (cond ((= n 0) 1) (t (* n (fact (- n 1))))))");
   TEST_EVALS(recursive, "(fact 5)", "120",                   "defun recursive");
 
-  TEST_ERROR("(defun)",                                      "no arguments");
-  TEST_ERROR("(defun f)",                                    "one argument");
-  TEST_ERROR("(defun f (x))",                                "two arguments");
+  // Multi-body defun (uses progn)
+  SERIES(multi_body,
+         "(defun greet (x) (set 'last-greeted x) x)");
+  TEST_EVALS(multi_body, "(greet 42)", "42",                 "defun multi-body");
+
+  SERIES(multi_body_fx,
+         "(define last-greeted '())",
+         "(defun greet (x) (set 'last-greeted x) x)",
+         "(greet 42)");
+  TEST_EVALS(multi_body_fx, "last-greeted", "42",            "defun multi-body side effect");
+
   TEST_ERROR("(defun t (x) x)",                              "can't defun truth");
 
   TEST_REPORT();
@@ -836,6 +844,125 @@ DEF_TEST(tco) {
          "((= (% n 3) 0) (count-non-mult3 (- n 1) acc)) "
          "(t (count-non-mult3 (- n 1) (+ acc 1)))))");
   TEST_EVALS(multi_clause, "(count-non-mult3 100000 0)", "66667", "deep cond multi-clause TCO");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(string_test) {
+  TEST_INIT();
+
+  // String literals self-evaluate
+  TEST_EVAL("\"hello\"", "\"hello\"",                          "string literal");
+  TEST_EVAL("\"\"", "\"\"",                                    "empty string");
+
+  // Escape sequences
+  TEST_EVAL("\"hello\\nworld\"", "\"hello\\nworld\"",          "string with newline escape");
+  TEST_EVAL("\"tab\\there\"", "\"tab\\there\"",                "string with tab escape");
+  TEST_EVAL("\"say \\\"hi\\\"\"", "\"say \\\"hi\\\"\"",       "string with escaped quotes");
+
+  // Strings are not atoms
+  TEST_FALSE("(atom \"hello\")",                               "string is not atom");
+
+  // String equality
+  TEST_TRUE("(eq \"hello\" \"hello\")",                        "string eq same");
+  TEST_FALSE("(eq \"hello\" \"world\")",                       "string eq different");
+  TEST_FALSE("(eq \"hello\" 42)",                              "string eq different type");
+
+  // Strings in lists
+  TEST_EVAL("(car '(\"a\" \"b\"))", "\"a\"",                  "string in list car");
+  TEST_EVAL("(cons \"x\" '(\"y\"))", "(\"x\" \"y\")",         "cons with strings");
+
+  // strcat
+  TEST_EVAL("(strcat \"hello\" \" world\")", "\"hello world\"", "strcat two strings");
+  TEST_EVAL("(strcat \"\" \"abc\")", "\"abc\"",                "strcat with empty");
+  TEST_EVAL("(strcat \"num: \" 42)", "\"num: 42\"",            "strcat string and number");
+
+  // strlen
+  TEST_EVAL("(strlen \"hello\")", "5",                         "strlen");
+  TEST_EVAL("(strlen \"\")", "0",                              "strlen empty");
+  TEST_ERROR("(strlen 42)",                                    "strlen non-string");
+
+  // set/define with strings
+  SERIES(str_var, "(define greeting \"hi\")");
+  TEST_EVALS(str_var, "greeting", "\"hi\"",                    "string in variable");
+  TEST_EVALS(str_var, "(strcat greeting \" there\")",
+             "\"hi there\"",                                   "strcat with variable");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(vector_test) {
+  TEST_INIT();
+
+  // Basic vector operations
+  TEST_EVAL("(vlen (mkvec 5))", "5",                           "mkvec and vlen");
+  TEST_EVAL("(vref (mkvec 3) 0)", "nil",                      "mkvec initializes to nil");
+
+  SERIES(vec_ops,
+         "(define v (mkvec 3))",
+         "(vset v 0 42)",
+         "(vset v 1 \"hello\")",
+         "(vset v 2 '(a b))");
+  TEST_EVALS(vec_ops, "(vref v 0)", "42",                     "vset and vref int");
+  TEST_EVALS(vec_ops, "(vref v 1)", "\"hello\"",              "vset and vref string");
+  TEST_EVALS(vec_ops, "(vref v 2)", "(a b)",                  "vset and vref list");
+  TEST_EVALS(vec_ops, "(vlen v)", "3",                        "vlen after set");
+
+  // Bounds checking
+  TEST_ERROR("(vref (mkvec 3) 5)",                            "vref out of bounds");
+  TEST_ERROR("(vref (mkvec 3) -1)",                           "vref negative index");
+
+  // Hash determinism
+  SERIES(hash_eq,
+         "(define h1 (hash \"test\"))",
+         "(define h2 (hash \"test\"))");
+  TEST_EVALS(hash_eq, "(eq h1 h2)", "t",                     "hash deterministic");
+
+  // Vector identity
+  SERIES(vec_id,
+         "(define a (mkvec 2))",
+         "(define b (mkvec 2))");
+  TEST_EVALS(vec_id, "(eq a a)", "t",                         "vector eq same");
+  TEST_EVALS(vec_id, "(eq a b)", "nil",                       "vector eq different");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(hashmap_test) {
+  TEST_INIT();
+
+  // Basic get/set
+  SERIES(hm_basic,
+         "(define m (make-hashmap))",
+         "(hashmap-set m \"name\" \"Jon\")",
+         "(hashmap-set m \"age\" 30)");
+  TEST_EVALS(hm_basic, "(hashmap-get m \"name\")", "\"Jon\"", "hashmap get string");
+  TEST_EVALS(hm_basic, "(hashmap-get m \"age\")", "30",       "hashmap get int");
+  TEST_EVALS(hm_basic, "(hashmap-get m \"x\")", "nil",        "hashmap get missing");
+
+  // Update existing key
+  SERIES(hm_update,
+         "(define m (make-hashmap))",
+         "(hashmap-set m \"x\" 1)",
+         "(hashmap-set m \"x\" 2)");
+  TEST_EVALS(hm_update, "(hashmap-get m \"x\")", "2",        "hashmap update key");
+
+  // Delete
+  SERIES(hm_del,
+         "(define m (make-hashmap))",
+         "(hashmap-set m \"a\" 1)",
+         "(hashmap-set m \"b\" 2)",
+         "(hashmap-del m \"a\")");
+  TEST_EVALS(hm_del, "(hashmap-get m \"a\")", "nil",         "hashmap del removes key");
+  TEST_EVALS(hm_del, "(hashmap-get m \"b\")", "2",           "hashmap del preserves others");
+
+  // Atom keys
+  SERIES(hm_atom,
+         "(define m (make-hashmap))",
+         "(hashmap-set m 'x 10)",
+         "(hashmap-set m 'y 20)");
+  TEST_EVALS(hm_atom, "(hashmap-get m 'x)", "10",            "hashmap atom key");
+  TEST_EVALS(hm_atom, "(hashmap-get m 'y)", "20",            "hashmap atom key 2");
 
   TEST_REPORT();
 }

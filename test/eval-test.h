@@ -145,5 +145,8 @@ DEF_TEST(defmacro_test);
 DEF_TEST(variadic);
 DEF_TEST(progn_test);
 DEF_TEST(tco);
+DEF_TEST(string_test);
+DEF_TEST(vector_test);
+DEF_TEST(hashmap_test);
 
 #endif //LISP_EVAL_TEST_H

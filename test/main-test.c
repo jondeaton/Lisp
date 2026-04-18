@@ -45,6 +45,9 @@ int run_all_tests(void) {
   RUN_TEST(variadic);
   RUN_TEST(progn_test);
   RUN_TEST(tco);
+  RUN_TEST(string_test);
+  RUN_TEST(vector_test);
+  RUN_TEST(hashmap_test);
 
   return num_fails;
 }

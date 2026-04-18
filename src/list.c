@@ -28,6 +28,8 @@ bool compare_recursive(const obj *x, const obj *y) {
   if (x == NULL) return y == NULL;
   if (x->objtype != y->objtype) return false;
   if (is_atom(x)) return strcmp(ATOM(x), ATOM(y)) == 0;
+  if (is_string(x)) return STRING_LEN(x) == STRING_LEN(y) && memcmp(STRING(x), STRING(y), STRING_LEN(x)) == 0;
+  if (is_vector(x)) return x == y;  // identity
   if (is_primitive(x)) return PRIMITIVE(x) == PRIMITIVE(y);
 
   if (is_list(x))

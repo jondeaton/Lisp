@@ -57,6 +57,9 @@ void gc_add_recursive(GarbageCollector *gc, obj *root) {
     gc_add_recursive(gc, PARAMETERS(root));
     gc_add_recursive(gc, PROCEDURE(root));
     gc_add_recursive(gc, CAPTURED(root));
+  } else if (is_vector(root)) {
+    for (int i = 0; i < VECTOR_LEN(root); i++)
+      gc_add_recursive(gc, VECTOR(root)[i]);
   }
   gc_add(gc, root);
 }
@@ -72,6 +75,9 @@ static void mark_recursive(obj *o) {
     mark_recursive(PARAMETERS(o));
     mark_recursive(CAPTURED(o));
     mark_recursive(PROCEDURE(o));
+  } else if (is_vector(o)) {
+    for (int i = 0; i < VECTOR_LEN(o); i++)
+      mark_recursive(VECTOR(o)[i]);
   }
 }
 

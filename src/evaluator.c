@@ -30,7 +30,7 @@ obj *eval(const obj *o, LispInterpreter *interpreter) {
       break;
     }
 
-    if (is_number(o) || is_primitive(o) || is_closure(o) || is_macro(o)) {
+    if (is_number(o) || is_string(o) || is_vector(o) || is_primitive(o) || is_closure(o) || is_macro(o)) {
       result = (obj*)o;
       break;
     }

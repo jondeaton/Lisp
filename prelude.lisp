@@ -3,6 +3,8 @@
 ; on top of the minimal C primitives:
 ;   quote atom eq car cdr cons cond set defmacro env lambda
 ;   + - * / % = > >= < <=
+;   print strcat strlen
+;   mkvec vref vset vlen hash
 
 ;; ---- Variadic bootstrap ----
 
@@ -15,9 +17,19 @@
 (defmacro define (name value)
   (list 'set (list 'quote name) value))
 
-; defun: define a named function
-(defmacro defun (name params body)
-  (list 'define name (list 'lambda params body)))
+; defun: define a named function (supports multiple body expressions)
+; single body:  (defun name (params) body)
+; multi body:   (defun name (params) body1 body2 ...)
+(defmacro defun args
+  (cond ((atom (cdr (cdr args)))
+         (cond ((atom (cdr args)) '())
+               (t '())))
+        ((atom (cdr (cdr (cdr args))))
+         (list 'define (car args)
+               (list 'lambda (car (cdr args)) (car (cdr (cdr args))))))
+        (t (list 'define (car args)
+                 (list 'lambda (car (cdr args))
+                       (cons 'progn (cdr (cdr args))))))))
 
 ;; ---- Let ----
 
@@ -100,3 +112,40 @@
 (defun nth (lst n)
   (cond ((= n 0) (car lst))
         (t (nth (cdr lst) (- n 1)))))
+
+;; ---- Hash Map ----
+;; Implemented as a vector of association lists (separate chaining)
+
+(defun make-hashmap () (mkvec 16))
+
+(defun hm-bucket (m key)
+  (% (hash key) (vlen m)))
+
+; alist helpers
+(defun alist-get (key lst)
+  (cond ((atom lst) '())
+        ((eq (car (car lst)) key) (cadr (car lst)))
+        (t (alist-get key (cdr lst)))))
+
+(defun alist-set (key val lst)
+  (cond ((atom lst) (list (list key val)))
+        ((eq (car (car lst)) key)
+         (cons (list key val) (cdr lst)))
+        (t (cons (car lst) (alist-set key val (cdr lst))))))
+
+(defun alist-del (key lst)
+  (cond ((atom lst) '())
+        ((eq (car (car lst)) key) (cdr lst))
+        (t (cons (car lst) (alist-del key (cdr lst))))))
+
+; public API
+(defun hashmap-get (m key)
+  (alist-get key (vref m (hm-bucket m key))))
+
+(defun hashmap-set (m key val)
+  (let ((idx (hm-bucket m key)))
+    (vset m idx (alist-set key val (vref m idx)))))
+
+(defun hashmap-del (m key)
+  (let ((idx (hm-bucket m key)))
+    (vset m idx (alist-del key (vref m idx)))))

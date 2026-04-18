@@ -34,11 +34,12 @@ static expression get_expression_from_file(FILE *fd, bool *eof, bool *syntax_err
 static expression reprompt(const_expression expr);
 static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
-static void update_net_balance(char next_character, int* netp);
 
 static void strip_line_comment(char *s) {
+  bool in_string = false;
   for (int i = 0; s[i]; i++) {
-    if (s[i] == ';') { s[i] = '\0'; return; }
+    if (s[i] == '"' && (i == 0 || s[i - 1] != '\\')) { in_string = !in_string; continue; }
+    if (!in_string && s[i] == ';') { s[i] = '\0'; return; }
   }
 }
 
@@ -245,14 +246,13 @@ static int get_indentation_size(const_expression expr) {
 
 static int get_net_balance(const_expression expr) {
   int net = 0;
-  for (size_t i = 0; i < strlen(expr); i++) {
-    update_net_balance(expr[i], &net);
-    if (net < 0) return false;
+  bool in_string = false;
+  for (size_t i = 0; expr[i]; i++) {
+    if (expr[i] == '"' && (i == 0 || expr[i - 1] != '\\')) { in_string = !in_string; continue; }
+    if (in_string) continue;
+    if (expr[i] == '(') net++;
+    if (expr[i] == ')') net--;
+    if (net < 0) return net;
   }
   return net;
-}
-
-static void update_net_balance(char next_character, int* netp) {
-  if (next_character == '(') (*netp)++;
-  if (next_character == ')') (*netp)--;
 }

@@ -22,6 +22,7 @@
 #define NIL_STR_REP "nil"
 
 static obj* parse_atom(const_expression e, size_t *num_parsed_p);
+static obj* parse_string(const_expression e, size_t *num_parsed_p);
 static obj* parse_list(const_expression e, size_t *num_parsed_p);
 static obj* get_quote_list(void);
 static bool contains_dot(const_expression e, size_t length);
@@ -59,6 +60,9 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
     expr_size += 1;
     CDR(o) = new_list_set(quoted, NULL);
 
+  } else if (expr_start[0] == '"') {
+    o = parse_string(expr_start, &expr_size);
+
   } else if (expr_start[0] == '(')  {
     o = parse_list((char *) expr_start + 1, &expr_size);
     expr_size += 1;
@@ -76,6 +80,51 @@ expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
   if (is_atom(o) || is_number(o)) return unparse_atom(o);
+  if (is_string(o)) {
+    const char *s = STRING(o);
+    size_t len = strlen(s);
+    // Worst case: every char needs escaping + 2 quotes + null
+    char *buf = malloc(len * 2 + 3);
+    MALLOC_CHECK(buf);
+    size_t j = 0;
+    buf[j++] = '"';
+    for (size_t i = 0; i < len; i++) {
+      switch (s[i]) {
+        case '"':  buf[j++] = '\\'; buf[j++] = '"'; break;
+        case '\\': buf[j++] = '\\'; buf[j++] = '\\'; break;
+        case '\n': buf[j++] = '\\'; buf[j++] = 'n'; break;
+        case '\t': buf[j++] = '\\'; buf[j++] = 't'; break;
+        default:   buf[j++] = s[i]; break;
+      }
+    }
+    buf[j++] = '"';
+    buf[j] = '\0';
+    return buf;
+  }
+  if (is_vector(o)) {
+    // Format as #(elem1 elem2 ...)
+    size_t total = 3;  // "#(" + ")"
+    expression *parts = malloc(sizeof(expression) * VECTOR_LEN(o));
+    for (int i = 0; i < VECTOR_LEN(o); i++) {
+      parts[i] = VECTOR(o)[i] ? unparse(VECTOR(o)[i]) : strdup("nil");
+      total += strlen(parts[i]) + (i > 0 ? 1 : 0);
+    }
+    char *buf = malloc(total + 1);
+    MALLOC_CHECK(buf);
+    size_t pos = 0;
+    buf[pos++] = '#'; buf[pos++] = '(';
+    for (int i = 0; i < VECTOR_LEN(o); i++) {
+      if (i > 0) buf[pos++] = ' ';
+      size_t len = strlen(parts[i]);
+      memcpy(buf + pos, parts[i], len);
+      pos += len;
+      free(parts[i]);
+    }
+    buf[pos++] = ')';
+    buf[pos] = '\0';
+    free(parts);
+    return buf;
+  }
   if (is_primitive(o)) return unparse_primitive(o);
 
   if (is_closure(o) || is_macro(o)) return unparse_closure(o);
@@ -105,16 +154,22 @@ bool empty_expression(const_expression e) {
 
 bool is_balanced(const_expression e) {
   int net = 0;
+  bool in_string = false;
   for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '"' && (i == 0 || e[i - 1] != '\\')) { in_string = !in_string; continue; }
+    if (in_string) continue;
     if (e[i] == '(') net++;
     if (e[i] == ')') net--;
   }
-  return net == 0;
+  return net == 0 && !in_string;
 }
 
 bool is_valid(const_expression e) {
   int net = 0;
+  bool in_string = false;
   for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '"' && (i == 0 || e[i - 1] != '\\')) { in_string = !in_string; continue; }
+    if (in_string) continue;
     if (e[i] == '(') net++;
     if (e[i] == ')') net--;
     if (net < 0) return false;
@@ -193,6 +248,43 @@ static expression unparse_primitive(const obj *o) {
   return e;
 }
 
+static obj* parse_string(const_expression e, size_t *num_parsed_p) {
+  assert(e[0] == '"');
+  // Find closing quote, handling escape sequences
+  size_t i = 1;
+  while (e[i] && e[i] != '"') {
+    if (e[i] == '\\' && e[i + 1]) i++;  // skip escaped char
+    i++;
+  }
+  if (e[i] != '"') {
+    LOG_ERROR("Unterminated string literal");
+    return NULL;
+  }
+  // Process escape sequences
+  char *buf = malloc(i);  // max possible length (excluding quotes)
+  MALLOC_CHECK(buf);
+  size_t j = 0;
+  for (size_t k = 1; k < i; k++) {
+    if (e[k] == '\\' && k + 1 < i) {
+      k++;
+      switch (e[k]) {
+        case 'n':  buf[j++] = '\n'; break;
+        case 't':  buf[j++] = '\t'; break;
+        case '\\': buf[j++] = '\\'; break;
+        case '"':  buf[j++] = '"';  break;
+        default:   buf[j++] = '\\'; buf[j++] = e[k]; break;
+      }
+    } else {
+      buf[j++] = e[k];
+    }
+  }
+  buf[j] = '\0';
+  obj *o = new_string(buf);
+  free(buf);
+  *num_parsed_p = i + 1;  // include both quotes
+  return o;
+}
+
 static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   size_t size = atom_size(e);
 
@@ -254,7 +346,7 @@ static int distance_to_next_element(const_expression e) {
 static size_t atom_size(const_expression e) {
   int i;
   for(i = 0; i < (int) strlen(e); i++) {
-    if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')') return (size_t) i;
+    if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')' || e[i] == '"') return (size_t) i;
   }
   return (size_t) i;
 }

@@ -60,6 +60,28 @@ obj* new_float(float value) {
   return o;
 }
 
+obj* new_vector(int len) {
+  obj* o = malloc(sizeof(obj));
+  MALLOC_CHECK(o);
+  o->objtype = vector_obj;
+  o->reachable = false;
+  VECTOR(o) = calloc(len, sizeof(obj*));
+  MALLOC_CHECK(VECTOR(o));
+  VECTOR_LEN(o) = len;
+  return o;
+}
+
+obj* new_string(const char *value) {
+  if (value == NULL) return NULL;
+  obj* o = malloc(sizeof(obj));
+  MALLOC_CHECK(o);
+  o->objtype = string_obj;
+  o->reachable = false;
+  STRING(o) = strdup(value);
+  STRING_LEN(o) = strlen(value);
+  return o;
+}
+
 bool compare(const obj* a, const obj* b) {
   if (a == NULL || b == NULL) return a == b;
   if (a->objtype != b->objtype) return false;
@@ -67,6 +89,8 @@ bool compare(const obj* a, const obj* b) {
   if (is_float(a)) return a->floatval == b->floatval;
   if (is_primitive(a)) return a->primitive == b->primitive;
   if (is_atom(a)) return strcmp(a->atom, b->atom) == 0;
+  if (is_string(a)) return STRING_LEN(a) == STRING_LEN(b) && memcmp(STRING(a), STRING(b), STRING_LEN(a)) == 0;
+  if (is_vector(a)) return a == b;  // identity comparison
   if (is_list(a)) return CAR(a) == CAR(b) && CDR(a) == CDR(b);
   if (is_closure(a))
     return PARAMETERS(a) == PARAMETERS(b) &&
@@ -78,6 +102,8 @@ bool compare(const obj* a, const obj* b) {
 void dispose(obj* o) {
   assert(o != NULL);
   if (is_atom(o)) free(o->atom);
+  if (is_string(o)) free(STRING(o));
+  if (is_vector(o)) free(VECTOR(o));
   free(o);
 }
 
@@ -114,6 +140,16 @@ bool is_int(const obj* o) {
 bool is_float(const obj* o) {
   if (o == NULL) return false;
   return o->objtype == float_obj;
+}
+
+bool is_string(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == string_obj;
+}
+
+bool is_vector(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == vector_obj;
 }
 
 bool is_number(const obj* o) {
