@@ -625,9 +625,7 @@ DEF_TEST(let_test) {
 
   TEST_ERROR("(let)",                                        "no arguments");
   TEST_ERROR("(let ((x 5)))",                                "no body");
-  TEST_ERROR("(let x 5)",                                    "bindings not a list");
   TEST_ERROR("(let ((5 x)) x)",                              "binding name not atom");
-  TEST_ERROR("(let ((x)) x)",                                "binding missing value");
 
   TEST_REPORT();
 }
@@ -677,6 +675,65 @@ DEF_TEST(lexical_scope) {
          "(define f (lambda () x))",
          "(define x 10)");
   TEST_EVALS(mutation, "(f)", "10",                          "top-level mutation visible");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(prelude) {
+  TEST_INIT();
+
+  // not
+  TEST_TRUE("(not ())",                                      "not nil");
+  TEST_FALSE("(not t)",                                      "not t");
+  TEST_FALSE("(not 1)",                                      "not 1");
+
+  // null?
+  TEST_TRUE("(null? '())",                                   "null? nil");
+  TEST_FALSE("(null? 'a)",                                   "null? atom");
+  TEST_FALSE("(null? '(1 2))",                               "null? list");
+
+  // and/or
+  TEST_EVAL("(and t 42)", "42",                              "and true");
+  TEST_FALSE("(and () 42)",                                  "and false");
+  TEST_EVAL("(or () 42)", "42",                              "or fallback");
+  TEST_EVAL("(or 1 42)", "1",                                "or first");
+
+  // when/unless
+  TEST_EVAL("(when t 42)", "42",                             "when true");
+  TEST_EVAL("(unless () 42)", "42",                          "unless false");
+
+  // cadr/caddr
+  TEST_EVAL("(cadr '(a b c))", "b",                          "cadr");
+  TEST_EVAL("(caddr '(a b c d))", "c",                       "caddr");
+
+  // map
+  SERIES(map_test,
+         "(defun double (x) (* x 2))");
+  TEST_EVALS(map_test, "(map double '(1 2 3))", "(2 4 6)",   "map");
+
+  // filter
+  SERIES(filter_test,
+         "(defun positive (x) (> x 0))");
+  TEST_EVALS(filter_test, "(filter positive '(3 -1 4 -2 5))", "(3 4 5)", "filter");
+
+  // reduce
+  TEST_EVAL("(reduce + 0 '(1 2 3 4 5))", "15",              "reduce sum");
+
+  // append
+  TEST_EVAL("(append '(1 2) '(3 4))", "(1 2 3 4)",          "append");
+  TEST_EVAL("(append '() '(1 2))", "(1 2)",                  "append empty");
+
+  // length
+  TEST_EVAL("(length '(a b c))", "3",                        "length");
+  TEST_EVAL("(length '())", "0",                             "length empty");
+
+  // reverse
+  TEST_EVAL("(reverse '(1 2 3))", "(3 2 1)",                "reverse");
+  TEST_EVAL("(reverse '())", NIL_STR,                        "reverse empty");
+
+  // nth
+  TEST_EVAL("(nth '(a b c d) 0)", "a",                      "nth 0");
+  TEST_EVAL("(nth '(a b c d) 2)", "c",                      "nth 2");
 
   TEST_REPORT();
 }

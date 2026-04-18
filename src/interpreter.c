@@ -36,6 +36,48 @@ static int get_indentation_size(const_expression expr);
 static int get_net_balance(const_expression expr);
 static void update_net_balance(char next_character, int* netp);
 
+// Lisp prelude: define, defun, let, and standard library functions
+// implemented in Lisp on top of the minimal C primitives
+static const char *prelude[] = {
+  // Core macros
+  "(defmacro define (name value) (list 'set (list 'quote name) value))",
+  "(defmacro defun (name params body) (list 'define name (list 'lambda params body)))",
+
+  // Helpers for let macro
+  "(defun map-car (lst) (cond ((atom lst) '()) (t (cons (car (car lst)) (map-car (cdr lst))))))",
+  "(defun map-cadr (lst) (cond ((atom lst) '()) (t (cons (car (cdr (car lst))) (map-cadr (cdr lst))))))",
+
+  // let: local bindings via lambda application
+  "(defmacro let (bindings body) (cons (list 'lambda (map-car bindings) body) (map-cadr bindings)))",
+
+  // Boolean operators
+  "(defun not (x) (cond (x '()) (t t)))",
+  "(defmacro and (a b) (list 'cond (list a b) (list t '())))",
+  "(defmacro or (a b) (list 'cond (list a a) (list t b)))",
+  "(defmacro when (pred body) (list 'cond (list pred body)))",
+  "(defmacro unless (pred body) (list 'cond (list pred '()) (list t body)))",
+
+  // Predicates
+  "(defun null? (x) (eq x '()))",
+
+  // List accessors
+  "(defun cadr (x) (car (cdr x)))",
+  "(defun caddr (x) (car (cdr (cdr x))))",
+
+  // Higher-order functions
+  "(defun map (f lst) (cond ((atom lst) '()) (t (cons (f (car lst)) (map f (cdr lst))))))",
+  "(defun filter (f lst) (cond ((atom lst) '()) ((f (car lst)) (cons (car lst) (filter f (cdr lst)))) (t (filter f (cdr lst)))))",
+  "(defun reduce (f acc lst) (cond ((atom lst) acc) (t (reduce f (f acc (car lst)) (cdr lst)))))",
+
+  // List utilities
+  "(defun append (a b) (cond ((atom a) b) (t (cons (car a) (append (cdr a) b)))))",
+  "(defun length (lst) (cond ((atom lst) 0) (t (+ 1 (length (cdr lst))))))",
+  "(defun reverse (lst) (reduce (lambda (acc x) (cons x acc)) '() lst))",
+  "(defun nth (lst n) (cond ((= n 0) (car lst)) (t (nth (cdr lst) (- n 1)))))",
+
+  NULL
+};
+
 bool interpreter_init(LispInterpreter *interpreter) {
   assert(interpreter != NULL);
 
@@ -50,6 +92,16 @@ bool interpreter_init(LispInterpreter *interpreter) {
 
   // Track all environment objects in the GC
   gc_add_recursive(&interpreter->gc, interpreter->env);
+
+  // Evaluate the Lisp prelude
+  for (int i = 0; prelude[i] != NULL; i++) {
+    obj *o = PARSE(prelude[i]);
+    if (o == NULL) continue;
+    gc_add_recursive(&interpreter->gc, o);
+    eval(o, interpreter);
+    collect_garbage(&interpreter->gc, interpreter->env);
+  }
+
   return true;
 }
 

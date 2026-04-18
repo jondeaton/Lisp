@@ -40,6 +40,7 @@ int run_all_tests(void) {
   RUN_TEST(list_test);
   RUN_TEST(let_test);
   RUN_TEST(lexical_scope);
+  RUN_TEST(prelude);
   RUN_TEST(defmacro_test);
 
   return num_fails;

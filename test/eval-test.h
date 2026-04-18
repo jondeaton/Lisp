@@ -140,6 +140,7 @@ DEF_TEST(defun_test);
 DEF_TEST(list_test);
 DEF_TEST(let_test);
 DEF_TEST(lexical_scope);
+DEF_TEST(prelude);
 DEF_TEST(defmacro_test);
 
 #endif //LISP_EVAL_TEST_H

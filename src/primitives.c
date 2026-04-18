@@ -26,11 +26,8 @@ static def_primitive(cdr);
 static def_primitive(cons);
 static def_primitive(cond);
 static def_primitive(set);
-static def_primitive(define);
-static def_primitive(defun);
 static def_primitive(defmacro_form);
 static def_primitive(lisp_list);
-static def_primitive(let_form);
 static def_primitive(env);
 static def_primitive(lambda);
 
@@ -38,12 +35,12 @@ const obj lisp_NIL;
 const obj lisp_T;
 
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
-                                             "cond", "set", "define", "defun", "defmacro",
-                                             "list", "let", "env", "lambda", NULL };
+                                             "cond", "set", "defmacro",
+                                             "list", "env", "lambda", NULL };
 
 static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
-                                                   &cond, &set, &define, &defun, &defmacro_form,
-                                                   &lisp_list, &let_form, &env, &lambda, NULL };
+                                                   &cond, &set, &defmacro_form,
+                                                   &lisp_list, &env, &lambda, NULL };
 
 // Helper: after binding a closure, update CAPTURED so it can reference itself (for recursion)
 static void enable_self_recursion(obj *value, obj *env_before, obj *env_after) {
@@ -169,7 +166,7 @@ static def_primitive(cons) {
   gc_add(&interpreter->gc, new_obj);
 
   CAR(new_obj) = car;
-  CDR(new_obj) = cdr;
+  CDR(new_obj) = is_nil(cdr) ? NULL : cdr;
 
   return new_obj;
 }
@@ -264,76 +261,6 @@ static def_primitive(set) {
   return value;
 }
 
-static def_primitive(define) {
-  if (!CHECK_NARGS(args, 2)) return NULL;
-
-  obj* var_name = CAR(args);
-  if (is_nil(var_name)) {
-    LOG_ERROR("Cannot define empty list");
-    return NULL;
-  }
-  if (is_t(var_name)) {
-    LOG_ERROR("Cannot define truth atom");
-    return NULL;
-  }
-  if (!is_atom(var_name)) {
-    LOG_ERROR("Can only define atom types");
-    return NULL;
-  }
-  obj* value = eval(ith(args, 1), interpreter);
-  if (value == NULL) {
-    LOG_ERROR("Error evaluating right-hand-side");
-    return NULL;
-  }
-
-  obj* env_before = interpreter->env;
-  obj** prev_value_p = lookup_entry(var_name, interpreter->env);
-  if (prev_value_p == NULL) {
-    obj* pair = make_pair(var_name, value);
-    obj* new_link = new_list_set(pair, interpreter->env);
-    gc_add(&interpreter->gc, CDR(pair));
-    gc_add(&interpreter->gc, pair);
-    gc_add(&interpreter->gc, new_link);
-    interpreter->env = new_link;
-  } else {
-    *prev_value_p = value;
-  }
-  enable_self_recursion(value, env_before, interpreter->env);
-  return value;
-}
-
-static def_primitive(defun) {
-  if (!CHECK_NARGS(args, 3)) return NULL;
-
-  obj* name = CAR(args);
-  if (!is_atom(name) || is_t(name)) {
-    LOG_ERROR("defun: first argument must be a name");
-    return NULL;
-  }
-
-  obj* body_node = new_list_set(ith(args, 2), NULL);
-  gc_add(&interpreter->gc, body_node);
-  obj* lambda_args = new_list_set(ith(args, 1), body_node);
-  gc_add(&interpreter->gc, lambda_args);
-
-  obj* closure = lambda(lambda_args, interpreter);
-  if (closure == NULL) return NULL;
-
-  obj** prev_value_p = lookup_entry(name, interpreter->env);
-  if (prev_value_p == NULL) {
-    obj* pair = make_pair(name, closure);
-    obj* new_link = new_list_set(pair, interpreter->env);
-    gc_add(&interpreter->gc, CDR(pair));
-    gc_add(&interpreter->gc, pair);
-    gc_add(&interpreter->gc, new_link);
-    interpreter->env = new_link;
-  } else {
-    *prev_value_p = closure;
-  }
-  CAPTURED(closure) = interpreter->env;
-  return closure;
-}
-
 static def_primitive(defmacro_form) {
   if (!CHECK_NARGS(args, 3)) return NULL;
 
@@ -389,49 +316,6 @@ static def_primitive(lisp_list) {
 
   obj* result = new_list_set(first, rest);
   gc_add(&interpreter->gc, result);
-  return result;
-}
-
-static def_primitive(let_form) {
-  if (!CHECK_NARGS(args, 2)) return NULL;
-
-  obj* bindings = CAR(args);
-  obj* body = ith(args, 1);
-
-  if (!is_list(bindings)) {
-    LOG_ERROR("let bindings must be a list");
-    return NULL;
-  }
-
-  obj* old_env = interpreter->env;
-
-  FOR_LIST(bindings, binding) {
-    if (!is_list(binding) || list_length(binding) != 2) {
-      LOG_ERROR("Each let binding must be (name value)");
-      interpreter->env = old_env;
-      return NULL;
-    }
-    obj* bname = CAR(binding);
-    if (!is_atom(bname) || is_t(bname)) {
-      LOG_ERROR("let binding name must be an atom");
-      interpreter->env = old_env;
-      return NULL;
-    }
-    obj* bvalue = eval(ith(binding, 1), interpreter);
-    if (bvalue == NULL) {
-      interpreter->env = old_env;
-      return NULL;
-    }
-    obj* pair = make_pair(bname, bvalue);
-    obj* new_link = new_list_set(pair, interpreter->env);
-    gc_add(&interpreter->gc, CDR(pair));
-    gc_add(&interpreter->gc, pair);
-    gc_add(&interpreter->gc, new_link);
-    interpreter->env = new_link;
-  }
-
-  obj* result = eval(body, interpreter);
-  interpreter->env = old_env;
   return result;
 }
 
