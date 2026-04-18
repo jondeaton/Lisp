@@ -42,6 +42,8 @@ int run_all_tests(void) {
   RUN_TEST(lexical_scope);
   RUN_TEST(prelude);
   RUN_TEST(defmacro_test);
+  RUN_TEST(variadic);
+  RUN_TEST(progn_test);
 
   return num_fails;
 }

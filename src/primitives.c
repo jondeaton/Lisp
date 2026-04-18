@@ -27,17 +27,16 @@ static def_primitive(cons);
 static def_primitive(cond);
 static def_primitive(set);
 static def_primitive(defmacro_form);
-static def_primitive(lisp_list);
 static def_primitive(env);
 static def_primitive(lambda);
 
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "defmacro",
-                                             "list", "env", "lambda", NULL };
+                                             "env", "lambda", NULL };
 
 static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
                                                    &cond, &set, &defmacro_form,
-                                                   &lisp_list, &env, &lambda, NULL };
+                                                   &env, &lambda, NULL };
 
 // Helper: after binding a closure, update CAPTURED so it can reference itself (for recursion)
 static void enable_self_recursion(obj *value, obj *env_before, obj *env_after) {
@@ -259,8 +258,8 @@ static def_primitive(defmacro_form) {
   }
 
   obj* params = ith(args, 1);
-  if (!is_list(params)) {
-    LOG_ERROR("defmacro: parameters must be a list");
+  if (!is_list(params) && !is_atom(params)) {
+    LOG_ERROR("defmacro: parameters must be a list or symbol");
     return NULL;
   }
 
@@ -286,27 +285,6 @@ static def_primitive(defmacro_form) {
   return o;
 }
 
-static def_primitive(lisp_list) {
-  if (args == NULL || is_nil(args)) return nil(&interpreter->gc);
-
-  obj* first = eval(CAR(args), interpreter);
-  if (first == NULL) {
-    LOG_ERROR("Error evaluating list element");
-    return NULL;
-  }
-
-  obj* rest = NULL;
-  if (CDR(args) != NULL) {
-    rest = lisp_list(CDR(args), interpreter);
-    if (rest == NULL) return NULL;
-    if (is_nil(rest)) rest = NULL;
-  }
-
-  obj* result = new_list_set(first, rest);
-  gc_add(&interpreter->gc, result);
-  return result;
-}
-
 static def_primitive(env) {
   if (!check_nargs(__func__, args, 0)) return NULL;
   return interpreter->env;
@@ -322,25 +300,25 @@ static def_primitive(lambda) {
   if (!CHECK_NARGS_MAX(args, 2)) return NULL;
 
   obj* params = ith(args, 0);
-  if (!is_list(params)) {
-    LOG_ERROR("Lambda parameters are not a list");
+  if (is_list(params)) {
+    FOR_LIST(params, var) {
+      if (var == NULL) continue;
+      if (is_t(var)) {
+        LOG_ERROR("Truth atom can't be parameter");
+        return NULL;
+      }
+      if (is_nil(var)) {
+        LOG_ERROR("Empty list can't be a parameter");
+        return NULL;
+      }
+      if (!is_atom(var)) {
+        LOG_ERROR("Parameter was not an atom");
+        return NULL;
+      }
+    }
+  } else if (!is_atom(params) || is_t(params)) {
+    LOG_ERROR("Lambda parameters must be a list or symbol");
     return NULL;
-  }
-
-  FOR_LIST(params, var) {
-    if (var == NULL) continue;
-    if (is_t(var)) {
-      LOG_ERROR("Truth atom can't be parameter");
-      return NULL;
-    }
-    if (is_nil(var)) {
-      LOG_ERROR("Empty list can't be a parameter");
-      return NULL;
-    }
-    if (!is_atom(var)) {
-      LOG_ERROR("Parameter was not an atom");
-      return NULL;
-    }
   }
 
   obj* procedure = ith(args, 1);

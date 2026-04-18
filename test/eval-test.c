@@ -774,3 +774,46 @@ DEF_TEST(defmacro_test) {
   TEST_REPORT();
 }
 
+DEF_TEST(variadic) {
+  TEST_INIT();
+
+  // Variadic lambda
+  TEST_EVAL("((lambda args args) 1 2 3)", "(1 2 3)",          "variadic identity");
+  TEST_EVAL("((lambda args (car args)) 1 2 3)", "1",          "variadic car");
+  TEST_EVAL("((lambda args (cdr args)) 1 2 3)", "(2 3)",      "variadic cdr");
+  TEST_EVAL("((lambda args args))", NIL_STR,                   "variadic no args");
+
+  // Variadic defun
+  SERIES(variadic_fn,
+         "(defun f args args)");
+  TEST_EVALS(variadic_fn, "(f 1 2 3)", "(1 2 3)",             "variadic defun");
+  TEST_EVALS(variadic_fn, "(f)", NIL_STR,                      "variadic defun no args");
+
+  // list is now variadic in prelude
+  TEST_EVAL("(list 1 2 3 4 5)", "(1 2 3 4 5)",                "list five elements");
+
+  // Variadic macro
+  SERIES(variadic_macro,
+         "(defmacro my-list args (cons 'list args))");
+  TEST_EVALS(variadic_macro, "(my-list 1 2 3)", "(1 2 3)",    "variadic macro");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(progn_test) {
+  TEST_INIT();
+
+  TEST_EVAL("(progn 42)", "42",                                "progn single");
+  TEST_EVAL("(progn 1 2 3)", "3",                              "progn returns last");
+
+  SERIES(side_effect,
+         "(progn (define x 10) (+ x 5))");
+  TEST_EVALS(side_effect, "x", "10",                           "progn side effect persists");
+
+  SERIES(multi_set,
+         "(progn (define a 1) (define b 2) (+ a b))");
+  TEST_EVALS(multi_set, "(+ a b)", "3",                        "progn multiple defines");
+
+  TEST_REPORT();
+}
+

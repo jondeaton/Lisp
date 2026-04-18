@@ -1,8 +1,13 @@
 ; Lisp Prelude
 ; Core macros and standard library implemented in Lisp
 ; on top of the minimal C primitives:
-;   quote atom eq car cdr cons cond set defmacro list env lambda
+;   quote atom eq car cdr cons cond set defmacro env lambda
 ;   + - * / % = > >= < <=
+
+;; ---- Variadic bootstrap ----
+
+; list must be defined first (macros use it in their expansions)
+(set 'list (lambda args args))
 
 ;; ---- Core macros ----
 
@@ -50,6 +55,14 @@
 ;; ---- Predicates ----
 
 (defun null? (x) (eq x '()))
+
+;; ---- Sequencing ----
+
+(defmacro progn body
+  (cond ((null? (cdr body)) (car body))
+        (t (list 'cond
+                 (list (list 'list (car body))
+                       (cons 'progn (cdr body)))))))
 
 ;; ---- List accessors ----
 

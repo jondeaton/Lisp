@@ -52,11 +52,11 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
   }
 
   if (is_closure(oper)) {
-    if (!CHECK_NARGS_MAX(args, NARGS(oper))) return NULL;
-
-    // Partial closure application
-    if (list_length(args) < NARGS(oper))
-      return closure_partial_application(oper, args, interpreter);
+    if (NARGS(oper) >= 0) {
+      if (!CHECK_NARGS_MAX(args, NARGS(oper))) return NULL;
+      if (list_length(args) < NARGS(oper))
+        return closure_partial_application(oper, args, interpreter);
+    }
 
     // Lexical scoping: evaluate args in caller's env, then bind params
     // in the closure's definition-time env (CAPTURED)
@@ -72,7 +72,7 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
   }
 
   if (is_macro(oper)) {
-    if (!CHECK_NARGS(args, NARGS(oper))) return NULL;
+    if (NARGS(oper) >= 0 && !CHECK_NARGS(args, NARGS(oper))) return NULL;
 
     // Macros: bind raw (unevaluated) args to params, eval body to get expansion,
     // then eval expansion in the caller's env
