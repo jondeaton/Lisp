@@ -4,18 +4,16 @@
  * Presents the implementation of the Lisp garbage collector.
  */
 
-
 #include <lisp-objects.h>
 #include <garbage-collector.h>
-#include <interpreter.h>
 
 #include <stdlib.h>
 #include <assert.h>
 
-static void obj_cleanup(obj** op);
+#define GC_INITIAL_CAPACITY 256
 
-GarbageCollector *new_gc() {
-  GarbageCollector *gc = (GarbageCollector*) malloc(sizeof(GarbageCollector));
+GarbageCollector *new_gc(void) {
+  GarbageCollector *gc = malloc(sizeof(GarbageCollector));
   if (gc == NULL) return NULL;
   bool success = gc_init(gc);
   if (!success) {
@@ -26,17 +24,26 @@ GarbageCollector *new_gc() {
 }
 
 bool gc_init(GarbageCollector *gc) {
-  size_t elemsz = sizeof(obj*);
-  CleanupFn cleanup_fn = (CleanupFn) &obj_cleanup;
-  return cvec_init(&gc->allocated, elemsz, 0, cleanup_fn);
+  gc->objects = malloc(sizeof(obj*) * GC_INITIAL_CAPACITY);
+  if (gc->objects == NULL) return false;
+  gc->count = 0;
+  gc->capacity = GC_INITIAL_CAPACITY;
+  return true;
 }
 
-void gc_add(GarbageCollector *gc, const obj *o) {
-  cvec_append(&gc->allocated, &o);
+void gc_add(GarbageCollector *gc, obj *o) {
+  if (o == NULL) return;
+  if (gc->count == gc->capacity) {
+    gc->capacity *= 2;
+    gc->objects = realloc(gc->objects, sizeof(obj*) * gc->capacity);
+    assert(gc->objects != NULL);
+  }
+  gc->objects[gc->count++] = o;
 }
 
 void gc_add_recursive(GarbageCollector *gc, obj *root) {
   if (root == NULL) return;
+  if (root->reachable) return; // already tracked in this batch
   root->reachable = true;
   if (is_list(root)) {
     gc_add_recursive(gc, CAR(root));
@@ -49,10 +56,9 @@ void gc_add_recursive(GarbageCollector *gc, obj *root) {
   gc_add(gc, root);
 }
 
-
 static void mark_recursive(obj *o) {
   if (o == NULL) return;
-  if (o->reachable) return;    // already seen
+  if (o->reachable) return;
   o->reachable = true;
   if (is_list(o)) {
     mark_recursive(CAR(o));
@@ -64,43 +70,36 @@ static void mark_recursive(obj *o) {
   }
 }
 
-static bool is_reachable(const void *objp) {
-  assert(objp != NULL);
-  obj *o = *(obj **) objp;
-  assert(o != NULL);
-  return o->reachable;
-}
-
-void collect_garbage(GarbageCollector *gc, obj* env) {
+void collect_garbage(GarbageCollector *gc, obj *env) {
   assert(gc != NULL);
 
-  // reset all the flags to not reached
-  void *el;
-  for_vector(&gc->allocated, el) {
-    obj *o = *(obj **) el;
-    if (o == NULL) continue;
-    o->reachable = false;
+  // Reset all reachable flags
+  for (int i = 0; i < gc->count; i++) {
+    gc->objects[i]->reachable = false;
   }
 
-  // mark and sweep
+  // Mark from root
   mark_recursive(env);
-  cvec_filter(&gc->allocated, is_reachable);
+
+  // Sweep: compact the array, freeing unreachable objects
+  int write = 0;
+  for (int read = 0; read < gc->count; read++) {
+    if (gc->objects[read]->reachable) {
+      gc->objects[write++] = gc->objects[read];
+    } else {
+      dispose(gc->objects[read]);
+    }
+  }
+  gc->count = write;
 }
 
 void gc_dispose(GarbageCollector *gc) {
   assert(gc != NULL);
-  cvec_dispose(&gc->allocated);
-}
-
-/**
- * Function: obj_cleanup
- * ---------------------
- * Cleanup an object given a pointer to a reference to the object. This
- * function was declared to use as the cleanup function for the CVector of
- * object references.
- * @param op: Pointer to a pointer to the object to dispose of
- */
-static void obj_cleanup(obj** op) {
-  assert(op != NULL);
-  dispose(*op);
+  for (int i = 0; i < gc->count; i++) {
+    dispose(gc->objects[i]);
+  }
+  free(gc->objects);
+  gc->objects = NULL;
+  gc->count = 0;
+  gc->capacity = 0;
 }

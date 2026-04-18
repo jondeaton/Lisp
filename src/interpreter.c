@@ -1,6 +1,6 @@
 /*
- * File: repl.c
- * ------------
+ * File: interpreter.c
+ * -------------------
  * Presents the implementation of the Read-Eval-Print Loop for Lisp
  */
 
@@ -39,19 +39,22 @@ static void update_net_balance(char next_character, int* netp);
 bool interpreter_init(LispInterpreter *interpreter) {
   assert(interpreter != NULL);
 
-  interpreter->env = init_env();
-  if (interpreter->env == NULL) return false;
-
   bool success = gc_init(&interpreter->gc);
-  if (!success) {
-    dispose_recursive(interpreter->env);
+  if (!success) return false;
+
+  interpreter->env = init_env();
+  if (interpreter->env == NULL) {
+    gc_dispose(&interpreter->gc);
     return false;
   }
+
+  // Track all environment objects in the GC
+  gc_add_recursive(&interpreter->gc, interpreter->env);
   return true;
 }
 
 void interpret_program(LispInterpreter *interpreter, const char *program_file, bool verbose) {
-  if (!program_file) return; // no program to interpret
+  if (!program_file) return;
   FILE* fd = fopen(program_file, "r");
 
   bool eof = false;
@@ -63,6 +66,7 @@ void interpret_program(LispInterpreter *interpreter, const char *program_file, b
       break;
     }
     if (o == NULL) continue;
+    gc_add_recursive(&interpreter->gc, o);
     obj* result = eval(o, interpreter);
     if (result == NULL) {
       if (verbose) LOG_MSG("NULL");
@@ -83,6 +87,7 @@ void interpret_fd(LispInterpreter *interpreter, FILE *fd_in, FILE *fd_out, bool 
       LOG_ERROR("Invalid expression");
       continue;
     }
+    gc_add_recursive(&interpreter->gc, o);
     obj* result = eval(o, interpreter);
     if (result == NULL && verbose) LOG_MSG("NULL");
     print_object(fd_out, result);
@@ -104,24 +109,14 @@ expression interpret_expression(LispInterpreter *interpreter, const_expression e
   gc_add_recursive(&interpreter->gc, o);
   obj* result_obj = eval(o, interpreter);
   expression result = unparse(result_obj);
-  collect_garbage(&interpreter->gc, interpreter->env); // frees the objects in result_obj that were allocated during eval
+  collect_garbage(&interpreter->gc, interpreter->env);
   return result;
 }
 
 void interpreter_dispose(LispInterpreter *interpreter) {
   gc_dispose(&interpreter->gc);
-  dispose_recursive(interpreter->env);
 }
 
-/**
- * Function: read_expression
- * -------------------------
- * Reads the next expression from standard input, turns it into a list object,
- * and then returns the object (in dynamically allocated memory)
- * @param fd: The file descriptor to read the next expression from
- * @param prompt: If true, print prompt to standard output (for interactive prompt)
- * @return: The parsed lisp object from dynamically allocated memory
- */
 static obj *read_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error) {
   expression next_expr = get_expression(fd, prompt, eof, syntax_error);
   if (next_expr == NULL) return NULL;
@@ -131,26 +126,11 @@ static obj *read_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error
   return o;
 }
 
-/**
- * Function: get_expression
- * ------------------------
- * Read the next expression from a file descriptor (e.g. a file or standard input)
- * @return: The expression in a dynamically allocated memory location
- * @param fd: A file descriptor to read input from
- * @return: An expression that was read from that file descriptor
- */
 static expression get_expression(FILE *fd, bool prompt, bool *eof, bool *syntax_error) {
   if (prompt) return get_expression_from_prompt(eof);
   else return get_expression_from_file(fd, eof, syntax_error);
 }
 
-/**
- * Function: get_expression_from_prompt
- * ------------------------------------
- * Gets the next expression from an interactive prompt from standard input
- * @param eof: Pointer to a boolean to write either EOF was encountered
- * @return: The next expression entered on the interactive prompt
- */
 static expression get_expression_from_prompt(bool* eof) {
   char* e = readline(PROMPT);
   *eof = e == NULL;
@@ -168,7 +148,7 @@ static expression get_expression_from_prompt(bool* eof) {
   while (true) {
     bool valid = is_valid(e);
     bool balanced = is_balanced(e);
-    
+
     if (valid && balanced) return e;
     if (!valid || *eof) return NULL;
 
@@ -186,14 +166,6 @@ static expression get_expression_from_prompt(bool* eof) {
   }
 }
 
-/**
- * Function: get_expression_from_file
- * ----------------------------------
- * Retrieves the next expression in the file
- * @param fd: File descriptor to read from
- * @param eof: Pointer to a bool to write whether or not EOF occurred
- * @return: The next expression read form the file descriptor
- */
 static expression get_expression_from_file(FILE *fd, bool *eof, bool *syntax_error) {
   char* p = fgets(buff, sizeof buff, fd);
   *eof = p == NULL;
@@ -228,13 +200,6 @@ static expression get_expression_from_file(FILE *fd, bool *eof, bool *syntax_err
   }
 }
 
-/**
- * Function: print_object
- * ----------------------
- * Serializes an object and prints it to a file
- * @param fd: File descriptor to print serialization to
- * @param o: The object to serialize and print
- */
 static void print_object(FILE *fd, const obj *o) {
   if (fd == NULL) {
     LOG_ERROR("Invalid file descriptor");
@@ -246,18 +211,9 @@ static void print_object(FILE *fd, const obj *o) {
   free(serialization);
 }
 
-/**
- * Function: reprompt
- * ------------------
- * Prints the properly indented re-prompt
- * @param expr: The expression to reprompt for
- */
 static expression reprompt(const_expression expr) {
-
-  // figure out the number of spaces to put for smart indentation
   int indentation = get_indentation_size(expr);
 
-  // re-purpose the global buffer to store the prompt
   char space = ' ';
   strcpy(buff, REPROMPT);
   for (int i = 0; i < indentation; i++)
@@ -267,26 +223,10 @@ static expression reprompt(const_expression expr) {
   return readline(buff);
 }
 
-/**
- * Function: get_indentation_size
- * ------------------------------
- * Gets the number of spaces that should be put on the reprompt
- * so that things are aligned correctly.
- * @param expr: The expression to get the indentation for
- * @return: The number of spaces that should be added to the next REPL prompt line
- * so that it is properly indented.
- */
 static int get_indentation_size(const_expression expr) {
   return get_net_balance(expr);
 }
 
-/**
- * Function: get_net_balance
- * -------------------------
- * Gets the number of open parenthesis that were not closed in an expression
- * @param expr: The expression to count parenthesis balance in
- * @return: The number of parenthesis in the expression that were opened but not closed
- */
 static int get_net_balance(const_expression expr) {
   int net = 0;
   for (size_t i = 0; i < strlen(expr); i++) {
@@ -296,13 +236,6 @@ static int get_net_balance(const_expression expr) {
   return net;
 }
 
-/**
- * Function: update_net_balance
- * ----------------------------
- * Updates the net parenthesis balance to include a certain character
- * @param next_character: The next character in the expression
- * @param netp: Pointer to the place where the net open parenthesis count is stored
- */
 static void update_net_balance(char next_character, int* netp) {
   if (next_character == '(') (*netp)++;
   if (next_character == ')') (*netp)--;

@@ -17,7 +17,7 @@
  * Get the math library environment
  * @return: The math library environment
  */
-obj* get_math_library();
+obj* get_math_library(void);
 
 /**
  * Primitive: add

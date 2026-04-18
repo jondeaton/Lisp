@@ -6,15 +6,30 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define TEST_PARSE(a, b, ...) TEST_ITEM(test_single_parse, a, b, __VA_ARGS__)
+
+// Free a parsed tree (no GC available in parse tests)
+static void free_tree(obj *o) {
+  if (o == NULL) return;
+  if (is_list(o)) {
+    free_tree(CAR(o));
+    free_tree(CDR(o));
+  } else if (is_closure(o)) {
+    free_tree(PARAMETERS(o));
+    free_tree(PROCEDURE(o));
+    free_tree(CAPTURED(o));
+  }
+  dispose(o);
+}
 
 bool test_single_parse(const_expression expr, const_expression expected,
                        const char *test_name_format, ...) {
 
   obj* o = PARSE(expr);
   expression result = unparse(o);
-  dispose_recursive(o);
+  free_tree(o);
 
   // compare result to expectation
   bool test_result = get_test_result(expected, result);

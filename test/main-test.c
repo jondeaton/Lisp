@@ -17,7 +17,7 @@
  * Runs all tests and determines if the interpreter is passing all of the tests
  * @return: True if all of the tests passed, false otherwise
  */
-int run_all_tests() {
+int run_all_tests(void) {
   int num_fails = 0, num_tests = 0;
 
   int nf, nt;
@@ -39,7 +39,7 @@ int run_all_tests() {
   return num_fails;
 }
 
-int main() {
+int main(void) {
   int fd = open("/dev/null", O_WRONLY);
   dup2(fd, STDERR_FILENO); // redirect stderr --> /dev/null
 
