@@ -25,6 +25,7 @@ add_executable(lisp ${LISP_SRC} src/main.c)
 target_include_directories(lisp PRIVATE include src ${READLINE_INCLUDE_DIR})
 target_link_libraries(lisp ${readline})
 target_compile_options(lisp PRIVATE -Wall -Wextra -pedantic)
+target_compile_definitions(lisp PRIVATE PRELUDE_PATH="${CMAKE_SOURCE_DIR}/prelude.lisp")
 
 set(TEST_SRC
         test/eval-test.c
@@ -36,3 +37,4 @@ add_executable(test-lisp ${LISP_SRC} ${TEST_SRC})
 target_include_directories(test-lisp PRIVATE include src test ${READLINE_INCLUDE_DIR})
 target_link_libraries(test-lisp ${readline})
 target_compile_options(test-lisp PRIVATE -Wall -Wextra -pedantic)
+target_compile_definitions(test-lisp PRIVATE PRELUDE_PATH="${CMAKE_SOURCE_DIR}/prelude.lisp")
