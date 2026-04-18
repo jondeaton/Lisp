@@ -78,7 +78,7 @@ expression unparse(const obj* o) {
   if (is_atom(o) || is_number(o)) return unparse_atom(o);
   if (is_primitive(o)) return unparse_primitive(o);
 
-  if (is_closure(o)) return unparse_closure(o);
+  if (is_closure(o) || is_macro(o)) return unparse_closure(o);
 
   if (is_list(o)) {
     expression list_expr = unparse_list(o);
@@ -152,13 +152,13 @@ static expression unparse_list(const obj *o) {
 }
 
 static expression unparse_closure(const obj* o) {
-  if (!is_closure(o)) return NULL;
+  if (!is_closure(o) && !is_macro(o)) return NULL;
 
   expression para = unparse(PARAMETERS(o));
-  int num_capt = list_length(CAPTURED(o));
+  const char *kind = is_macro(o) ? "macro" : "closure";
 
   char buf[256];
-  sprintf(buf, "<closure:%s, %d vars captured>", para, num_capt);
+  sprintf(buf, "<%s:%s>", kind, para);
   free(para);
   return strdup(buf);
 }

@@ -26,6 +26,11 @@ static def_primitive(cdr);
 static def_primitive(cons);
 static def_primitive(cond);
 static def_primitive(set);
+static def_primitive(define);
+static def_primitive(defun);
+static def_primitive(defmacro_form);
+static def_primitive(lisp_list);
+static def_primitive(let_form);
 static def_primitive(env);
 static def_primitive(lambda);
 
@@ -33,13 +38,18 @@ const obj lisp_NIL;
 const obj lisp_T;
 
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
-                                             "cond", "set", "env", "lambda", NULL };
+                                             "cond", "set", "define", "defun", "defmacro",
+                                             "list", "let", "env", "lambda", NULL };
 
 static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
-                                                   &cond, &set, &env, &lambda, NULL };
+                                                   &cond, &set, &define, &defun, &defmacro_form,
+                                                   &lisp_list, &let_form, &env, &lambda, NULL };
 
-// Static function declarations
-static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
+// Helper: after binding a closure, update CAPTURED so it can reference itself (for recursion)
+static void enable_self_recursion(obj *value, obj *env_before, obj *env_after) {
+  if ((is_closure(value) || is_macro(value)) && CAPTURED(value) == env_before)
+    CAPTURED(value) = env_after;
+}
 
 obj* get_primitive_library(void) {
   return create_environment(primitive_reserved_names, primitive_functions);
@@ -238,10 +248,9 @@ static def_primitive(set) {
     return NULL;
   }
 
-  // Check if already bound
+  obj* env_before = interpreter->env;
   obj** prev_value_p = lookup_entry(var_name, interpreter->env);
   if (prev_value_p == NULL) {
-    // New binding: prepend (name value) pair to env
     obj* pair = make_pair(var_name, value);
     obj* new_link = new_list_set(pair, interpreter->env);
     gc_add(&interpreter->gc, CDR(pair));
@@ -249,10 +258,181 @@ static def_primitive(set) {
     gc_add(&interpreter->gc, new_link);
     interpreter->env = new_link;
   } else {
-    // Overwrite previous value (GC will collect old value if unreachable)
     *prev_value_p = value;
   }
+  enable_self_recursion(value, env_before, interpreter->env);
   return value;
+}
+
+static def_primitive(define) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+
+  obj* var_name = CAR(args);
+  if (is_nil(var_name)) {
+    LOG_ERROR("Cannot define empty list");
+    return NULL;
+  }
+  if (is_t(var_name)) {
+    LOG_ERROR("Cannot define truth atom");
+    return NULL;
+  }
+  if (!is_atom(var_name)) {
+    LOG_ERROR("Can only define atom types");
+    return NULL;
+  }
+  obj* value = eval(ith(args, 1), interpreter);
+  if (value == NULL) {
+    LOG_ERROR("Error evaluating right-hand-side");
+    return NULL;
+  }
+
+  obj* env_before = interpreter->env;
+  obj** prev_value_p = lookup_entry(var_name, interpreter->env);
+  if (prev_value_p == NULL) {
+    obj* pair = make_pair(var_name, value);
+    obj* new_link = new_list_set(pair, interpreter->env);
+    gc_add(&interpreter->gc, CDR(pair));
+    gc_add(&interpreter->gc, pair);
+    gc_add(&interpreter->gc, new_link);
+    interpreter->env = new_link;
+  } else {
+    *prev_value_p = value;
+  }
+  enable_self_recursion(value, env_before, interpreter->env);
+  return value;
+}
+
+static def_primitive(defun) {
+  if (!CHECK_NARGS(args, 3)) return NULL;
+
+  obj* name = CAR(args);
+  if (!is_atom(name) || is_t(name)) {
+    LOG_ERROR("defun: first argument must be a name");
+    return NULL;
+  }
+
+  obj* body_node = new_list_set(ith(args, 2), NULL);
+  gc_add(&interpreter->gc, body_node);
+  obj* lambda_args = new_list_set(ith(args, 1), body_node);
+  gc_add(&interpreter->gc, lambda_args);
+
+  obj* closure = lambda(lambda_args, interpreter);
+  if (closure == NULL) return NULL;
+
+  obj** prev_value_p = lookup_entry(name, interpreter->env);
+  if (prev_value_p == NULL) {
+    obj* pair = make_pair(name, closure);
+    obj* new_link = new_list_set(pair, interpreter->env);
+    gc_add(&interpreter->gc, CDR(pair));
+    gc_add(&interpreter->gc, pair);
+    gc_add(&interpreter->gc, new_link);
+    interpreter->env = new_link;
+  } else {
+    *prev_value_p = closure;
+  }
+  CAPTURED(closure) = interpreter->env;
+  return closure;
+}
+
+static def_primitive(defmacro_form) {
+  if (!CHECK_NARGS(args, 3)) return NULL;
+
+  obj* name = CAR(args);
+  if (!is_atom(name) || is_t(name)) {
+    LOG_ERROR("defmacro: first argument must be a name");
+    return NULL;
+  }
+
+  obj* params = ith(args, 1);
+  if (!is_list(params)) {
+    LOG_ERROR("defmacro: parameters must be a list");
+    return NULL;
+  }
+
+  obj* body = ith(args, 2);
+
+  obj* o = new_closure_set(params, body, interpreter->env);
+  if (o == NULL) return NULL;
+  o->objtype = macro_obj;
+  gc_add(&interpreter->gc, o);
+
+  obj** prev_value_p = lookup_entry(name, interpreter->env);
+  if (prev_value_p == NULL) {
+    obj* pair = make_pair(name, o);
+    obj* new_link = new_list_set(pair, interpreter->env);
+    gc_add(&interpreter->gc, CDR(pair));
+    gc_add(&interpreter->gc, pair);
+    gc_add(&interpreter->gc, new_link);
+    interpreter->env = new_link;
+  } else {
+    *prev_value_p = o;
+  }
+  CAPTURED(o) = interpreter->env;
+  return o;
+}
+
+static def_primitive(lisp_list) {
+  if (args == NULL || is_nil(args)) return nil(&interpreter->gc);
+
+  obj* first = eval(CAR(args), interpreter);
+  if (first == NULL) {
+    LOG_ERROR("Error evaluating list element");
+    return NULL;
+  }
+
+  obj* rest = NULL;
+  if (CDR(args) != NULL) {
+    rest = lisp_list(CDR(args), interpreter);
+    if (rest == NULL) return NULL;
+    if (is_nil(rest)) rest = NULL;
+  }
+
+  obj* result = new_list_set(first, rest);
+  gc_add(&interpreter->gc, result);
+  return result;
+}
+
+static def_primitive(let_form) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+
+  obj* bindings = CAR(args);
+  obj* body = ith(args, 1);
+
+  if (!is_list(bindings)) {
+    LOG_ERROR("let bindings must be a list");
+    return NULL;
+  }
+
+  obj* old_env = interpreter->env;
+
+  FOR_LIST(bindings, binding) {
+    if (!is_list(binding) || list_length(binding) != 2) {
+      LOG_ERROR("Each let binding must be (name value)");
+      interpreter->env = old_env;
+      return NULL;
+    }
+    obj* bname = CAR(binding);
+    if (!is_atom(bname) || is_t(bname)) {
+      LOG_ERROR("let binding name must be an atom");
+      interpreter->env = old_env;
+      return NULL;
+    }
+    obj* bvalue = eval(ith(binding, 1), interpreter);
+    if (bvalue == NULL) {
+      interpreter->env = old_env;
+      return NULL;
+    }
+    obj* pair = make_pair(bname, bvalue);
+    obj* new_link = new_list_set(pair, interpreter->env);
+    gc_add(&interpreter->gc, CDR(pair));
+    gc_add(&interpreter->gc, pair);
+    gc_add(&interpreter->gc, new_link);
+    interpreter->env = new_link;
+  }
+
+  obj* result = eval(body, interpreter);
+  interpreter->env = old_env;
+  return result;
 }
 
 static def_primitive(env) {
@@ -263,7 +443,7 @@ static def_primitive(env) {
 /**
  * Primitive: lambda
  * -----------------
- * Define a non-primitive procedure
+ * Define a non-primitive procedure. Captures the entire lexical environment.
  */
 static def_primitive(lambda) {
   if (!CHECK_NARGS_MIN(args, 1)) return NULL;
@@ -292,54 +472,12 @@ static def_primitive(lambda) {
   }
 
   obj* procedure = ith(args, 1);
-
-  // Capture variables
-  obj* captured = NULL;
-  bool success = capture_variables(&captured, params, procedure, interpreter->env);
-  if (!success) {
-    LOG_ERROR("Error while capturing lambda variables");
-    return NULL;
-  }
-
-  obj* o = new_closure_set(params, procedure, captured);
+  obj* o = new_closure_set(params, procedure, interpreter->env);
   if (o == NULL) {
     LOG_ERROR("Error allocating closure object");
     return NULL;
   }
 
   gc_add(&interpreter->gc, o);
-  gc_add_recursive(&interpreter->gc, captured);
   return o;
-}
-
-/**
- * Function: capture_variables
- * ---------------------------
- * Creates a captured variable list by searching for variable names that exist in both the procedure
- * and the environment. Captured values are copied so closures have snapshot semantics.
- */
-static bool capture_variables(obj **capturedp, const obj *params,
-                              const obj *procedure, const obj *env) {
-  if (procedure == NULL) return true;
-
-  if (is_atom(procedure)) {
-    if (lookup_pair(procedure, *capturedp)) return true; // Already captured
-    if (list_contains(params, procedure)) return true;   // Parameter, not free var
-
-    obj* matching_pair = lookup_pair(procedure, env);
-    if (matching_pair == NULL) return true; // No value to capture
-
-    obj *pair_copy = copy_recursive(matching_pair);
-    if (pair_copy == NULL) return false;
-
-    obj *new_list = new_list_set(pair_copy, *capturedp);
-    if (new_list == NULL) return false;
-    *capturedp = new_list;
-
-  } else if (is_list(procedure)) {
-    bool success = capture_variables(capturedp, params, CAR(procedure), env);
-    if (!success) return false;
-    return capture_variables(capturedp, params, CDR(procedure), env);
-  }
-  return true;
 }

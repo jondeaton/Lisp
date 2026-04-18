@@ -14,5 +14,6 @@
 obj *closure_partial_application(const obj *closure, const obj *args, LispInterpreter *interpreter);
 obj *new_closure_set(obj *params, obj *procedure, obj *captured);
 obj *associate(obj *names, const obj *args, LispInterpreter *interpreter);
+obj *associate_raw(obj *names, const obj *args, GarbageCollector *gc);
 
 #endif // _CLOSURE_H_INCLUDED

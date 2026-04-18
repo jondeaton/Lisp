@@ -19,6 +19,7 @@ enum type {
   list_obj,             // List object
   primitive_obj,        // Primitive function object
   closure_obj,          // Closure/procedure object
+  macro_obj,            // Macro object (like closure, but different application)
   int_obj,              // Integer object
   float_obj             // Floating point number object
 };
@@ -71,6 +72,7 @@ bool is_atom(const obj* o);
 bool is_primitive(const obj* o);
 bool is_list(const obj* o);
 bool is_closure(const obj* o);
+bool is_macro(const obj* o);
 bool is_int(const obj* o);
 bool is_float(const obj* o);
 bool is_number(const obj* o);

@@ -35,6 +35,12 @@ int run_all_tests(void) {
   RUN_TEST(closure);
   RUN_TEST(recursion);
   RUN_TEST(Y_combinator);
+  RUN_TEST(define_test);
+  RUN_TEST(defun_test);
+  RUN_TEST(list_test);
+  RUN_TEST(let_test);
+  RUN_TEST(lexical_scope);
+  RUN_TEST(defmacro_test);
 
   return num_fails;
 }

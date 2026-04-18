@@ -45,7 +45,10 @@ def_primitive(add)    { return apply_arithmetic(args, add_ints, add_floats, inte
 def_primitive(sub)    { return apply_arithmetic(args, sub_ints, sub_floats, interpreter); }
 def_primitive(mul)    { return apply_arithmetic(args, mul_ints, mul_floats, interpreter); }
 def_primitive(divide) { return apply_arithmetic(args, divide_ints, divide_floats, interpreter); }
-def_primitive(mod)    { return apply_arithmetic(args, mod_ints, mod_floats, interpreter); }
+def_primitive(mod) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+  return apply_arithmetic(args, mod_ints, mod_floats, interpreter);
+}
 
 #define def_math_compare(name, op) def_primitive(name) { \
   if (!CHECK_NARGS(args, 2)) return NULL; \
@@ -67,28 +70,32 @@ def_math_compare(lte, <=)
 
 static obj *apply_arithmetic(const obj *args, obj *(*int_op)(int, int),
                              obj *(*float_op)(float, float), LispInterpreter *interpreter) {
-  if (!CHECK_NARGS(args, 2)) return NULL;
+  if (!CHECK_NARGS_MIN(args, 2)) return NULL;
 
-  obj* first = eval(ith(args, 0), interpreter);
-  if (first == NULL) return NULL;
-  if (!is_number(first)) {
-    LOG_ERROR("First argument is not a number.");
+  obj* result = eval(CAR(args), interpreter);
+  if (result == NULL) return NULL;
+  if (!is_number(result)) {
+    LOG_ERROR("Argument is not a number.");
     return NULL;
   }
 
-  obj* second = eval(ith(args, 1), interpreter);
-  if (second == NULL) return NULL;
-  if (!is_number(second)) {
-    LOG_ERROR("Second argument is not a number.");
-    return NULL;
+  for (const obj* rest = CDR(args); rest != NULL; rest = CDR(rest)) {
+    obj* next = eval(CAR(rest), interpreter);
+    if (next == NULL) return NULL;
+    if (!is_number(next)) {
+      LOG_ERROR("Argument is not a number.");
+      return NULL;
+    }
+
+    obj *tmp;
+    if (result->objtype == float_obj || next->objtype == float_obj) {
+      tmp = float_op(get_float(result), get_float(next));
+    } else {
+      tmp = int_op(get_int(result), get_int(next));
+    }
+    gc_add(&interpreter->gc, tmp);
+    result = tmp;
   }
 
-  obj *result;
-  if (first->objtype == float_obj || second->objtype == float_obj) {
-    result = float_op(get_float(first), get_float(second));
-  } else {
-    result = int_op(get_int(first), get_int(second));
-  }
-  gc_add(&interpreter->gc, result);
   return result;
 }

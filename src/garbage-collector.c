@@ -48,7 +48,7 @@ void gc_add_recursive(GarbageCollector *gc, obj *root) {
   if (is_list(root)) {
     gc_add_recursive(gc, CAR(root));
     gc_add_recursive(gc, CDR(root));
-  } else if (is_closure(root)) {
+  } else if (is_closure(root) || is_macro(root)) {
     gc_add_recursive(gc, PARAMETERS(root));
     gc_add_recursive(gc, PROCEDURE(root));
     gc_add_recursive(gc, CAPTURED(root));
@@ -63,7 +63,7 @@ static void mark_recursive(obj *o) {
   if (is_list(o)) {
     mark_recursive(CAR(o));
     mark_recursive(CDR(o));
-  } else if (is_closure(o)) {
+  } else if (is_closure(o) || is_macro(o)) {
     mark_recursive(PARAMETERS(o));
     mark_recursive(CAPTURED(o));
     mark_recursive(PROCEDURE(o));

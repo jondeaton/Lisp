@@ -352,9 +352,11 @@ DEF_TEST(math) {
   TEST_EVALS(set_xy, "(/ y x)", "1",        "");
   TEST_EVALS(set_xy, "(% y x)", "6",        "");
 
-  // weird ways to use these things
-  // TEST_EVAL("(+ 1 2 3 4)", "10"); // just kidding, we will use the standard
-  // TEST_EVAL("(* 1 2 3 4)", "24"); // library to implement this functionality
+  // Variadic arithmetic
+  TEST_EVAL("(+ 1 2 3 4)", "10",               "variadic addition");
+  TEST_EVAL("(* 1 2 3 4)", "24",               "variadic multiplication");
+  TEST_EVAL("(- 10 3 2 1)", "4",               "variadic subtraction");
+  TEST_EVAL("(/ 120 2 3 4)", "5",              "variadic division");
 
   // Data type errors
   TEST_ERROR("(+ 5 z)",                      "add with unknown variable");
@@ -378,9 +380,7 @@ DEF_TEST(math) {
   TEST_ERROR("(/ 3)",                        "one argument");
   TEST_ERROR("(= 4)",                        "one argument");
 
-  // Too many arguments
-  TEST_ERROR("(- 3 4 5)",                    "too many arguments");
-  TEST_ERROR("(/ 3 4 5)",                    "too many arguments");
+  // Too many arguments (only % stays binary)
   TEST_ERROR("(% 3 4 5)",                    "too many arguments");
 
   TEST_REPORT();
@@ -532,6 +532,187 @@ DEF_TEST(Y_combinator) {
   TEST_EVALS(yc_factorial, "((Y F) 0)", "1",                   "Factorial 0 Y-Combinator");
   TEST_EVALS(yc_factorial, "((Y F) 1)", "1",                   "Factorial 1 Y-Combinator");
   TEST_EVALS(yc_factorial, "((Y F) 5)", "120",                 "Factorial 5 Y-Combinator");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(define_test) {
+  TEST_INIT();
+
+  SERIES(def_x, "(define x 5)");
+  TEST_EVALS(def_x, "x", "5",                              "simple define");
+
+  SERIES(def_overwrite,
+         "(define x 5)",
+         "(define x 10)");
+  TEST_EVALS(def_overwrite, "x", "10",                      "define overwrite");
+
+  SERIES(def_expr, "(define x (+ 3 4))");
+  TEST_EVALS(def_expr, "x", "7",                            "define with expression");
+
+  TEST_ERROR("(define)",                                     "no arguments");
+  TEST_ERROR("(define x)",                                   "one argument");
+  TEST_ERROR("(define x y z)",                               "too many arguments");
+  TEST_ERROR("(define 1 4)",                                 "can't define a number");
+  TEST_ERROR("(define t 4)",                                 "can't define truth atom");
+  TEST_ERROR("(define () 4)",                                "can't define nil");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(defun_test) {
+  TEST_INIT();
+
+  SERIES(simple,
+         "(defun square (x) (* x x))");
+  TEST_EVALS(simple, "(square 6)", "36",                     "simple defun");
+
+  SERIES(multi_arg,
+         "(defun add3 (a b c) (+ a (+ b c)))");
+  TEST_EVALS(multi_arg, "(add3 1 2 3)", "6",                 "defun multi arg");
+
+  SERIES(no_arg,
+         "(defun fortytwo () 42)");
+  TEST_EVALS(no_arg, "(fortytwo)", "42",                     "defun no args");
+
+  SERIES(recursive,
+         "(defun fact (n) (cond ((= n 0) 1) (t (* n (fact (- n 1))))))");
+  TEST_EVALS(recursive, "(fact 5)", "120",                   "defun recursive");
+
+  TEST_ERROR("(defun)",                                      "no arguments");
+  TEST_ERROR("(defun f)",                                    "one argument");
+  TEST_ERROR("(defun f (x))",                                "two arguments");
+  TEST_ERROR("(defun t (x) x)",                              "can't defun truth");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(list_test) {
+  TEST_INIT();
+
+  TEST_EVAL("(list)", NIL_STR,                               "empty list");
+  TEST_EVAL("(list 1)", "(1)",                               "singleton list");
+  TEST_EVAL("(list 1 2 3)", "(1 2 3)",                       "three element list");
+  TEST_EVAL("(list (+ 1 2) (* 3 4))", "(3 12)",              "list of expressions");
+  TEST_EVAL("(car (list 'a 'b 'c))", "a",                   "car of list");
+  TEST_EVAL("(cdr (list 'a 'b 'c))", "(b c)",               "cdr of list");
+
+  SERIES(with_var,
+         "(define x 42)");
+  TEST_EVALS(with_var, "(list x x x)", "(42 42 42)",         "list with variables");
+
+  TEST_ERROR("(list z)",                                     "undefined variable");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(let_test) {
+  TEST_INIT();
+
+  TEST_EVAL("(let ((x 5)) x)", "5",                         "simple let");
+  TEST_EVAL("(let ((x 5) (y 10)) (+ x y))", "15",           "let two bindings");
+  TEST_EVAL("(let ((x 3)) (* x x))", "9",                   "let with expression body");
+
+  // let should not pollute outer environment
+  SERIES(scoping,
+         "(define x 1)",
+         "(let ((x 99)) x)");
+  TEST_EVALS(scoping, "x", "1",                             "let does not leak");
+
+  SERIES(nested,
+         "(let ((x 5)) (let ((y 10)) (+ x y)))");
+  TEST_EVALS(nested, "(+ 0 0)", "0",                         "nested let cleanup");
+
+  TEST_ERROR("(let)",                                        "no arguments");
+  TEST_ERROR("(let ((x 5)))",                                "no body");
+  TEST_ERROR("(let x 5)",                                    "bindings not a list");
+  TEST_ERROR("(let ((5 x)) x)",                              "binding name not atom");
+  TEST_ERROR("(let ((x)) x)",                                "binding missing value");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(lexical_scope) {
+  TEST_INIT();
+
+  // Classic dynamic vs lexical scoping test:
+  // g binds its param x=2, then calls f. With lexical scoping, f sees x=1 (from define),
+  // not x=2 (from g's param).
+  SERIES(classic,
+         "(define x 1)",
+         "(define f (lambda (y) (+ x y)))",
+         "(define g (lambda (x) (f 0)))");
+  TEST_EVALS(classic, "(g 2)", "1",                          "lexical not dynamic");
+
+  // Closures should not see let bindings from caller
+  SERIES(let_leak,
+         "(define x 1)",
+         "(define f (lambda () x))",
+         "(define g (lambda () (let ((x 99)) (f))))");
+  TEST_EVALS(let_leak, "(g)", "1",                           "let does not leak into closures");
+
+  // Closure captures definition-time env
+  SERIES(capture,
+         "(define make-adder (lambda (x) (lambda (y) (+ x y))))",
+         "(define add-10 (make-adder 10))");
+  TEST_EVALS(capture, "(add-10 32)", "42",                   "closure captures lexical env");
+
+  // Self-recursion works
+  SERIES(recurse,
+         "(define fact (lambda (n) (cond ((= n 0) 1) (t (* n (fact (- n 1)))))))");
+  TEST_EVALS(recurse, "(fact 6)", "720",                     "self-recursion with define");
+
+  SERIES(recurse_set,
+         "(set 'fact (lambda (n) (cond ((= n 0) 1) (t (* n (fact (- n 1)))))))");
+  TEST_EVALS(recurse_set, "(fact 6)", "720",                 "self-recursion with set");
+
+  // defun recursion
+  SERIES(defun_rec,
+         "(defun fib (n) (cond ((= n 0) 0) ((= n 1) 1) (t (+ (fib (- n 1)) (fib (- n 2))))))");
+  TEST_EVALS(defun_rec, "(fib 10)", "55",                    "defun recursion");
+
+  // Top-level mutation visible to closures (Scheme-like)
+  SERIES(mutation,
+         "(define x 5)",
+         "(define f (lambda () x))",
+         "(define x 10)");
+  TEST_EVALS(mutation, "(f)", "10",                          "top-level mutation visible");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(defmacro_test) {
+  TEST_INIT();
+
+  // Simple macro: (when pred body) → (cond (pred body))
+  SERIES(when_macro,
+         "(defmacro when (pred body) (list 'cond (list pred body)))");
+  TEST_EVALS(when_macro, "(when t 42)", "42",                "simple when macro");
+  TEST_EVALS(when_macro, "(when () 42)", NIL_STR,            "when macro false");
+
+  // Macro with actual computation
+  SERIES(when_expr,
+         "(defmacro when (pred body) (list 'cond (list pred body)))",
+         "(define x 5)");
+  TEST_EVALS(when_expr, "(when (= x 5) (* x x))", "25",     "when macro with expr");
+
+  // unless macro: (unless pred body) → (cond (pred ()) (t body))
+  SERIES(unless_macro,
+         "(defmacro unless (pred body) (list 'cond (list pred '()) (list t body)))");
+  TEST_EVALS(unless_macro, "(unless () 42)", "42",           "unless macro true case");
+  TEST_EVALS(unless_macro, "(unless t 42)", NIL_STR,         "unless macro false case");
+
+  // swap macro: (swap a b) → (let ((tmp a)) (define a b) (define b tmp))
+  // Actually let's do something simpler: a macro that doubles
+  SERIES(double_macro,
+         "(defmacro double (x) (list '+ x x))");
+  TEST_EVALS(double_macro, "(double 5)", "10",               "double macro");
+  TEST_EVALS(double_macro, "(double (+ 1 2))", "6",          "double macro with expr");
+
+  TEST_ERROR("(defmacro)",                                   "no arguments");
+  TEST_ERROR("(defmacro m)",                                 "one argument");
+  TEST_ERROR("(defmacro m (x))",                             "two arguments");
+  TEST_ERROR("(defmacro t (x) x)",                           "can't defmacro truth");
 
   TEST_REPORT();
 }

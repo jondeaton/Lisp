@@ -14,9 +14,6 @@
 #include <garbage-collector.h>
 #include <interpreter.h>
 
-// Static function declarations
-static obj *bind(obj *params, const obj *args, LispInterpreter *interpreter);
-
 obj *eval(const obj *o, LispInterpreter *interpreter) {
   if (o == NULL) return NULL;
 
@@ -31,8 +28,8 @@ obj *eval(const obj *o, LispInterpreter *interpreter) {
     return value;
   }
 
-  // Numbers, primitives and closures evaluate to themselves
-  if (is_number(o) || is_primitive(o) || is_closure(o)) return (obj*) o;
+  // Numbers, primitives, closures and macros evaluate to themselves
+  if (is_number(o) || is_primitive(o) || is_closure(o) || is_macro(o)) return (obj*) o;
 
   // List type means its a operator being applied to operands which means evaluate
   // the operator (return a procedure or a primitive) to which we call apply on the arguments
@@ -50,7 +47,7 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
   if (oper == NULL) return NULL;
 
   if (is_primitive(oper)) {
-    primitive_t f = *PRIMITIVE(oper);
+    primitive_t f = PRIMITIVE(oper);
     return f(args, interpreter);
   }
 
@@ -61,21 +58,34 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
     if (list_length(args) < NARGS(oper))
       return closure_partial_application(oper, args, interpreter);
 
-    // The result of a closure application is the evaluation of the body of the closure in an environment
-    // containing the captured variables from the closure, along with the values of the arguments
-    // bound to the parameters of the closure.
+    // Lexical scoping: evaluate args in caller's env, then bind params
+    // in the closure's definition-time env (CAPTURED)
+    obj* frame = associate(PARAMETERS(oper), args, interpreter);
+    obj* new_env = join_lists(frame, CAPTURED(oper));
 
-    obj* tmp_env = bind(PARAMETERS(oper), args, interpreter); // Bind the parameters to the arguments
-    obj* capture_copy = copy_recursive(CAPTURED(oper));
-    gc_add_recursive(&interpreter->gc, capture_copy);
-    obj* new_env = join_lists(capture_copy, tmp_env); // Prepend the captured list to the environment
-
-    obj* old_env = interpreter->env; // gotta keep one around in case points is modified in eval
+    obj* old_env = interpreter->env;
     interpreter->env = new_env;
-    obj* result = eval(PROCEDURE(oper), interpreter); // Evaluate body in prepended environment
+    obj* result = eval(PROCEDURE(oper), interpreter);
     interpreter->env = old_env;
 
     return result;
+  }
+
+  if (is_macro(oper)) {
+    if (!CHECK_NARGS(args, NARGS(oper))) return NULL;
+
+    // Macros: bind raw (unevaluated) args to params, eval body to get expansion,
+    // then eval expansion in the caller's env
+    obj* frame = associate_raw(PARAMETERS(oper), args, &interpreter->gc);
+    obj* macro_env = join_lists(frame, CAPTURED(oper));
+
+    obj* old_env = interpreter->env;
+    interpreter->env = macro_env;
+    obj* expansion = eval(PROCEDURE(oper), interpreter);
+    interpreter->env = old_env;
+
+    if (expansion == NULL) return NULL;
+    return eval(expansion, interpreter);
   }
 
   if (is_atom(oper)) {
@@ -84,18 +94,4 @@ obj *apply(const obj *oper, const obj *args, LispInterpreter *interpreter) {
   }
   LOG_ERROR("Non-procedure cannot be applied");
   return NULL;
-}
-
-/**
- * Function: bind
- * --------------
- * binds a list of arguments to parameters and prepends them on to an environment
- * @param params: List of parameters
- * @param args: List of arguments to bind to the parameters
- * @param envp: Environment to prepend the bound arguments to
- * @return: Environment now with bound arguments appended
- */
-static obj *bind(obj *params, const obj *args, LispInterpreter *interpreter) {
-  obj* frame = associate(params, args, interpreter);
-  return join_lists(frame, interpreter->env);
 }

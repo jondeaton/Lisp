@@ -27,11 +27,13 @@ obj* copy_recursive(const obj *o) {
   if (is_int(o))       return new_int(get_int(o));
   if (is_float(o))     return new_float(get_float(o));
   if (is_primitive(o)) return new_primitive(PRIMITIVE(o));
-  if (is_closure(o)) {
+  if (is_closure(o) || is_macro(o)) {
     obj *params = copy_recursive(PARAMETERS(o));
     obj *proc = copy_recursive(PROCEDURE(o));
     obj *capt = copy_recursive(CAPTURED(o));
-    return new_closure_set(params, proc, capt);
+    obj *copy = new_closure_set(params, proc, capt);
+    if (is_macro(o)) copy->objtype = macro_obj;
+    return copy;
   }
   if (is_list(o)) {
     obj* car = copy_recursive(CAR(o));

@@ -20,7 +20,7 @@
 static bool check_read_permissions(const char* path);
 static void int_handler(int signal);
 
-static LispInterpreter* interpreter;
+static LispInterpreter *g_interpreter;
 
 int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl,
              const char *history_file, bool verbose) {
@@ -32,6 +32,7 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
 
   LispInterpreter interpreter;
   bool success = interpreter_init(&interpreter);
+  g_interpreter = &interpreter;
   if (!success) {
     LOG_ERROR("Error initializing interpreter");
     return -1;
@@ -82,7 +83,7 @@ int run_lisp(const char *bootstrap_path, const char *program_file, bool run_repl
  * @param signal: The signal to exit the program
  */
 static void int_handler(int signal) {
-  interpreter_dispose(interpreter);
+  interpreter_dispose(g_interpreter);
   exit(signal);
 }
 

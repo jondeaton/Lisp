@@ -101,6 +101,11 @@ bool is_closure(const obj* o) {
   return o->objtype == closure_obj;
 }
 
+bool is_macro(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == macro_obj;
+}
+
 bool is_int(const obj* o) {
   if (o == NULL) return false;
   return o->objtype == int_obj;

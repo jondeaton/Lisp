@@ -53,3 +53,16 @@ obj *associate(obj *names, const obj *args, LispInterpreter *interpreter) {
   gc_add(&interpreter->gc, nested_pair);
   return nested_pair;
 }
+
+obj *associate_raw(obj *names, const obj *args, GarbageCollector *gc) {
+  if (!is_list(names) || !is_list(args)) return NULL;
+
+  obj *pair = make_pair(CAR(names), CAR(args));
+  gc_add(gc, pair);
+  gc_add(gc, CDR(pair));
+
+  obj* cdr = associate_raw(CDR(names), CDR(args), gc);
+  obj *nested_pair = new_list_set(pair, cdr);
+  gc_add(gc, nested_pair);
+  return nested_pair;
+}
