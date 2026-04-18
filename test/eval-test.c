@@ -817,3 +817,26 @@ DEF_TEST(progn_test) {
   TEST_REPORT();
 }
 
+DEF_TEST(tco) {
+  TEST_INIT();
+
+  // Deep tail recursion through cond — would segfault without TCO
+  SERIES(count,
+         "(set 'count (lambda (self n) (cond ((= n 100000) n) (t (self self (+ n 1))))))");
+  TEST_EVALS(count, "(count count 0)", "100000",               "deep tail recursion via cond");
+
+  // Tail-recursive factorial with accumulator
+  SERIES(fact,
+         "(defun fact-acc (n acc) (cond ((= n 0) acc) (t (fact-acc (- n 1) (* n acc)))))");
+  TEST_EVALS(fact, "(fact-acc 10 1)", "3628800",               "tail-recursive factorial");
+
+  // Deep cond with multiple clauses (all tail-recursive)
+  SERIES(multi_clause,
+         "(defun count-non-mult3 (n acc) (cond ((= n 0) acc) "
+         "((= (% n 3) 0) (count-non-mult3 (- n 1) acc)) "
+         "(t (count-non-mult3 (- n 1) (+ acc 1)))))");
+  TEST_EVALS(multi_clause, "(count-non-mult3 100000 0)", "66667", "deep cond multi-clause TCO");
+
+  TEST_REPORT();
+}
+

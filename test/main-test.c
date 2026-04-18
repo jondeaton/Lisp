@@ -44,6 +44,7 @@ int run_all_tests(void) {
   RUN_TEST(defmacro_test);
   RUN_TEST(variadic);
   RUN_TEST(progn_test);
+  RUN_TEST(tco);
 
   return num_fails;
 }
