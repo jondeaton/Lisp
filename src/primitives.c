@@ -39,19 +39,24 @@ static def_primitive(vector_ref);
 static def_primitive(vector_set);
 static def_primitive(vector_length);
 static def_primitive(hash_val);
+static def_primitive(input_line);
+static def_primitive(read_file);
+static def_primitive(write_file);
 
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
                                              "cond", "set", "defmacro",
                                              "env", "lambda",
                                              "print", "strcat", "strlen",
-                                             "mkvec", "vref", "vset", "vlen", "hash", NULL };
+                                             "mkvec", "vref", "vset", "vlen", "hash",
+                                             "input", "read", "write", NULL };
 
 static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
                                                    &cond, &set, &defmacro_form,
                                                    &env, &lambda,
                                                    &print_val, &concat, &string_length,
                                                    &make_vector, &vector_ref, &vector_set,
-                                                   &vector_length, &hash_val, NULL };
+                                                   &vector_length, &hash_val,
+                                                   &input_line, &read_file, &write_file, NULL };
 
 // Helper: after binding a closure, update CAPTURED so it can reference itself (for recursion)
 static void enable_self_recursion(obj *value, obj *env_before, obj *env_after) {
@@ -260,7 +265,7 @@ static def_primitive(set) {
     *prev_value_p = value;
   }
   enable_self_recursion(value, env_before, interpreter->env);
-  return value;
+  return nil(&interpreter->gc);
 }
 
 static def_primitive(defmacro_form) {
@@ -359,7 +364,7 @@ static def_primitive(print_val) {
   }
   putchar('\n');
   fflush(stdout);
-  return value;
+  return nil(&interpreter->gc);
 }
 
 static def_primitive(concat) {
@@ -502,4 +507,51 @@ static def_primitive(hash_val) {
   obj *o = new_int((int)(h & 0x7FFFFFFF));  // keep positive
   gc_add(&interpreter->gc, o);
   return o;
+}
+
+static def_primitive(input_line) {
+  if (!CHECK_NARGS(args, 0)) return NULL;
+  char buf[4096];
+  if (fgets(buf, sizeof(buf), stdin) == NULL)
+    return nil(&interpreter->gc);
+  size_t len = strlen(buf);
+  if (len > 0 && buf[len - 1] == '\n') buf[--len] = '\0';
+  obj *o = new_string(buf);
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+static def_primitive(read_file) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *path = eval(CAR(args), interpreter);
+  if (path == NULL) return NULL;
+  if (!is_string(path)) { LOG_ERROR("read: argument must be a string"); return NULL; }
+  FILE *f = fopen(STRING(path), "r");
+  if (!f) { LOG_ERROR("read: cannot open \"%s\"", STRING(path)); return NULL; }
+  fseek(f, 0, SEEK_END);
+  long size = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  char *buf = malloc(size + 1);
+  MALLOC_CHECK(buf);
+  size_t nread = fread(buf, 1, size, f);
+  buf[nread] = '\0';
+  fclose(f);
+  obj *o = new_string(buf);
+  free(buf);
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+static def_primitive(write_file) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+  obj *path = eval(CAR(args), interpreter);
+  obj *content = eval(ith(args, 1), interpreter);
+  if (path == NULL || content == NULL) return NULL;
+  if (!is_string(path)) { LOG_ERROR("write: first argument must be a string"); return NULL; }
+  if (!is_string(content)) { LOG_ERROR("write: second argument must be a string"); return NULL; }
+  FILE *f = fopen(STRING(path), "w");
+  if (!f) { LOG_ERROR("write: cannot open \"%s\"", STRING(path)); return NULL; }
+  fwrite(STRING(content), 1, STRING_LEN(content), f);
+  fclose(f);
+  return content;
 }

@@ -5,6 +5,7 @@
 ;   + - * / % = > >= < <=
 ;   print strcat strlen
 ;   mkvec vref vset vlen hash
+;   input read write
 
 ;; ---- Variadic bootstrap ----
 
@@ -49,6 +50,9 @@
         (map-cadr bindings)))
 
 ;; ---- Boolean operators ----
+
+(defmacro if (pred then else)
+  (list 'cond (list pred then) (list t else)))
 
 (defun not (x) (cond (x '()) (t t)))
 
