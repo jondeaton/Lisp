@@ -1,7 +1,7 @@
-/**
- * @file math.c
- * @brief Implementation of the math library
- * @details Full disclosure, this file is honestly not that great.
+/*
+ * File: math-lib.c
+ * ----------------
+ * Implementation of the math library
  */
 
 #include <math-lib.h>
@@ -11,120 +11,109 @@
 #include <environment.h>
 #include <stack-trace.h>
 
-
-// function typedefs for Z^2 --> Z, and R^2 --> R
-typedef int (*intArithmeticFuncPtr)(int, int);
-typedef float (*floatArithmeticFuncPtr)(float, float);
-
-// Static declarations
-static obj *apply_arithmetic(const obj *args, intArithmeticFuncPtr int_op,
-                             floatArithmeticFuncPtr float_op, LispInterpreter *interpreter);
-
-// List of reserved words in the lisp language
 static atom_t const math_reserved_atoms[] = { "+", "-", "*", "/", "%",
                                               "=", ">", ">=", "<", "<=", NULL };
 
-// List of the primitives associated with each of the reserved words
 static const primitive_t math_primitives[]= { &add, &sub, &mul, &divide, &mod,
                                               &equal, &gt, &gte, &lt, &lte, NULL };
 
-obj* get_math_library() {
+obj* get_math_library(void) {
   return create_environment(math_reserved_atoms, math_primitives);
 }
 
-// Define basic functions for arithmetic operations on two numbers
-#define def_single_op(name, T, op) static inline T name ## _ ## T ##s (T x, T y) { return x op y; }
-#define def_two_ops(name, op) def_single_op(name, int, op) def_single_op(name, float, op)
-def_two_ops(add, +)
-def_two_ops(sub, -)
-def_two_ops(mul, *)
-def_two_ops(divide, /)
-def_single_op(mod, int, %)
-static float mod_floats(float x, float y) { // This one needs it's own special definition
-  x = x > 0 ? x : -x;
-  y = y > 0 ? y : -y;
-  while (x >= y) x -= y;
-  return x;
+enum arith_op { OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_MOD };
+
+static obj *apply_arithmetic(const obj *args, enum arith_op op, LispInterpreter *interpreter) {
+  if (!CHECK_NARGS_MIN(args, 2)) return NULL;
+
+  obj* result = eval(CAR(args), interpreter);
+  if (result == NULL) return NULL;
+  if (!is_number(result)) {
+    LOG_ERROR("Argument is not a number.");
+    return NULL;
+  }
+
+  for (const obj* rest = CDR(args); rest != NULL; rest = CDR(rest)) {
+    obj* next = eval(CAR(rest), interpreter);
+    if (next == NULL) return NULL;
+    if (!is_number(next)) {
+      LOG_ERROR("Argument is not a number.");
+      return NULL;
+    }
+
+    obj *tmp;
+    if (result->objtype == float_obj || next->objtype == float_obj) {
+      float a = get_float(result), b = get_float(next);
+      switch (op) {
+        case OP_ADD: tmp = new_float(a + b); break;
+        case OP_SUB: tmp = new_float(a - b); break;
+        case OP_MUL: tmp = new_float(a * b); break;
+        case OP_DIV: tmp = new_float(a / b); break;
+        case OP_MOD: { float x = a > 0 ? a : -a, y = b > 0 ? b : -b;
+                       while (x >= y) x -= y;
+                       tmp = new_float(x); break; }
+      }
+    } else {
+      int a = get_int(result), b = get_int(next);
+      switch (op) {
+        case OP_ADD: tmp = new_int(a + b); break;
+        case OP_SUB: tmp = new_int(a - b); break;
+        case OP_MUL: tmp = new_int(a * b); break;
+        case OP_DIV: tmp = new_int(a / b); break;
+        case OP_MOD: tmp = new_int(a % b); break;
+      }
+    }
+    gc_add(&interpreter->gc, tmp);
+    result = tmp;
+  }
+
+  return result;
 }
 
-// Function definitions for integer and floating point allocators
-#define def_number_allocator(T) static obj* allocate_ ## T (T value, GarbageCollector* gc) {\
-  obj* o = new_int(value); \
-  gc_add(gc, o); \
-  return o; }
-
-def_number_allocator(int)
-
-def_number_allocator(float)
-
-// macro for defining a the primitive operator
-#define def_math_op_primitive(name) def_primitive(name) { \
-  return apply_arithmetic(args, &(name ## _ints), &(name ## _floats), interpreter); \
-}
-def_math_op_primitive(add)
-def_math_op_primitive(sub)
-def_math_op_primitive(mul)
-def_math_op_primitive(divide)
-def_math_op_primitive(mod)
-
-// Define a mathematical comparison primitive
-#define def_math_compare_primitive(name, op) def_primitive(name) { \
-  if (!CHECK_NARGS(args, 2)) return NULL; \
-  obj* first = eval(ith(args, 0), interpreter); \
-  if (first == NULL) return NULL; \
-  if (!is_number(first)) { \
-      LOG_ERROR("First argument did not evaluate to a number."); \
-      return NULL; \
-  } \
-  obj* second = eval(ith(args, 1), interpreter); \
-  if (second == NULL) return NULL; \
-  if (!is_number(second)) { \
-    LOG_ERROR("Second argument did not evaluate to a number."); \
-    return NULL; \
-  } \
-  if (is_int(first) && is_int(second)) \
-    return get_int(first) op get_int(second) ? t(&interpreter->gc) : nil(&interpreter->gc); \
-  return get_float(first) op get_float(second) ? t(&interpreter->gc) : nil(&interpreter->gc); \
-}
-def_math_compare_primitive(equal, ==)
-def_math_compare_primitive(gt, >)
-def_math_compare_primitive(gte, >=)
-def_math_compare_primitive(lt, <)
-def_math_compare_primitive(lte, <=)
-
-/**
- * Function: apply_arithmetic
- * --------------------------
- * Apply an arithmetic operation, the core of all operators
- * @param args: The lisp object containing the argument list
- * @param envp: The environment to apply the operation in
- * @param int_op: The operation corresponding to applying to integers
- * @param float_op: The operation corresponding to applying to floating point numbers
- * @return: The result of applying the arithmetic operation to the values of the arguments
- */
-static obj *apply_arithmetic(const obj *args, intArithmeticFuncPtr int_op,
-                             floatArithmeticFuncPtr float_op, LispInterpreter *interpreter) {
+def_primitive(add)    { return apply_arithmetic(args, OP_ADD, interpreter); }
+def_primitive(sub)    { return apply_arithmetic(args, OP_SUB, interpreter); }
+def_primitive(mul)    { return apply_arithmetic(args, OP_MUL, interpreter); }
+def_primitive(divide) { return apply_arithmetic(args, OP_DIV, interpreter); }
+def_primitive(mod) {
   if (!CHECK_NARGS(args, 2)) return NULL;
+  return apply_arithmetic(args, OP_MOD, interpreter);
+}
 
+enum cmp_op { CMP_EQ, CMP_GT, CMP_GTE, CMP_LT, CMP_LTE };
+
+static obj *apply_compare(const obj *args, enum cmp_op op, LispInterpreter *interpreter) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
   obj* first = eval(ith(args, 0), interpreter);
   if (first == NULL) return NULL;
-  if (!is_number(first)) {
-    LOG_ERROR("First argument did not evaluate to a number.");
-    return NULL;
-  }
-
+  if (!is_number(first)) { LOG_ERROR("First argument is not a number."); return NULL; }
   obj* second = eval(ith(args, 1), interpreter);
   if (second == NULL) return NULL;
-  if (!is_number(second)) {
-    LOG_ERROR("Second argument did not evaluate to a number.");
-    return NULL;
-  }
-
-  if (first->objtype == float_obj || second->objtype == float_obj ) {
-    float value = float_op(get_float(first), get_float(second));
-    return allocate_float(value, &interpreter->gc);
+  if (!is_number(second)) { LOG_ERROR("Second argument is not a number."); return NULL; }
+  bool result;
+  if (is_int(first) && is_int(second)) {
+    int a = get_int(first), b = get_int(second);
+    switch (op) {
+      case CMP_EQ:  result = a == b; break;
+      case CMP_GT:  result = a > b; break;
+      case CMP_GTE: result = a >= b; break;
+      case CMP_LT:  result = a < b; break;
+      case CMP_LTE: result = a <= b; break;
+    }
   } else {
-    int value = int_op(get_int(first), get_int(second));
-    return allocate_int(value, &interpreter->gc);
+    float a = get_float(first), b = get_float(second);
+    switch (op) {
+      case CMP_EQ:  result = a == b; break;
+      case CMP_GT:  result = a > b; break;
+      case CMP_GTE: result = a >= b; break;
+      case CMP_LT:  result = a < b; break;
+      case CMP_LTE: result = a <= b; break;
+    }
   }
+  return result ? t(&interpreter->gc) : nil(&interpreter->gc);
 }
+
+def_primitive(equal) { return apply_compare(args, CMP_EQ, interpreter); }
+def_primitive(gt)    { return apply_compare(args, CMP_GT, interpreter); }
+def_primitive(gte)   { return apply_compare(args, CMP_GTE, interpreter); }
+def_primitive(lt)    { return apply_compare(args, CMP_LT, interpreter); }
+def_primitive(lte)   { return apply_compare(args, CMP_LTE, interpreter); }

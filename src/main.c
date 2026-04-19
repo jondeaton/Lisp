@@ -42,7 +42,7 @@ struct InterpreterConfig {
 };
 
 static void parse_command_line_args(int argc, char* argv[], struct InterpreterConfig *config);
-static void print_version_information();
+static void print_version_information(void);
 
 const char *const optstring = ":rb:t:vh";
 
@@ -143,7 +143,7 @@ static void parse_command_line_args(int argc, char* argv[],
  * -----------------------------------
  * Prints the version information for the Lisp interpreter.
  */
-static void print_version_information() {
+static void print_version_information(void) {
   printf("Lisp Interpreter 1.0, STD %ld\n"
          "Author: Jon Deaton, %s %s\n%s\n",
          __STDC_VERSION__, __DATE__, __TIME__, __VERSION__);

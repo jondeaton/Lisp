@@ -22,8 +22,9 @@
 #define NIL_STR_REP "nil"
 
 static obj* parse_atom(const_expression e, size_t *num_parsed_p);
+static obj* parse_string(const_expression e, size_t *num_parsed_p);
 static obj* parse_list(const_expression e, size_t *num_parsed_p);
-static obj* get_quote_list();
+static obj* get_quote_list(void);
 static bool contains_dot(const_expression e, size_t length);
 
 static expression unparse_list(const obj *o);
@@ -48,20 +49,23 @@ obj* parse_expression(const_expression e, size_t *num_parsed_p) {
   if (expr_start[0] == ')') {
     if (num_parsed_p != NULL) *num_parsed_p = (size_t) start + 1;
     return NULL;
-  } // End of list
+  }
 
   obj* o;
   size_t expr_size;
 
-  if (expr_start[0] == '\'') { // Expression starts with quote character
+  if (expr_start[0] == '\'') {
     o = get_quote_list();
     obj* quoted = parse_expression((char *) expr_start + 1, &expr_size);
-    expr_size += 1; // for the quote character
+    expr_size += 1;
     CDR(o) = new_list_set(quoted, NULL);
 
-  } else if (expr_start[0] == '(')  { // Expression starts with opening paren
+  } else if (expr_start[0] == '"') {
+    o = parse_string(expr_start, &expr_size);
+
+  } else if (expr_start[0] == '(')  {
     o = parse_list((char *) expr_start + 1, &expr_size);
-    expr_size += 1; // for the opening parentheses character
+    expr_size += 1;
     if (o == NULL) o = new_list();
 
   } else {
@@ -76,16 +80,61 @@ expression unparse(const obj* o) {
   if (o == NULL) return NULL;
 
   if (is_atom(o) || is_number(o)) return unparse_atom(o);
+  if (is_string(o)) {
+    const char *s = STRING(o);
+    size_t len = strlen(s);
+    // Worst case: every char needs escaping + 2 quotes + null
+    char *buf = malloc(len * 2 + 3);
+    MALLOC_CHECK(buf);
+    size_t j = 0;
+    buf[j++] = '"';
+    for (size_t i = 0; i < len; i++) {
+      switch (s[i]) {
+        case '"':  buf[j++] = '\\'; buf[j++] = '"'; break;
+        case '\\': buf[j++] = '\\'; buf[j++] = '\\'; break;
+        case '\n': buf[j++] = '\\'; buf[j++] = 'n'; break;
+        case '\t': buf[j++] = '\\'; buf[j++] = 't'; break;
+        default:   buf[j++] = s[i]; break;
+      }
+    }
+    buf[j++] = '"';
+    buf[j] = '\0';
+    return buf;
+  }
+  if (is_vector(o)) {
+    // Format as #(elem1 elem2 ...)
+    size_t total = 3;  // "#(" + ")"
+    expression *parts = malloc(sizeof(expression) * VECTOR_LEN(o));
+    for (int i = 0; i < VECTOR_LEN(o); i++) {
+      parts[i] = VECTOR(o)[i] ? unparse(VECTOR(o)[i]) : strdup("nil");
+      total += strlen(parts[i]) + (i > 0 ? 1 : 0);
+    }
+    char *buf = malloc(total + 1);
+    MALLOC_CHECK(buf);
+    size_t pos = 0;
+    buf[pos++] = '#'; buf[pos++] = '(';
+    for (int i = 0; i < VECTOR_LEN(o); i++) {
+      if (i > 0) buf[pos++] = ' ';
+      size_t len = strlen(parts[i]);
+      memcpy(buf + pos, parts[i], len);
+      pos += len;
+      free(parts[i]);
+    }
+    buf[pos++] = ')';
+    buf[pos] = '\0';
+    free(parts);
+    return buf;
+  }
   if (is_primitive(o)) return unparse_primitive(o);
 
-  if (is_closure(o)) return unparse_closure(o);
+  if (is_closure(o) || is_macro(o)) return unparse_closure(o);
 
   if (is_list(o)) {
     expression list_expr = unparse_list(o);
     if (list_expr == NULL)
       return strdup(NIL_STR_REP);
 
-    expression e = malloc(1 + strlen(list_expr) + 2); // open, close, null
+    expression e = malloc(1 + strlen(list_expr) + 2);
     MALLOC_CHECK(e);
     e[0] = '(';
     strcpy((char *) e + 1, list_expr);
@@ -105,16 +154,22 @@ bool empty_expression(const_expression e) {
 
 bool is_balanced(const_expression e) {
   int net = 0;
+  bool in_string = false;
   for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '"' && (i == 0 || e[i - 1] != '\\')) { in_string = !in_string; continue; }
+    if (in_string) continue;
     if (e[i] == '(') net++;
     if (e[i] == ')') net--;
   }
-  return net == 0;
+  return net == 0 && !in_string;
 }
 
 bool is_valid(const_expression e) {
   int net = 0;
+  bool in_string = false;
   for (size_t i = 0; i < strlen(e); i++) {
+    if (e[i] == '"' && (i == 0 || e[i - 1] != '\\')) { in_string = !in_string; continue; }
+    if (in_string) continue;
     if (e[i] == '(') net++;
     if (e[i] == ')') net--;
     if (net < 0) return false;
@@ -122,15 +177,6 @@ bool is_valid(const_expression e) {
   return net >= 0;
 }
 
-
-/**
- * Function: unparse_list
- * ----------------------
- * Turn a list into an expression that represents that list. Note: the produced lisp expression
- * will be in dynamically allocated space and will NOT contain opening and closing parentheses.
- * @param o: A lisp object that is a list to be unparsed
- * @return: A lisp expression that represents the passed lisp object
- */
 static expression unparse_list(const obj *o) {
   if (o == NULL) return NULL;
 
@@ -160,42 +206,23 @@ static expression unparse_list(const obj *o) {
   return e;
 }
 
-/**
- * Function: unparse_closure
- * -------------------------
- * Serializes a closure object into a string
- * @param o: The closure object to serialize
- * @return: The serialization of the closure in a string
- */
 static expression unparse_closure(const obj* o) {
-  if (!is_closure(o)) return NULL;
+  if (!is_closure(o) && !is_macro(o)) return NULL;
 
-  closure_t* closure = CLOSURE(o);
-  expression para = unparse(closure->parameters);
-  int num_capt = list_length(closure->captured);
+  expression para = unparse(PARAMETERS(o));
+  const char *kind = is_macro(o) ? "macro" : "closure";
 
   char buf[256];
-  sprintf(buf, "<closure:%s, %d vars captured>", para, num_capt);
+  sprintf(buf, "<%s:%s>", kind, para);
   free(para);
   return strdup(buf);
 }
 
-/**
- * Function: unparse_atom
- * ----------------------
- * Serializes an atom into a lisp expression in dynamically allocated memory.
- * This function will handle objects of type atom_obj as well as integer_obj and float_obj
- * @param o: Pointer to an atom object
- * @return: Pointer to dynamically allocated memory with the an expression representing the atom
- */
 static expression unparse_atom(const obj *o) {
   if (o == NULL) return NULL;
 
   if (is_atom(o)) {
-    atom_t atm = ATOM(o);
-    expression e = malloc(strlen(atm) + 1); // Cant use "new_atom"
-    MALLOC_CHECK(e);
-    return strcpy(e, atm);
+    return strdup(ATOM(o));
   }
 
   if (is_int(o)) {
@@ -213,35 +240,51 @@ static expression unparse_atom(const obj *o) {
   return NULL;
 }
 
-/**
- * Function: unparse_primitive
- * ---------------------------
- * Turns a primitive atom into a string in dynamically allocated memory
- * @param o: A pointer to a lisp object of primitive type
- * @return: An expression in dynamically allocated memory that
- */
 static expression unparse_primitive(const obj *o) {
   if (o == NULL) return NULL;
-  expression e = malloc(strlen(KMAG) + 2 + sizeof(void*) * 8 / 4 + strlen(RESET) + 1);
+  expression e = malloc(strlen(KMAG) + 2 + sizeof(void*) * 2 + strlen(RESET) + 1);
   MALLOC_CHECK(e);
-  void* p = NULL;
-  memcpy(&p, (void**) PRIMITIVE(o), sizeof(primitive_t));
-  sprintf(e, KMAG "%p" RESET, p);
+  sprintf(e, KMAG "%p" RESET, (void*)(intptr_t)PRIMITIVE(o));
   return e;
 }
 
-/**
- * Function: parse_atom
- * --------------------
- * Parses an expression that represents an atom or number.
- * NOTE: If the expression can be turned into an integer or floating point object then it will be
- * and then the returned object will be of the integer_obj or float_obj instead of atom_obj. Also note
- * that integer object is preferred over float object (i.e. "3" will be parsed into an integer even
- * though it could also be parsed as a float)
- * @param e: A pointer to an atom expression
- * @param num_parsed_p: Pointer to a location to be populated with the number of characters parsed
- * @return: A lisp object representing the parsed atom in dynamically allocated memory
- */
+static obj* parse_string(const_expression e, size_t *num_parsed_p) {
+  assert(e[0] == '"');
+  // Find closing quote, handling escape sequences
+  size_t i = 1;
+  while (e[i] && e[i] != '"') {
+    if (e[i] == '\\' && e[i + 1]) i++;  // skip escaped char
+    i++;
+  }
+  if (e[i] != '"') {
+    LOG_ERROR("Unterminated string literal");
+    return NULL;
+  }
+  // Process escape sequences
+  char *buf = malloc(i);  // max possible length (excluding quotes)
+  MALLOC_CHECK(buf);
+  size_t j = 0;
+  for (size_t k = 1; k < i; k++) {
+    if (e[k] == '\\' && k + 1 < i) {
+      k++;
+      switch (e[k]) {
+        case 'n':  buf[j++] = '\n'; break;
+        case 't':  buf[j++] = '\t'; break;
+        case '\\': buf[j++] = '\\'; break;
+        case '"':  buf[j++] = '"';  break;
+        default:   buf[j++] = '\\'; buf[j++] = e[k]; break;
+      }
+    } else {
+      buf[j++] = e[k];
+    }
+  }
+  buf[j] = '\0';
+  obj *o = new_string(buf);
+  free(buf);
+  *num_parsed_p = i + 1;  // include both quotes
+  return o;
+}
+
 static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   size_t size = atom_size(e);
 
@@ -264,17 +307,6 @@ static obj* parse_atom(const_expression e, size_t *num_parsed_p) {
   return o;
 }
 
-/**
- * Function: parse_list
- * --------------------
- * Parses an expression that represents a list. This expression should not start
- * with an opening parentheses. This function will parse until there is a closing parentheses
- * that closes the implicit opening parentheses. Note: this is NOT necessarily the first closing
- * parentheses as there may be lists nested inside of this list.
- * @param e: An expression representing a list
- * @param num_parsed_p: A pointer to a place where the number of parsed characters may be written. Must be valid
- * @return: Pointer to a lisp data structure object representing the lisp expression
- */
 static obj* parse_list(const_expression e, size_t *num_parsed_p) {
   int start = distance_to_next_element(e);
   expression exprStart = (char*) e + start;
@@ -282,10 +314,10 @@ static obj* parse_list(const_expression e, size_t *num_parsed_p) {
   if (exprStart[0] == ')') {
     *num_parsed_p = (size_t) start + 1;
     return NULL;
-  } // Empty list or the end of a list
+  }
 
   size_t exprSize;
-  obj* nextElement = parse_expression(exprStart, &exprSize); // will find closing paren
+  obj* nextElement = parse_expression(exprStart, &exprSize);
   obj* o = new_list_set(nextElement, NULL);
 
   size_t restSize;
@@ -296,26 +328,13 @@ static obj* parse_list(const_expression e, size_t *num_parsed_p) {
   return o;
 }
 
-/**
- * Function: get_quote_list
- * ------------------------
- * Creates a list where car points to a "quote" atom and cdr points to nothing
- * @return: Pointer to the list object
- */
-static obj* get_quote_list() {
+static obj* get_quote_list(void) {
   size_t i;
   obj* quote_atom = parse_atom("quote", &i);
   if (quote_atom == NULL) return NULL;
   return new_list_set(quote_atom, NULL);
 }
 
-/**
- * Function: distance_to_next_element
- * ----------------------------------
- * Counts the number of characters of whitespace until a non-whitespace character is found
- * @param e: A lisp expression
- * @return: The number of characters of whitespace in the beginning
- */
 static int distance_to_next_element(const_expression e) {
   unsigned long i;
   for (i = 0; i < strlen(e); i++)
@@ -324,41 +343,19 @@ static int distance_to_next_element(const_expression e) {
   return (int) i;
 }
 
-/**
- * Function: atom_size
- * -------------------
- * Finds the size of the atom pointed to in the expression
- * @param e: An expression that represents an atom
- * @return: The number of characters in that atom
- */
 static size_t atom_size(const_expression e) {
   int i;
   for(i = 0; i < (int) strlen(e); i++) {
-    if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')') return (size_t) i;
+    if (is_white_space(e[i]) || e[i] == '(' || e[i] == ')' || e[i] == '"') return (size_t) i;
   }
   return (size_t) i;
 }
 
-/**
- * Function: is_white_space
- * ------------------------
- * Checks if a single character is a whitespace character
- * @param character: The character to check
- * @return: True if that character is whitespace, false otherwise
- */
 static const char* kWhitespace = " \t\n\r";
 static bool is_white_space(char character) {
   return strchr(kWhitespace, character) != NULL;
 }
 
-/**
- * Function: contains_dot
- * ----------------------
- * Determines if an expression contains a decimal point/floating point
- * @param e: The expression to check for a decimal point in
- * @param length: The number of characters to check if there is a dot
- * @return: True if there is a decimal point in the expression, false otherwise.
- */
 static bool contains_dot(const_expression e, size_t length) {
   for (size_t i = 0; i < length; i++) {
     if (e[i] == '.') return true;

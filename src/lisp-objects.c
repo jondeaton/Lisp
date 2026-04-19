@@ -5,7 +5,6 @@
  */
 
 #include <lisp-objects.h>
-#include <primitives.h>
 #include <stack-trace.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,17 +12,16 @@
 
 obj* new_atom(atom_t name) {
   if (name == NULL) return NULL;
-  size_t name_size = strlen(name);
-  obj* o = malloc(sizeof(obj) + name_size + 1);
+  obj* o = malloc(sizeof(obj));
   MALLOC_CHECK(o);
   o->objtype = atom_obj;
   o->reachable = false;
-  strcpy((char*) ATOM(o), name);
+  o->atom = strdup(name);
   return o;
 }
 
-obj* new_list() {
-  obj* o = malloc(sizeof(obj) + sizeof(list_t));
+obj* new_list(void) {
+  obj* o = malloc(sizeof(obj));
   MALLOC_CHECK(o);
   o->objtype = list_obj;
   o->reachable = false;
@@ -32,65 +30,81 @@ obj* new_list() {
   return o;
 }
 
-obj* new_closure() {
-  obj* o = malloc(sizeof(obj) + sizeof(closure_t));
+obj* new_closure(void) {
+  obj* o = malloc(sizeof(obj));
   MALLOC_CHECK(o);
   o->objtype = closure_obj;
   o->reachable = false;
+  PARAMETERS(o) = NULL;
+  PROCEDURE(o) = NULL;
+  CAPTURED(o) = NULL;
+  NARGS(o) = 0;
   return o;
 }
 
-obj* copy_atom(const obj* o) {
-  if (!is_atom(o)) return NULL;
-  return new_atom(ATOM(o));
+obj* new_int(int value) {
+  obj* o = malloc(sizeof(obj));
+  MALLOC_CHECK(o);
+  o->objtype = int_obj;
+  o->reachable = false;
+  o->intval = value;
+  return o;
 }
 
-obj* copy_list(const obj *o) {
-  obj* list_copy = new_list();
-  memcpy(LIST(list_copy), LIST(o), sizeof(list_obj));
-  return list_copy;
+obj* new_float(float value) {
+  obj* o = malloc(sizeof(obj));
+  MALLOC_CHECK(o);
+  o->objtype = float_obj;
+  o->reachable = false;
+  o->floatval = value;
+  return o;
+}
+
+obj* new_vector(int len) {
+  obj* o = malloc(sizeof(obj));
+  MALLOC_CHECK(o);
+  o->objtype = vector_obj;
+  o->reachable = false;
+  VECTOR(o) = calloc(len, sizeof(obj*));
+  MALLOC_CHECK(VECTOR(o));
+  VECTOR_LEN(o) = len;
+  return o;
+}
+
+obj* new_string(const char *value) {
+  if (value == NULL) return NULL;
+  obj* o = malloc(sizeof(obj));
+  MALLOC_CHECK(o);
+  o->objtype = string_obj;
+  o->reachable = false;
+  STRING(o) = strdup(value);
+  STRING_LEN(o) = strlen(value);
+  return o;
 }
 
 bool compare(const obj* a, const obj* b) {
   if (a == NULL || b == NULL) return a == b;
   if (a->objtype != b->objtype) return false;
-  if (is_int(a)) return get_int(a) == get_int(b);
-  if (is_float(a)) return get_float(a) == get_float(b);
-
-  if (is_primitive(a))
-    return *PRIMITIVE(a) == *PRIMITIVE(b);
-  if (is_list(a))
-    return memcmp(LIST(a), LIST(b), sizeof(list_t)) == 0;
-  if (is_atom(a))
-    return strcmp(ATOM(a), ATOM(b)) == 0;
+  if (is_int(a)) return a->intval == b->intval;
+  if (is_float(a)) return a->floatval == b->floatval;
+  if (is_primitive(a)) return a->primitive == b->primitive;
+  if (is_atom(a)) return strcmp(a->atom, b->atom) == 0;
+  if (is_string(a)) return STRING_LEN(a) == STRING_LEN(b) && memcmp(STRING(a), STRING(b), STRING_LEN(a)) == 0;
+  if (is_vector(a)) return a == b;  // identity comparison
+  if (is_list(a)) return CAR(a) == CAR(b) && CDR(a) == CDR(b);
   if (is_closure(a))
-    return memcmp(CLOSURE(a), CLOSURE(b), sizeof(closure_t)) == 0;
+    return PARAMETERS(a) == PARAMETERS(b) &&
+           PROCEDURE(a) == PROCEDURE(b) &&
+           CAPTURED(a) == CAPTURED(b);
   return false;
 }
 
 void dispose(obj* o) {
   assert(o != NULL);
+  if (is_atom(o)) free(o->atom);
+  if (is_string(o)) free(STRING(o));
+  if (is_vector(o)) free(VECTOR(o));
   free(o);
-}
-
-obj* new_int(int value) {
-  obj* o = malloc(sizeof(obj) + sizeof(int));
-  MALLOC_CHECK(o);
-  o->objtype = int_obj;
-  o->reachable = false;
-  int *contents = (int*) CONTENTS(o);
-  *contents = value;
-  return o;
-}
-
-obj* new_float(float value) {
-  obj* o = malloc(sizeof(obj) + sizeof(float));
-  MALLOC_CHECK(o);
-  o->objtype = float_obj;
-  o->reachable = false;
-  float *contents = (float*) CONTENTS(o);
-  *contents = value;
-  return o;
 }
 
 bool is_atom(const obj* o) {
@@ -113,6 +127,11 @@ bool is_closure(const obj* o) {
   return o->objtype == closure_obj;
 }
 
+bool is_macro(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == macro_obj;
+}
+
 bool is_int(const obj* o) {
   if (o == NULL) return false;
   return o->objtype == int_obj;
@@ -121,6 +140,16 @@ bool is_int(const obj* o) {
 bool is_float(const obj* o) {
   if (o == NULL) return false;
   return o->objtype == float_obj;
+}
+
+bool is_string(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == string_obj;
+}
+
+bool is_vector(const obj* o) {
+  if (o == NULL) return false;
+  return o->objtype == vector_obj;
 }
 
 bool is_number(const obj* o) {
@@ -136,15 +165,14 @@ bool is_t(const obj* o) {
 
 float get_float(const obj* o) {
   if (is_int(o)) return (float) get_int(o);
-  if (is_float(o)) return *(float*) CONTENTS(o);
-
+  if (is_float(o)) return o->floatval;
   LOG_ERROR("Object is not a number");
   return 0;
 }
 
 int get_int(const obj* o) {
   if (is_float(o)) return (int) get_float(o);
-  if (is_int(o)) return *(int*) CONTENTS(o);
+  if (is_int(o)) return o->intval;
   LOG_ERROR("Object is not a number");
   return 0;
 }

@@ -1,9 +1,7 @@
 /*
- * File: lisp.c
- * ------------
+ * File: primitives.c
+ * ------------------
  * Presents the implementation of the lisp primitives.
- * These include car, cdr, quote, eq, atom, cond, cons,
- * set, env, lambda, and defmacro
  */
 
 #include <interpreter.h>
@@ -18,6 +16,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <parser.h>
 
 // forward declarations of primitives
 static def_primitive(quote);
@@ -28,68 +28,63 @@ static def_primitive(cdr);
 static def_primitive(cons);
 static def_primitive(cond);
 static def_primitive(set);
+static def_primitive(defmacro_form);
 static def_primitive(env);
 static def_primitive(lambda);
-static def_primitive(defmacro);
-
-const obj lisp_NIL; // The empty list / NIL value within lisp.
-const obj lisp_T;   // The true atom.
+static def_primitive(print_val);
+static def_primitive(concat);
+static def_primitive(string_length);
+static def_primitive(make_vector);
+static def_primitive(vector_ref);
+static def_primitive(vector_set);
+static def_primitive(vector_length);
+static def_primitive(hash_val);
+static def_primitive(input_line);
+static def_primitive(read_file);
+static def_primitive(write_file);
 
 static atom_t primitive_reserved_names[] = { "quote", "atom", "eq", "car", "cdr", "cons",
-                                             "cond", "set", "env", "lambda", "defmacro", NULL };
+                                             "cond", "set", "defmacro",
+                                             "env", "lambda",
+                                             "print", "strcat", "strlen",
+                                             "mkvec", "vref", "vset", "vlen", "hash",
+                                             "input", "read", "write", NULL };
 
 static const primitive_t primitive_functions[] = { &quote, &atom, &eq, &car, &cdr, &cons,
-                                                   &cond, &set, &env, &lambda, &defmacro,  NULL };
+                                                   &cond, &set, &defmacro_form,
+                                                   &env, &lambda,
+                                                   &print_val, &concat, &string_length,
+                                                   &make_vector, &vector_ref, &vector_set,
+                                                   &vector_length, &hash_val,
+                                                   &input_line, &read_file, &write_file, NULL };
 
-// Static function declarations
-static bool capture_variables(obj **capturedp, const obj *params, const obj *procedure, const obj *env);
+// Helper: after binding a closure, update CAPTURED so it can reference itself (for recursion)
+static void enable_self_recursion(obj *value, obj *env_before, obj *env_after) {
+  if ((is_closure(value) || is_macro(value)) && CAPTURED(value) == env_before)
+    CAPTURED(value) = env_after;
+}
 
-
-obj* get_primitive_library() {
+obj* get_primitive_library(void) {
   return create_environment(primitive_reserved_names, primitive_functions);
 }
 
 obj* new_primitive(primitive_t primitive) {
-  obj* o = malloc(sizeof(obj) + sizeof(primitive_t));
+  obj* o = malloc(sizeof(obj));
   MALLOC_CHECK(o);
   o->objtype = primitive_obj;
   o->reachable = false;
-  memcpy(PRIMITIVE(o), &primitive, sizeof(primitive));
+  o->primitive = primitive;
   return o;
 }
 
-// Allocate new truth atom
-obj *t(GarbageCollector *mm) {
-  obj* t = new_atom("t");
-  gc_add(mm, t);
-  return t;
-}
+obj *t(GarbageCollector *gc) { return gc->t_cached; }
+obj *nil(GarbageCollector *gc) { return gc->nil_cached; }
 
-// Allocate new empty list
-obj *nil(GarbageCollector *mm) {
-  obj* list = new_list_set(NULL, NULL);
-  gc_add(mm, list);
-  return list;
-}
-
-/**
- * Primitive: quote
- * ----------------
- * Returns the unevaluated version of the object
- * @param args: The object to quote
- * @param envp: The environment to evaluate this primitive in
- * @return: Pointer to the lisp object without evaluating it
- */
 static def_primitive(quote) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   return CAR(args);
 }
 
-/**
- * Primitive: atom
- * ---------------
- * Checks if an object is an atom
- */
 static def_primitive(atom) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* result = eval(CAR(args), interpreter);
@@ -98,11 +93,6 @@ static def_primitive(atom) {
   return is_number(result) ? t(&interpreter->gc) : nil(&interpreter->gc);
 }
 
-/**
- * Primitive: eq
- * -------------
- * Test for equality of two objects
- */
 static def_primitive(eq) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
@@ -115,12 +105,6 @@ static def_primitive(eq) {
   return same ? t(&interpreter->gc) : nil(&interpreter->gc);
 }
 
-/**
- * Primitive: car
- * -------------
- * Takes a single argument, evaluates it, and returns the
- * head of the list which is the result of the evaluation.
- */
 static def_primitive(car) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), interpreter);
@@ -137,12 +121,6 @@ static def_primitive(car) {
   return CAR(arg_value);
 }
 
-/**
- * Primitive: cdr
- * -------------
- * Takes a single argument, evaluates it, and returns the
- * tail of the list which is the result of the evaluation.
- */
 static def_primitive(cdr) {
   if (!CHECK_NARGS(args, 1)) return NULL;
   obj* arg_value = eval(CAR(args), interpreter);
@@ -161,15 +139,6 @@ static def_primitive(cdr) {
   return CDR(arg_value);
 }
 
-/**
- * Primitive: cons
- * ---------------
- * Usage (cons 'x '(a b c)) --> (x a b c)
- *
- * (cons x y)
- * Expects the value of y to be a list and returns a list containing the value
- * of x followed by the elements of the value of y
- */
 static def_primitive(cons) {
   if (!CHECK_NARGS(args, 2)) return NULL;
 
@@ -192,36 +161,24 @@ static def_primitive(cons) {
   }
 
   if (!is_list(cdr)) {
-    // no dot notation (yet) means second arg must be list
     LOG_ERROR("Second argument is not list");
     return NULL;
   }
 
-  // Allocate new slot to hold x in result list
   obj *new_obj = new_list();
   if (new_obj == NULL) {
     LOG_ERROR("could not allocate list element");
     return NULL;
   }
-  gc_add(&interpreter->gc, new_obj); // Record allocation
+  gc_add(&interpreter->gc, new_obj);
 
   CAR(new_obj) = car;
-  CDR(new_obj) = cdr;
+  CDR(new_obj) = is_nil(cdr) ? NULL : cdr;
 
   return new_obj;
 }
 
-/**
- * Primitive: cond
- * ---------------
- * (cond (p1 e1) ... (pn en))
- * The p expressions are evaluated in order until one returns t
- * When one is found  the value of the corresponding e expression
- * is returned as the expression
- */
 static def_primitive(cond) {
-
-  // recursive base case
   if (args == NULL) return nil(&interpreter->gc);
 
   if (!is_list(args)) {
@@ -253,8 +210,7 @@ static def_primitive(cond) {
   }
 
   if (!is_nil(predicate)) {
-    // recursive base case: predicate is true
-    obj* e = ith(pair, 1); // get it's associated value
+    obj* e = ith(pair, 1);
     if (e == NULL) {
       LOG_ERROR("Predicate has no associated value");
       return NULL;
@@ -265,15 +221,13 @@ static def_primitive(cond) {
     return value;
   }
 
-  // tail recursion on the remaining predicate-expression pairs
   return cond(CDR(args), interpreter);
 }
 
 /**
  * Primitive: set
  * --------------
- * Primitive function for setting a value in the environment that the
- * primitive is evaluated in
+ * Bind a value to a name in the environment.
  * Usage: (set 'foo 42)
  */
 static def_primitive(set) {
@@ -298,50 +252,59 @@ static def_primitive(set) {
     return NULL;
   }
 
-  // Make a copy of the result
-  obj* result_cpy = copy_recursive(value);
-  if (result_cpy == NULL) {
-    LOG_ERROR("Error copying right-hand-side");
+  obj* env_before = interpreter->env;
+  obj** prev_value_p = lookup_entry(var_name, interpreter->env);
+  if (prev_value_p == NULL) {
+    obj* pair = make_pair(var_name, value);
+    obj* new_link = new_list_set(pair, interpreter->env);
+    gc_add(&interpreter->gc, CDR(pair));
+    gc_add(&interpreter->gc, pair);
+    gc_add(&interpreter->gc, new_link);
+    interpreter->env = new_link;
+  } else {
+    *prev_value_p = value;
+  }
+  enable_self_recursion(value, env_before, interpreter->env);
+  return nil(&interpreter->gc);
+}
+
+static def_primitive(defmacro_form) {
+  if (!CHECK_NARGS(args, 3)) return NULL;
+
+  obj* name = CAR(args);
+  if (!is_atom(name) || is_t(name)) {
+    LOG_ERROR("defmacro: first argument must be a name");
     return NULL;
   }
 
-  // Store the result in the environment (potentially over-writing)
-  obj** prev_value_p = lookup_entry(var_name, interpreter->env); // previously bound value
+  obj* params = ith(args, 1);
+  if (!is_list(params) && !is_atom(params)) {
+    LOG_ERROR("defmacro: parameters must be a list or symbol");
+    return NULL;
+  }
+
+  obj* body = ith(args, 2);
+
+  obj* o = new_closure_set(params, body, interpreter->env);
+  if (o == NULL) return NULL;
+  o->objtype = macro_obj;
+  gc_add(&interpreter->gc, o);
+
+  obj** prev_value_p = lookup_entry(name, interpreter->env);
   if (prev_value_p == NULL) {
-    // no previous value found in environment
-    obj* pair_second = new_list_set(result_cpy, NULL);
-    obj *var_name_copy = copy_recursive(var_name);
-    obj *pair_first = new_list_set(var_name_copy, pair_second);
-    obj *new_link = new_list_set(pair_first, interpreter->env);
-
-    if (var_name_copy == NULL || pair_first == NULL ||
-        pair_second == NULL || new_link == NULL) {
-      LOG_ERROR("Error allocating memory to store variable in environment");
-      dispose_recursive(result_cpy);
-      dispose_recursive(var_name_copy);
-      dispose_recursive(pair_first);
-      dispose_recursive(new_link);
-      return NULL;
-    }
-
+    obj* pair = make_pair(name, o);
+    obj* new_link = new_list_set(pair, interpreter->env);
+    gc_add(&interpreter->gc, CDR(pair));
+    gc_add(&interpreter->gc, pair);
+    gc_add(&interpreter->gc, new_link);
     interpreter->env = new_link;
   } else {
-    // Over-write previous value
-    // Note: must copy the result into a temporary value *before* disposing of the
-    // previous value because the result value may reference the previous value, as in the
-    // case of self-referential over-writing. For example: (set 'x (cdr x))
-    dispose_recursive(*prev_value_p);         // dispose of the old value
-    *prev_value_p = result_cpy;               // store new value in environment
-    value = result_cpy;
+    *prev_value_p = o;
   }
-  return value;
+  CAPTURED(o) = interpreter->env;
+  return o;
 }
 
-/**
- * Primitive: env
- * --------------
- * Simply returns the environment
- */
 static def_primitive(env) {
   if (!check_nargs(__func__, args, 0)) return NULL;
   return interpreter->env;
@@ -350,115 +313,245 @@ static def_primitive(env) {
 /**
  * Primitive: lambda
  * -----------------
- * Define a non-primitive procedure
+ * Define a non-primitive procedure. Captures the entire lexical environment.
  */
 static def_primitive(lambda) {
   if (!CHECK_NARGS_MIN(args, 1)) return NULL;
   if (!CHECK_NARGS_MAX(args, 2)) return NULL;
 
   obj* params = ith(args, 0);
-  if (!is_list(params)) {
-    LOG_ERROR("Lambda parameters are not a list");
+  if (is_list(params)) {
+    FOR_LIST(params, var) {
+      if (var == NULL) continue;
+      if (is_t(var)) {
+        LOG_ERROR("Truth atom can't be parameter");
+        return NULL;
+      }
+      if (is_nil(var)) {
+        LOG_ERROR("Empty list can't be a parameter");
+        return NULL;
+      }
+      if (!is_atom(var)) {
+        LOG_ERROR("Parameter was not an atom");
+        return NULL;
+      }
+    }
+  } else if (!is_atom(params) || is_t(params)) {
+    LOG_ERROR("Lambda parameters must be a list or symbol");
     return NULL;
   }
 
-  // check to make sure that the parameters are all atoms
-  FOR_LIST(params, var) {
-    if (var == NULL) continue;
-    if (is_t(var)) {
-      LOG_ERROR("Truth atom can't be parameter");
-      return NULL;
-    }
-    if (is_nil(var)) {
-      LOG_ERROR("Empty list can't be a parameter");
-      return NULL;
-    }
-    if (!is_atom(var)) {
-      LOG_ERROR("Parameter was not an atom");
-      return NULL;
-    }
-  }
-  params = copy_recursive(params); // Params are well-formed, make a copy for saving.
-  obj* procedure = copy_recursive(ith(args, 1));
-
-  if (params ==  NULL || procedure == NULL) {
-    LOG_ERROR("Error copying parameters and body of lambda declaration");
-    dispose_recursive(params);
-    dispose_recursive(procedure);
-    return NULL;
-  }
-
-  // Capture variables
-  obj* captured = NULL; // Will store the captured variables
-  bool success = capture_variables(&captured, params, procedure, interpreter->env);
-  if (!success) {
-    LOG_ERROR("Error while capturing lambda variables");
-    dispose_recursive(params);
-    dispose_recursive(procedure);
-    return NULL;
-  }
-
-  // Create new closure object
-  obj* o = new_closure_set(params, procedure, captured);
+  obj* procedure = ith(args, 1);
+  obj* o = new_closure_set(params, procedure, interpreter->env);
   if (o == NULL) {
     LOG_ERROR("Error allocating closure object");
-    dispose_recursive(params);
-    dispose_recursive(procedure);
     return NULL;
   }
 
-  gc_add_recursive(&interpreter->gc, o);
+  gc_add(&interpreter->gc, o);
   return o;
 }
 
-/**
- * Primitive: defmacro
- * -------------------
- * Defines a lisp macro
- */
-static def_primitive(defmacro) {
-  LOG_ERROR("Macros not yet supported");
-  return NULL;
+static def_primitive(print_val) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *value = eval(CAR(args), interpreter);
+  if (value == NULL) return nil(&interpreter->gc);
+  if (is_string(value)) {
+    fwrite(STRING(value), 1, STRING_LEN(value), stdout);
+  } else {
+    expression str = unparse(value);
+    if (str) { fputs(str, stdout); free(str); }
+  }
+  putchar('\n');
+  fflush(stdout);
+  return nil(&interpreter->gc);
 }
 
-/**
- * Function: capture_variables
- * ---------------------------
- * Creates a captured variable list by searching for variable names that exist in both the procedure
- * and the environment. Creates a list of key-value pairs extracted (copied) from the environment.
- * Variable names in the parameter list will not be captured.
- * @param capturedp: Pointer to where the captured list reference should be stored
- * @param params: Parameters to the lambda function (these will not be captured
- * @param procedure: Procedure body of the lambda function to search for variables to bind in
- * @param env: Environment to search for values to capture
- * @return true if variables were captures successfully, false otherwise
- */
-static bool capture_variables(obj **capturedp, const obj *params,
-                              const obj *procedure, const obj *env) {
-  if (procedure == NULL) return true;
+static def_primitive(concat) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+  obj *a = eval(CAR(args), interpreter);
+  obj *b = eval(ith(args, 1), interpreter);
+  if (a == NULL || b == NULL) return NULL;
 
-  if (is_atom(procedure)) {
-    if (lookup_pair(procedure, *capturedp)) return true; // Already captured
-    // Don't capture parameters (those get bound at apply-time)
-    if (list_contains(params, procedure)) return true;
-
-    obj* matching_pair = lookup_pair(procedure, env);
-    if (matching_pair == NULL) return true; // No value to be captured
-
-    obj *pair_copy = copy_recursive(matching_pair);
-    if (pair_copy == NULL) return false;
-
-    obj *new_list = new_list_set(pair_copy, *capturedp); // Prepend to capture list
-    if (new_list == NULL) {
-      dispose_recursive(pair_copy);
-      return false;
-    }
-    *capturedp = new_list;
-
-  } else if (is_list(procedure)) { // depth-first search
-    bool success = capture_variables(capturedp, params, CAR(procedure), env);
-    if (!success) return false;
-    return capture_variables(capturedp, params, CDR(procedure), env); // tail recursion
+  // Convert both to string representations
+  char *sa, *sb;
+  bool free_a = false, free_b = false;
+  if (is_string(a)) { sa = STRING(a); }
+  else { sa = unparse(a); free_a = true; }
+  if (is_string(b)) { sb = STRING(b); }
+  else { sb = unparse(b); free_b = true; }
+  if (sa == NULL || sb == NULL) {
+    if (free_a && sa) free(sa);
+    if (free_b && sb) free(sb);
+    return NULL;
   }
-  return true;
+
+  size_t la = free_a ? strlen(sa) : STRING_LEN(a);
+  size_t lb = free_b ? strlen(sb) : STRING_LEN(b);
+  char *buf = malloc(la + lb + 1);
+  MALLOC_CHECK(buf);
+  memcpy(buf, sa, la);
+  memcpy(buf + la, sb, lb);
+  buf[la + lb] = '\0';
+
+  obj *o = new_string(buf);
+  gc_add(&interpreter->gc, o);
+
+  if (free_a) free(sa);
+  if (free_b) free(sb);
+  free(buf);
+  return o;
+}
+
+static def_primitive(string_length) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *value = eval(CAR(args), interpreter);
+  if (value == NULL) return NULL;
+  if (!is_string(value)) {
+    LOG_ERROR("string-length requires a string argument");
+    return NULL;
+  }
+  obj *o = new_int((int)STRING_LEN(value));
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+static def_primitive(make_vector) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *size = eval(CAR(args), interpreter);
+  if (size == NULL || !is_int(size)) {
+    LOG_ERROR("mkvec requires an integer size");
+    return NULL;
+  }
+  int n = get_int(size);
+  if (n < 0) { LOG_ERROR("mkvec: size must be non-negative"); return NULL; }
+  obj *v = new_vector(n);
+  // Initialize all slots to nil
+  for (int i = 0; i < n; i++)
+    VECTOR(v)[i] = nil(&interpreter->gc);
+  gc_add(&interpreter->gc, v);
+  return v;
+}
+
+static def_primitive(vector_ref) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+  obj *v = eval(CAR(args), interpreter);
+  obj *idx = eval(ith(args, 1), interpreter);
+  if (v == NULL || idx == NULL) return NULL;
+  if (!is_vector(v)) { LOG_ERROR("vref: first argument must be a vector"); return NULL; }
+  if (!is_int(idx)) { LOG_ERROR("vref: index must be an integer"); return NULL; }
+  int i = get_int(idx);
+  if (i < 0 || i >= VECTOR_LEN(v)) {
+    LOG_ERROR("vref: index %d out of bounds (length %d)", i, VECTOR_LEN(v));
+    return NULL;
+  }
+  return VECTOR(v)[i];
+}
+
+static def_primitive(vector_set) {
+  if (!CHECK_NARGS(args, 3)) return NULL;
+  obj *v = eval(CAR(args), interpreter);
+  obj *idx = eval(ith(args, 1), interpreter);
+  obj *val = eval(ith(args, 2), interpreter);
+  if (v == NULL || idx == NULL || val == NULL) return NULL;
+  if (!is_vector(v)) { LOG_ERROR("vset: first argument must be a vector"); return NULL; }
+  if (!is_int(idx)) { LOG_ERROR("vset: index must be an integer"); return NULL; }
+  int i = get_int(idx);
+  if (i < 0 || i >= VECTOR_LEN(v)) {
+    LOG_ERROR("vset: index %d out of bounds (length %d)", i, VECTOR_LEN(v));
+    return NULL;
+  }
+  VECTOR(v)[i] = val;
+  return v;
+}
+
+static def_primitive(vector_length) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *v = eval(CAR(args), interpreter);
+  if (v == NULL) return NULL;
+  if (!is_vector(v)) { LOG_ERROR("vlen: argument must be a vector"); return NULL; }
+  obj *o = new_int(VECTOR_LEN(v));
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+// FNV-1a hash
+static unsigned int fnv1a(const char *data, size_t len) {
+  unsigned int h = 2166136261u;
+  for (size_t i = 0; i < len; i++) {
+    h ^= (unsigned char)data[i];
+    h *= 16777619u;
+  }
+  return h;
+}
+
+static def_primitive(hash_val) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *value = eval(CAR(args), interpreter);
+  if (value == NULL) return NULL;
+  unsigned int h;
+  if (is_atom(value))
+    h = fnv1a(ATOM(value), strlen(ATOM(value)));
+  else if (is_string(value))
+    h = fnv1a(STRING(value), STRING_LEN(value));
+  else if (is_int(value)) {
+    int v = get_int(value);
+    h = fnv1a((const char*)&v, sizeof(v));
+  } else if (is_float(value)) {
+    float v = get_float(value);
+    h = fnv1a((const char*)&v, sizeof(v));
+  } else {
+    LOG_ERROR("hash: unsupported type");
+    return NULL;
+  }
+  obj *o = new_int((int)(h & 0x7FFFFFFF));  // keep positive
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+static def_primitive(input_line) {
+  if (!CHECK_NARGS(args, 0)) return NULL;
+  char buf[4096];
+  if (fgets(buf, sizeof(buf), stdin) == NULL)
+    return nil(&interpreter->gc);
+  size_t len = strlen(buf);
+  if (len > 0 && buf[len - 1] == '\n') buf[--len] = '\0';
+  obj *o = new_string(buf);
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+static def_primitive(read_file) {
+  if (!CHECK_NARGS(args, 1)) return NULL;
+  obj *path = eval(CAR(args), interpreter);
+  if (path == NULL) return NULL;
+  if (!is_string(path)) { LOG_ERROR("read: argument must be a string"); return NULL; }
+  FILE *f = fopen(STRING(path), "r");
+  if (!f) { LOG_ERROR("read: cannot open \"%s\"", STRING(path)); return NULL; }
+  fseek(f, 0, SEEK_END);
+  long size = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  char *buf = malloc(size + 1);
+  MALLOC_CHECK(buf);
+  size_t nread = fread(buf, 1, size, f);
+  buf[nread] = '\0';
+  fclose(f);
+  obj *o = new_string(buf);
+  free(buf);
+  gc_add(&interpreter->gc, o);
+  return o;
+}
+
+static def_primitive(write_file) {
+  if (!CHECK_NARGS(args, 2)) return NULL;
+  obj *path = eval(CAR(args), interpreter);
+  obj *content = eval(ith(args, 1), interpreter);
+  if (path == NULL || content == NULL) return NULL;
+  if (!is_string(path)) { LOG_ERROR("write: first argument must be a string"); return NULL; }
+  if (!is_string(content)) { LOG_ERROR("write: second argument must be a string"); return NULL; }
+  FILE *f = fopen(STRING(path), "w");
+  if (!f) { LOG_ERROR("write: cannot open \"%s\"", STRING(path)); return NULL; }
+  fwrite(STRING(content), 1, STRING_LEN(content), f);
+  fclose(f);
+  return content;
 }

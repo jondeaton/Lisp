@@ -352,9 +352,11 @@ DEF_TEST(math) {
   TEST_EVALS(set_xy, "(/ y x)", "1",        "");
   TEST_EVALS(set_xy, "(% y x)", "6",        "");
 
-  // weird ways to use these things
-  // TEST_EVAL("(+ 1 2 3 4)", "10"); // just kidding, we will use the standard
-  // TEST_EVAL("(* 1 2 3 4)", "24"); // library to implement this functionality
+  // Variadic arithmetic
+  TEST_EVAL("(+ 1 2 3 4)", "10",               "variadic addition");
+  TEST_EVAL("(* 1 2 3 4)", "24",               "variadic multiplication");
+  TEST_EVAL("(- 10 3 2 1)", "4",               "variadic subtraction");
+  TEST_EVAL("(/ 120 2 3 4)", "5",              "variadic division");
 
   // Data type errors
   TEST_ERROR("(+ 5 z)",                      "add with unknown variable");
@@ -378,9 +380,7 @@ DEF_TEST(math) {
   TEST_ERROR("(/ 3)",                        "one argument");
   TEST_ERROR("(= 4)",                        "one argument");
 
-  // Too many arguments
-  TEST_ERROR("(- 3 4 5)",                    "too many arguments");
-  TEST_ERROR("(/ 3 4 5)",                    "too many arguments");
+  // Too many arguments (only % stays binary)
   TEST_ERROR("(% 3 4 5)",                    "too many arguments");
 
   TEST_REPORT();
@@ -532,6 +532,437 @@ DEF_TEST(Y_combinator) {
   TEST_EVALS(yc_factorial, "((Y F) 0)", "1",                   "Factorial 0 Y-Combinator");
   TEST_EVALS(yc_factorial, "((Y F) 1)", "1",                   "Factorial 1 Y-Combinator");
   TEST_EVALS(yc_factorial, "((Y F) 5)", "120",                 "Factorial 5 Y-Combinator");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(define_test) {
+  TEST_INIT();
+
+  SERIES(def_x, "(define x 5)");
+  TEST_EVALS(def_x, "x", "5",                              "simple define");
+
+  SERIES(def_overwrite,
+         "(define x 5)",
+         "(define x 10)");
+  TEST_EVALS(def_overwrite, "x", "10",                      "define overwrite");
+
+  SERIES(def_expr, "(define x (+ 3 4))");
+  TEST_EVALS(def_expr, "x", "7",                            "define with expression");
+
+  TEST_ERROR("(define)",                                     "no arguments");
+  TEST_ERROR("(define x)",                                   "one argument");
+  TEST_ERROR("(define x y z)",                               "too many arguments");
+  TEST_ERROR("(define 1 4)",                                 "can't define a number");
+  TEST_ERROR("(define t 4)",                                 "can't define truth atom");
+  TEST_ERROR("(define () 4)",                                "can't define nil");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(defun_test) {
+  TEST_INIT();
+
+  SERIES(simple,
+         "(defun square (x) (* x x))");
+  TEST_EVALS(simple, "(square 6)", "36",                     "simple defun");
+
+  SERIES(multi_arg,
+         "(defun add3 (a b c) (+ a (+ b c)))");
+  TEST_EVALS(multi_arg, "(add3 1 2 3)", "6",                 "defun multi arg");
+
+  SERIES(no_arg,
+         "(defun fortytwo () 42)");
+  TEST_EVALS(no_arg, "(fortytwo)", "42",                     "defun no args");
+
+  SERIES(recursive,
+         "(defun fact (n) (cond ((= n 0) 1) (t (* n (fact (- n 1))))))");
+  TEST_EVALS(recursive, "(fact 5)", "120",                   "defun recursive");
+
+  // Multi-body defun (uses progn)
+  SERIES(multi_body,
+         "(defun greet (x) (set 'last-greeted x) x)");
+  TEST_EVALS(multi_body, "(greet 42)", "42",                 "defun multi-body");
+
+  SERIES(multi_body_fx,
+         "(define last-greeted '())",
+         "(defun greet (x) (set 'last-greeted x) x)",
+         "(greet 42)");
+  TEST_EVALS(multi_body_fx, "last-greeted", "42",            "defun multi-body side effect");
+
+  TEST_ERROR("(defun t (x) x)",                              "can't defun truth");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(list_test) {
+  TEST_INIT();
+
+  TEST_EVAL("(list)", NIL_STR,                               "empty list");
+  TEST_EVAL("(list 1)", "(1)",                               "singleton list");
+  TEST_EVAL("(list 1 2 3)", "(1 2 3)",                       "three element list");
+  TEST_EVAL("(list (+ 1 2) (* 3 4))", "(3 12)",              "list of expressions");
+  TEST_EVAL("(car (list 'a 'b 'c))", "a",                   "car of list");
+  TEST_EVAL("(cdr (list 'a 'b 'c))", "(b c)",               "cdr of list");
+
+  SERIES(with_var,
+         "(define x 42)");
+  TEST_EVALS(with_var, "(list x x x)", "(42 42 42)",         "list with variables");
+
+  TEST_ERROR("(list z)",                                     "undefined variable");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(let_test) {
+  TEST_INIT();
+
+  TEST_EVAL("(let ((x 5)) x)", "5",                         "simple let");
+  TEST_EVAL("(let ((x 5) (y 10)) (+ x y))", "15",           "let two bindings");
+  TEST_EVAL("(let ((x 3)) (* x x))", "9",                   "let with expression body");
+
+  // let should not pollute outer environment
+  SERIES(scoping,
+         "(define x 1)",
+         "(let ((x 99)) x)");
+  TEST_EVALS(scoping, "x", "1",                             "let does not leak");
+
+  SERIES(nested,
+         "(let ((x 5)) (let ((y 10)) (+ x y)))");
+  TEST_EVALS(nested, "(+ 0 0)", "0",                         "nested let cleanup");
+
+  TEST_ERROR("(let)",                                        "no arguments");
+  TEST_ERROR("(let ((x 5)))",                                "no body");
+  TEST_ERROR("(let ((5 x)) x)",                              "binding name not atom");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(lexical_scope) {
+  TEST_INIT();
+
+  // Classic dynamic vs lexical scoping test:
+  // g binds its param x=2, then calls f. With lexical scoping, f sees x=1 (from define),
+  // not x=2 (from g's param).
+  SERIES(classic,
+         "(define x 1)",
+         "(define f (lambda (y) (+ x y)))",
+         "(define g (lambda (x) (f 0)))");
+  TEST_EVALS(classic, "(g 2)", "1",                          "lexical not dynamic");
+
+  // Closures should not see let bindings from caller
+  SERIES(let_leak,
+         "(define x 1)",
+         "(define f (lambda () x))",
+         "(define g (lambda () (let ((x 99)) (f))))");
+  TEST_EVALS(let_leak, "(g)", "1",                           "let does not leak into closures");
+
+  // Closure captures definition-time env
+  SERIES(capture,
+         "(define make-adder (lambda (x) (lambda (y) (+ x y))))",
+         "(define add-10 (make-adder 10))");
+  TEST_EVALS(capture, "(add-10 32)", "42",                   "closure captures lexical env");
+
+  // Self-recursion works
+  SERIES(recurse,
+         "(define fact (lambda (n) (cond ((= n 0) 1) (t (* n (fact (- n 1)))))))");
+  TEST_EVALS(recurse, "(fact 6)", "720",                     "self-recursion with define");
+
+  SERIES(recurse_set,
+         "(set 'fact (lambda (n) (cond ((= n 0) 1) (t (* n (fact (- n 1)))))))");
+  TEST_EVALS(recurse_set, "(fact 6)", "720",                 "self-recursion with set");
+
+  // defun recursion
+  SERIES(defun_rec,
+         "(defun fib (n) (cond ((= n 0) 0) ((= n 1) 1) (t (+ (fib (- n 1)) (fib (- n 2))))))");
+  TEST_EVALS(defun_rec, "(fib 10)", "55",                    "defun recursion");
+
+  // Top-level mutation visible to closures (Scheme-like)
+  SERIES(mutation,
+         "(define x 5)",
+         "(define f (lambda () x))",
+         "(define x 10)");
+  TEST_EVALS(mutation, "(f)", "10",                          "top-level mutation visible");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(prelude) {
+  TEST_INIT();
+
+  // not
+  TEST_TRUE("(not ())",                                      "not nil");
+  TEST_FALSE("(not t)",                                      "not t");
+  TEST_FALSE("(not 1)",                                      "not 1");
+
+  // null?
+  TEST_TRUE("(null? '())",                                   "null? nil");
+  TEST_FALSE("(null? 'a)",                                   "null? atom");
+  TEST_FALSE("(null? '(1 2))",                               "null? list");
+
+  // and/or
+  TEST_EVAL("(and t 42)", "42",                              "and true");
+  TEST_FALSE("(and () 42)",                                  "and false");
+  TEST_EVAL("(or () 42)", "42",                              "or fallback");
+  TEST_EVAL("(or 1 42)", "1",                                "or first");
+
+  // when/unless
+  TEST_EVAL("(when t 42)", "42",                             "when true");
+  TEST_EVAL("(unless () 42)", "42",                          "unless false");
+
+  // cadr/caddr
+  TEST_EVAL("(cadr '(a b c))", "b",                          "cadr");
+  TEST_EVAL("(caddr '(a b c d))", "c",                       "caddr");
+
+  // map
+  SERIES(map_test,
+         "(defun double (x) (* x 2))");
+  TEST_EVALS(map_test, "(map double '(1 2 3))", "(2 4 6)",   "map");
+
+  // filter
+  SERIES(filter_test,
+         "(defun positive (x) (> x 0))");
+  TEST_EVALS(filter_test, "(filter positive '(3 -1 4 -2 5))", "(3 4 5)", "filter");
+
+  // reduce
+  TEST_EVAL("(reduce + 0 '(1 2 3 4 5))", "15",              "reduce sum");
+
+  // append
+  TEST_EVAL("(append '(1 2) '(3 4))", "(1 2 3 4)",          "append");
+  TEST_EVAL("(append '() '(1 2))", "(1 2)",                  "append empty");
+
+  // length
+  TEST_EVAL("(length '(a b c))", "3",                        "length");
+  TEST_EVAL("(length '())", "0",                             "length empty");
+
+  // reverse
+  TEST_EVAL("(reverse '(1 2 3))", "(3 2 1)",                "reverse");
+  TEST_EVAL("(reverse '())", NIL_STR,                        "reverse empty");
+
+  // nth
+  TEST_EVAL("(nth '(a b c d) 0)", "a",                      "nth 0");
+  TEST_EVAL("(nth '(a b c d) 2)", "c",                      "nth 2");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(defmacro_test) {
+  TEST_INIT();
+
+  // Simple macro: (when pred body) → (cond (pred body))
+  SERIES(when_macro,
+         "(defmacro when (pred body) (list 'cond (list pred body)))");
+  TEST_EVALS(when_macro, "(when t 42)", "42",                "simple when macro");
+  TEST_EVALS(when_macro, "(when () 42)", NIL_STR,            "when macro false");
+
+  // Macro with actual computation
+  SERIES(when_expr,
+         "(defmacro when (pred body) (list 'cond (list pred body)))",
+         "(define x 5)");
+  TEST_EVALS(when_expr, "(when (= x 5) (* x x))", "25",     "when macro with expr");
+
+  // unless macro: (unless pred body) → (cond (pred ()) (t body))
+  SERIES(unless_macro,
+         "(defmacro unless (pred body) (list 'cond (list pred '()) (list t body)))");
+  TEST_EVALS(unless_macro, "(unless () 42)", "42",           "unless macro true case");
+  TEST_EVALS(unless_macro, "(unless t 42)", NIL_STR,         "unless macro false case");
+
+  // swap macro: (swap a b) → (let ((tmp a)) (define a b) (define b tmp))
+  // Actually let's do something simpler: a macro that doubles
+  SERIES(double_macro,
+         "(defmacro double (x) (list '+ x x))");
+  TEST_EVALS(double_macro, "(double 5)", "10",               "double macro");
+  TEST_EVALS(double_macro, "(double (+ 1 2))", "6",          "double macro with expr");
+
+  TEST_ERROR("(defmacro)",                                   "no arguments");
+  TEST_ERROR("(defmacro m)",                                 "one argument");
+  TEST_ERROR("(defmacro m (x))",                             "two arguments");
+  TEST_ERROR("(defmacro t (x) x)",                           "can't defmacro truth");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(variadic) {
+  TEST_INIT();
+
+  // Variadic lambda
+  TEST_EVAL("((lambda args args) 1 2 3)", "(1 2 3)",          "variadic identity");
+  TEST_EVAL("((lambda args (car args)) 1 2 3)", "1",          "variadic car");
+  TEST_EVAL("((lambda args (cdr args)) 1 2 3)", "(2 3)",      "variadic cdr");
+  TEST_EVAL("((lambda args args))", NIL_STR,                   "variadic no args");
+
+  // Variadic defun
+  SERIES(variadic_fn,
+         "(defun f args args)");
+  TEST_EVALS(variadic_fn, "(f 1 2 3)", "(1 2 3)",             "variadic defun");
+  TEST_EVALS(variadic_fn, "(f)", NIL_STR,                      "variadic defun no args");
+
+  // list is now variadic in prelude
+  TEST_EVAL("(list 1 2 3 4 5)", "(1 2 3 4 5)",                "list five elements");
+
+  // Variadic macro
+  SERIES(variadic_macro,
+         "(defmacro my-list args (cons 'list args))");
+  TEST_EVALS(variadic_macro, "(my-list 1 2 3)", "(1 2 3)",    "variadic macro");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(progn_test) {
+  TEST_INIT();
+
+  TEST_EVAL("(progn 42)", "42",                                "progn single");
+  TEST_EVAL("(progn 1 2 3)", "3",                              "progn returns last");
+
+  SERIES(side_effect,
+         "(progn (define x 10) (+ x 5))");
+  TEST_EVALS(side_effect, "x", "10",                           "progn side effect persists");
+
+  SERIES(multi_set,
+         "(progn (define a 1) (define b 2) (+ a b))");
+  TEST_EVALS(multi_set, "(+ a b)", "3",                        "progn multiple defines");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(tco) {
+  TEST_INIT();
+
+  // Deep tail recursion through cond — would segfault without TCO
+  SERIES(count,
+         "(set 'count (lambda (self n) (cond ((= n 100000) n) (t (self self (+ n 1))))))");
+  TEST_EVALS(count, "(count count 0)", "100000",               "deep tail recursion via cond");
+
+  // Tail-recursive factorial with accumulator
+  SERIES(fact,
+         "(defun fact-acc (n acc) (cond ((= n 0) acc) (t (fact-acc (- n 1) (* n acc)))))");
+  TEST_EVALS(fact, "(fact-acc 10 1)", "3628800",               "tail-recursive factorial");
+
+  // Deep cond with multiple clauses (all tail-recursive)
+  SERIES(multi_clause,
+         "(defun count-non-mult3 (n acc) (cond ((= n 0) acc) "
+         "((= (% n 3) 0) (count-non-mult3 (- n 1) acc)) "
+         "(t (count-non-mult3 (- n 1) (+ acc 1)))))");
+  TEST_EVALS(multi_clause, "(count-non-mult3 100000 0)", "66667", "deep cond multi-clause TCO");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(string_test) {
+  TEST_INIT();
+
+  // String literals self-evaluate
+  TEST_EVAL("\"hello\"", "\"hello\"",                          "string literal");
+  TEST_EVAL("\"\"", "\"\"",                                    "empty string");
+
+  // Escape sequences
+  TEST_EVAL("\"hello\\nworld\"", "\"hello\\nworld\"",          "string with newline escape");
+  TEST_EVAL("\"tab\\there\"", "\"tab\\there\"",                "string with tab escape");
+  TEST_EVAL("\"say \\\"hi\\\"\"", "\"say \\\"hi\\\"\"",       "string with escaped quotes");
+
+  // Strings are not atoms
+  TEST_FALSE("(atom \"hello\")",                               "string is not atom");
+
+  // String equality
+  TEST_TRUE("(eq \"hello\" \"hello\")",                        "string eq same");
+  TEST_FALSE("(eq \"hello\" \"world\")",                       "string eq different");
+  TEST_FALSE("(eq \"hello\" 42)",                              "string eq different type");
+
+  // Strings in lists
+  TEST_EVAL("(car '(\"a\" \"b\"))", "\"a\"",                  "string in list car");
+  TEST_EVAL("(cons \"x\" '(\"y\"))", "(\"x\" \"y\")",         "cons with strings");
+
+  // strcat
+  TEST_EVAL("(strcat \"hello\" \" world\")", "\"hello world\"", "strcat two strings");
+  TEST_EVAL("(strcat \"\" \"abc\")", "\"abc\"",                "strcat with empty");
+  TEST_EVAL("(strcat \"num: \" 42)", "\"num: 42\"",            "strcat string and number");
+
+  // strlen
+  TEST_EVAL("(strlen \"hello\")", "5",                         "strlen");
+  TEST_EVAL("(strlen \"\")", "0",                              "strlen empty");
+  TEST_ERROR("(strlen 42)",                                    "strlen non-string");
+
+  // set/define with strings
+  SERIES(str_var, "(define greeting \"hi\")");
+  TEST_EVALS(str_var, "greeting", "\"hi\"",                    "string in variable");
+  TEST_EVALS(str_var, "(strcat greeting \" there\")",
+             "\"hi there\"",                                   "strcat with variable");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(vector_test) {
+  TEST_INIT();
+
+  // Basic vector operations
+  TEST_EVAL("(vlen (mkvec 5))", "5",                           "mkvec and vlen");
+  TEST_EVAL("(vref (mkvec 3) 0)", "nil",                      "mkvec initializes to nil");
+
+  SERIES(vec_ops,
+         "(define v (mkvec 3))",
+         "(vset v 0 42)",
+         "(vset v 1 \"hello\")",
+         "(vset v 2 '(a b))");
+  TEST_EVALS(vec_ops, "(vref v 0)", "42",                     "vset and vref int");
+  TEST_EVALS(vec_ops, "(vref v 1)", "\"hello\"",              "vset and vref string");
+  TEST_EVALS(vec_ops, "(vref v 2)", "(a b)",                  "vset and vref list");
+  TEST_EVALS(vec_ops, "(vlen v)", "3",                        "vlen after set");
+
+  // Bounds checking
+  TEST_ERROR("(vref (mkvec 3) 5)",                            "vref out of bounds");
+  TEST_ERROR("(vref (mkvec 3) -1)",                           "vref negative index");
+
+  // Hash determinism
+  SERIES(hash_eq,
+         "(define h1 (hash \"test\"))",
+         "(define h2 (hash \"test\"))");
+  TEST_EVALS(hash_eq, "(eq h1 h2)", "t",                     "hash deterministic");
+
+  // Vector identity
+  SERIES(vec_id,
+         "(define a (mkvec 2))",
+         "(define b (mkvec 2))");
+  TEST_EVALS(vec_id, "(eq a a)", "t",                         "vector eq same");
+  TEST_EVALS(vec_id, "(eq a b)", "nil",                       "vector eq different");
+
+  TEST_REPORT();
+}
+
+DEF_TEST(hashmap_test) {
+  TEST_INIT();
+
+  // Basic get/set
+  SERIES(hm_basic,
+         "(define m (make-hashmap))",
+         "(hashmap-set m \"name\" \"Jon\")",
+         "(hashmap-set m \"age\" 30)");
+  TEST_EVALS(hm_basic, "(hashmap-get m \"name\")", "\"Jon\"", "hashmap get string");
+  TEST_EVALS(hm_basic, "(hashmap-get m \"age\")", "30",       "hashmap get int");
+  TEST_EVALS(hm_basic, "(hashmap-get m \"x\")", "nil",        "hashmap get missing");
+
+  // Update existing key
+  SERIES(hm_update,
+         "(define m (make-hashmap))",
+         "(hashmap-set m \"x\" 1)",
+         "(hashmap-set m \"x\" 2)");
+  TEST_EVALS(hm_update, "(hashmap-get m \"x\")", "2",        "hashmap update key");
+
+  // Delete
+  SERIES(hm_del,
+         "(define m (make-hashmap))",
+         "(hashmap-set m \"a\" 1)",
+         "(hashmap-set m \"b\" 2)",
+         "(hashmap-del m \"a\")");
+  TEST_EVALS(hm_del, "(hashmap-get m \"a\")", "nil",         "hashmap del removes key");
+  TEST_EVALS(hm_del, "(hashmap-get m \"b\")", "2",           "hashmap del preserves others");
+
+  // Atom keys
+  SERIES(hm_atom,
+         "(define m (make-hashmap))",
+         "(hashmap-set m 'x 10)",
+         "(hashmap-set m 'y 20)");
+  TEST_EVALS(hm_atom, "(hashmap-get m 'x)", "10",            "hashmap atom key");
+  TEST_EVALS(hm_atom, "(hashmap-get m 'y)", "20",            "hashmap atom key 2");
 
   TEST_REPORT();
 }

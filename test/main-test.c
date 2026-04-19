@@ -17,7 +17,7 @@
  * Runs all tests and determines if the interpreter is passing all of the tests
  * @return: True if all of the tests passed, false otherwise
  */
-int run_all_tests() {
+int run_all_tests(void) {
   int num_fails = 0, num_tests = 0;
 
   int nf, nt;
@@ -35,11 +35,24 @@ int run_all_tests() {
   RUN_TEST(closure);
   RUN_TEST(recursion);
   RUN_TEST(Y_combinator);
+  RUN_TEST(define_test);
+  RUN_TEST(defun_test);
+  RUN_TEST(list_test);
+  RUN_TEST(let_test);
+  RUN_TEST(lexical_scope);
+  RUN_TEST(prelude);
+  RUN_TEST(defmacro_test);
+  RUN_TEST(variadic);
+  RUN_TEST(progn_test);
+  RUN_TEST(tco);
+  RUN_TEST(string_test);
+  RUN_TEST(vector_test);
+  RUN_TEST(hashmap_test);
 
   return num_fails;
 }
 
-int main() {
+int main(void) {
   int fd = open("/dev/null", O_WRONLY);
   dup2(fd, STDERR_FILENO); // redirect stderr --> /dev/null
 
